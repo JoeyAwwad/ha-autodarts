@@ -168,7 +168,7 @@ Check from another address that a trusted-network login is refused, for example 
 - **Never `pkill -f <pattern>` from your own shell.** The pattern is in your shell's command line, so it kills the shell. Match `/proc/PID/cmdline` and kill by PID.
 - `sudo` has no terminal: use `sudo -S` with a password the user gave, or `pkexec` (desktop pop-up), or ask the user to run the command.
 - Read `curl | bash` installers before running them; this one deletes the 1.x binary.
-- Wait for background work with `run_in_background`, not `sleep`.
+- Wait for long-running work with your tool's background or notification mechanism, not with fixed `sleep` calls.
 - Headless Chrome with `--remote-debugging-port` gives screenshots of the real UI; seed Home Assistant's `hassTokens` in `localStorage` to sign it in. Origins differ between `127.0.0.1` and the LAN address.
 - Home Assistant REST calls return 500 for a `ServiceValidationError`; read the message in the container log.
 - Ask for a real dart when timing matters: the board only reports darts thrown while you listen.
