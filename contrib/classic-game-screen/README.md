@@ -13,7 +13,11 @@ A full-screen game screen for a TV or monitor at the board, in the style of play
 - **How to play**: an **(i)** on every game tile, and next to the game name while playing, opens that game's rules: who can play, the goal, how it scores and how it is won.
 
   ![A rules sheet](images/rules-sheet.png)
-- **Game screen**: big scores readable from about 2 m, the three darts of the visit, checkout suggestion, bust, Undo and Next player. Cricket games use a pub-style chalkboard. Training games show the next target and progress. Game shot screen with Rematch.
+- **Dart-machine look**: a dark theme made for a TV at the board (or classic blue, pub green, neon, high contrast). Every player keeps a colour on their card, chalkboard column and dart markers; the newest dart is white.
+- **Game screen**: big scores readable from several metres, whose turn it is with the darts left (●●○), the three darts of the visit, checkout suggestion, bust, Undo and Next player. Cricket games use a chalkboard with marks in the players' colours. Training games show the next target and progress.
+- **Result screen**: the winner, then every player ranked with legs, average or marks per round and their score, with Rematch and New game.
+
+  ![The result screen](images/result.png)
 - **Correct a dart** the board read wrong: tap it (every dart has a ✎) and pick the right bed. See [Correcting darts](#correcting-darts).
 - **Drawn dartboard** with a marker where each dart landed (from the board's `/api/events` coordinates). The camera picture is one tap away (warped straight-on with the calibration homography from `/api/system`).
 - **Wild Mouse (Minnesota) Cricket**, which the integration does not have. The card scores it itself from the board's darts.
@@ -36,6 +40,8 @@ brand: Darts                   # name on the screens
 photo: /local/my-photo.jpg     # optional picture on the New game and Game shot screens
 overlay: true                  # cover Home Assistant's header and sidebar
 stuck_takeout_reset: 5         # seconds before a stuck takeout is reset; 0 turns it off
+theme: machine                 # machine (dark, default), classic (blue), pub, neon or contrast; also on the New game screen
+player_colors: ["#3b82f6", "#f43f5e", "#22c55e", "#f59e0b"]   # one colour per player, in throwing order
 ```
 
 The board's local API must be reachable from the browser (it answers CORS with `*`). If Home Assistant is served over HTTPS, the browser blocks the plain-HTTP board and the card falls back to what the entities carry.

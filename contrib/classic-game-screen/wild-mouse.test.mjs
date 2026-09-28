@@ -136,3 +136,11 @@ test("undo after a correction still takes the whole visit back", () => {
   assert.ok(g.undo()); assert.equal(g.players[0].marks[20], 0); assert.equal(g.current, 0 + 1);
   assert.ok(g.undo()); assert.equal(g.players[0].marks[19], 0); assert.equal(g.current, 0);
 });
+test("darts and marks are counted for marks per round", () => {
+  const g = WildMouse.create(["A", "B"], { bed: true });
+  visit(g, "T20", "S20", "S7"); // 3 marks closing, 1 scoring, 1 miss
+  assert.equal(g.players[0].darts, 3); assert.equal(g.players[0].markTotal, 4);
+  visit(g, "S5", "S5", "S5"); // three in a bed: one mark
+  assert.equal(g.players[1].markTotal, 1);
+  g.undo(); assert.equal(g.players[1].markTotal, 0, "undo takes the counts back");
+});

@@ -50,6 +50,10 @@ const CRICKET = new Set(["cricket", "cut_throat", "tactics"]);
 const TRAINING = new Set(GROUPS[3].games.map(([id]) => id));
 const LEGS = [1, 2, 3, 5, 7];
 const BOT_LEVELS = [["Off", 0], ["Easy", 30], ["Club", 50], ["Pub pro", 70], ["Pro", 90], ["Legend", 110]];
+// Every player keeps a colour for the whole game: card, chalkboard column, dart markers.
+const PLAYER_COLORS = ["#3b82f6", "#f43f5e", "#22c55e", "#f59e0b"];
+// Looks for the screen; "machine" is a dark dart-machine look, "classic" the original blue.
+const THEMES = [["Machine", "machine"], ["Classic", "classic"], ["Pub", "pub"], ["Neon", "neon"], ["High contrast", "contrast"]];
 
 // -- Game icons, colours and rules ----------------------------------------------------------
 // Line icons on a 48 x 48 grid, drawn in the tile's accent colour. A game without a drawing
@@ -378,7 +382,7 @@ class WildMouse {
     const targets = [...WM_NUMBERS, "D", "T", ...(bed ? ["B"] : [])];
     return new WildMouse({
       kind: "wild_mouse", targets, legsToWin: legs, bed, leg: 1, starter: 0, current: 0,
-      players: players.map((name) => ({ name, marks: Object.fromEntries(targets.map((t) => [t, 0])), points: 0, legs: 0 })),
+      players: players.map((name) => ({ name, marks: Object.fromEntries(targets.map((t) => [t, 0])), points: 0, legs: 0, darts: 0, markTotal: 0 })),
       visit: [], bedVisit: false, seen: 0, winner: null, legWinner: null, history: [],
     });
   }
@@ -435,6 +439,9 @@ class WildMouse {
       }
       me.points += points;
     }
+    // Match statistics: darts thrown and marks that closed or scored (for marks per round).
+    me.darts = (me.darts || 0) + 1;
+    me.markTotal = (me.markTotal || 0) + (points ? Math.max(marks, pick.marks) : marks);
     this.visit.push({ seg, target: pick ? pick.t : null, marks, points });
     if (this.visit.length === 3) this._bedCheck();
     this._winCheck();
@@ -447,8 +454,10 @@ class WildMouse {
     const same = segs.every((x) => x.number != null && x.number === segs[0].number && x.ring === segs[0].ring);
     if (!same) return;
     const me = this.players[this.current];
+    const counted = this._open(me, "B") || this._scorable("B");
     if (this._open(me, "B")) me.marks.B += 1;
     else if (this._scorable("B")) me.points += this.visit.reduce((t, d) => t + segmentScore(d.seg), 0);
+    if (counted) me.markTotal = (me.markTotal || 0) + 1;
     this.bedVisit = true;
   }
 
@@ -518,10 +527,11 @@ const MARK_SVG = [
 // A pub-style cricket board: target numbers down the middle with the two players'
 // marks either side, or a column per player for three and four. rows:
 // [{label, extra, marks: [one per player]}]; current: index of the player throwing.
-function chalkboard(rows, players, current) {
+function chalkboard(rows, players, current, colors = PLAYER_COLORS) {
   const two = players.length === 2;
-  const cell = (m, i) => `<div class="cm ${i === current ? "cur" : ""}">${MARK_SVG[Math.min(m || 0, 3)]}</div>`;
-  const head = two ? "" : `<div class="crow chead"><div class="clab"></div>${players.map((p, i) => `<div class="cm ${i === current ? "cur" : ""}"><span>${esc(p)}</span></div>`).join("")}</div>`;
+  const pc = (i) => `style="--pc:${colors[i % colors.length]}"`;
+  const cell = (m, i) => `<div class="cm ${i === current ? "cur" : ""}" ${pc(i)}>${MARK_SVG[Math.min(m || 0, 3)]}</div>`;
+  const head = two ? "" : `<div class="crow chead"><div class="clab"></div>${players.map((p, i) => `<div class="cm ${i === current ? "cur" : ""}" ${pc(i)}><span>${esc(p)}</span></div>`).join("")}</div>`;
   const body = rows
     .map((r) => {
       const dead = r.marks.every((m) => m >= 3) ? "dead" : "";
@@ -554,7 +564,12 @@ function save(key, value) {
 
 class AutodartsClassicCard extends HTMLElement {
   setConfig(config) {
-    this._config = { prefix: "autodarts_board", camera: 0, view: "virtual", overlay: true, brand: "Darts", photo: "", stuck_takeout_reset: STUCK_TAKEOUT_S, ...config };
+    this._config = { prefix: "autodarts_board", camera: 0, view: "virtual", overlay: true, brand: "Darts", photo: "", stuck_takeout_reset: STUCK_TAKEOUT_S, theme: "machine", ...config };
+    this._theme = load("theme", this._config.theme);
+    const colors = Array.isArray(this._config.player_colors) && this._config.player_colors.length ? this._config.player_colors : PLAYER_COLORS;
+    // Colours go into style attributes: only hex values and plain colour names.
+    this._colors = colors.map(String).filter((c) => /^(#[0-9a-f]{3,8}|[a-z]{3,20})$/i.test(c));
+    if (!this._colors.length) this._colors = PLAYER_COLORS;
     this._key = null;
     this._view = load("board-view", this._config.view);
     this._cam = load("camera", Number(this._config.camera) || 0);
@@ -867,6 +882,7 @@ class AutodartsClassicCard extends HTMLElement {
       case "legs": s.legs = Number(value); break;
       case "bot": s.bot = Number(value); break;
       case "holes": s.holes = value; break;
+      case "theme": this._theme = value; save("theme", value); break;
       case "bed": s.bed = !s.bed; break;
       case "double_out": s.double_out = !s.double_out; break;
       case "double_in": s.double_in = !s.double_in; break;
@@ -904,7 +920,7 @@ class AutodartsClassicCard extends HTMLElement {
   _build() {
     this.attachShadow({ mode: "open" });
     this.shadowRoot.innerHTML = `<style>${CSS}</style>
-      <div class="stage ${this._config.overlay ? "overlay-mode" : ""}">
+      <div class="stage ${this._config.overlay ? "overlay-mode" : ""}" data-theme="${esc(this._theme)}">
         <div class="game-screen">
           <div class="info"></div>
           <div class="boardwrap">
@@ -963,6 +979,7 @@ class AutodartsClassicCard extends HTMLElement {
     }
     const lobby = this._isLobby();
     this._stage.classList.toggle("in-lobby", lobby);
+    this._stage.dataset.theme = this._theme;
     if (lobby) this._lobbyEl.innerHTML = this._renderLobby();
     else this._renderGame();
     const pad = !!this._pad && !lobby;
@@ -1071,12 +1088,75 @@ class AutodartsClassicCard extends HTMLElement {
       </header>`;
   }
 
-  _finishBoard(visit) {
+  _finishBoard(visit, color = this._colors[0]) {
     this._lastVisit = visit;
     if (!visit.length && !(this._lastThrows || []).length) this._lastThrows = [];
+    this._virtual.style.setProperty("--pc", color);
     this._virtual.innerHTML = boardSvg(visit, this._lastThrows || []);
     this._stage.querySelector('[data-act="view"]').textContent = this._view === "live" ? "Virtual board" : "Live camera";
     this._stage.querySelector('[data-act="cam"]').textContent = `Camera ${(this._cam % (this._cams?.length || 3)) + 1}`;
+  }
+
+  // The result table of an integration game: the winner first, then by legs and score.
+  _resultRows(kind, a, scores) {
+    const sets = (a.sets_to_win || 1) > 1, legs = (a.legs_to_win || 1) > 1 || sets;
+    const main = (p) => (kind === "x01" ? p.remaining : a.game === "killer" ? Math.max(p.lives || 0, 0) : p.points ?? p.score ?? 0);
+    const mainLabel = kind === "x01" ? "left" : a.game === "killer" ? "lives" : a.game === "golf" ? "strokes" : "points";
+    // Fewer is better for X01 (remaining), Golf (strokes) and Cut-Throat (points).
+    const low = kind === "x01" || a.game === "golf" || a.game === "cut_throat";
+    return scores
+      .map((p, i) => ({ p, i }))
+      .sort((x, y) => (y.p.player === a.winner) - (x.p.player === a.winner) || (y.p.sets ?? 0) - (x.p.sets ?? 0)
+        || (y.p.legs ?? 0) - (x.p.legs ?? 0) || (low ? main(x.p) - main(y.p) : main(y.p) - main(x.p)))
+      .map(({ p, i }) => ({
+        name: p.name || `Player ${p.player}`, color: this._pc(i), main: main(p), mainLabel,
+        stats: [
+          ...(sets ? [["sets", p.sets ?? 0]] : []), ...(legs ? [["legs", p.legs ?? 0]] : []),
+          ...(p.average != null ? [["average", Number(p.average).toFixed(1)]] : []),
+          ...(p.mpr != null ? [["MPR", Number(p.mpr).toFixed(2)]] : []),
+        ],
+      }));
+  }
+
+  _pc(i) {
+    return this._colors[Math.max(i, 0) % this._colors.length];
+  }
+
+  // Marks per round: marks that closed or scored, per three darts thrown.
+  _mpr(p) {
+    return p.darts ? ((p.markTotal || 0) * 3 / p.darts).toFixed(2) : "0.00";
+  }
+
+  // Whose turn it is and how many darts are left: shown on the thrower's card.
+  _turnTag(thrown) {
+    const pips = [0, 1, 2].map((i) => `<i class="${i < thrown ? "used" : ""}"></i>`).join("");
+    const text = thrown >= 3 ? "Pull your darts" : `Throwing · dart ${thrown + 1} of 3`;
+    return `<div class="turn-tag"><span>${text}</span><span class="pips" aria-label="${3 - Math.min(thrown, 3)} darts left">${pips}</span></div>`;
+  }
+
+  // The end of a game: the winner big, then everybody ranked with their numbers.
+  // rows: [{name, color, main, mainLabel, stats: [[label, value]]}], best first.
+  _resultScreen({ label = "Game shot", winner, rows, undo = false }) {
+    const table = rows
+      .map((r, i) => `
+        <div class="res-row ${i === 0 ? "first" : ""}" style="--pc:${r.color}">
+          <span class="res-rank">${i + 1}</span>
+          <span class="res-name">${esc(r.name)}</span>
+          ${(r.stats || []).map(([l, v]) => `<span class="res-stat"><b>${esc(v)}</b><small>${esc(l)}</small></span>`).join("")}
+          <span class="res-main"><b>${esc(r.main)}</b><small>${esc(r.mainLabel || "")}</small></span>
+        </div>`)
+      .join("");
+    return `
+      <div class="gameshot" style="--pc:${rows[0]?.color || "#fcd34d"}">
+        <div class="gs-label">${esc(label)}</div>
+        <div class="gs-name">${esc(winner)}</div>
+        <div class="res-table">${table}</div>
+        <div class="gs-actions">
+          <button class="primary big" data-act="rematch">Rematch</button>
+          <button class="big" data-act="new">New game</button>
+        </div>
+        ${undo ? `<button class="ghost gs-undo" data-act="undo">↶ Wrong reading? Undo the last visit</button>` : ""}
+      </div>`;
   }
 
   // Training games ("drills") keep their state on the target sensor: one thrower, a
@@ -1133,12 +1213,13 @@ class AutodartsClassicCard extends HTMLElement {
     const legs = wm.legsToWin > 1;
     const cards = wm.players
       .map((p, i) => {
-        const active = i === wm.current && wm.winner == null;
+        const active = i === wm.current && wm.winner == null && wm.legWinner == null;
         return `
-          <div class="player ${active ? "active" : ""} ${wm.winner === i || wm.legWinner === i ? "winner" : ""}">
+          <div class="player ${active ? "active" : ""} ${wm.winner === i || wm.legWinner === i ? "winner" : ""}" style="--pc:${this._pc(i)}">
             ${legs ? `<div class="legs"><span>${p.legs}<small>legs</small></span></div>` : ""}
             <div class="pname">${esc(p.name)}</div>
             <div class="score">${p.points}</div>
+            ${active ? this._turnTag(wm.visit.length) : `<div class="stats">${p.darts ? `MPR ${this._mpr(p)}` : ""}</div>`}
           </div>`;
       })
       .join("");
@@ -1167,6 +1248,7 @@ class AutodartsClassicCard extends HTMLElement {
         wm.targets.map((t) => ({ label: label(t), extra: typeof t === "string", marks: wm.players.map((p) => p.marks[t]) })),
         wm.players.map((p) => p.name),
         wm.winner == null ? wm.current : -1,
+        this._colors,
       )}
       <div class="turn">
         <div class="total">${points ? `+${points}` : wm.visit.length ? "0" : "–"}</div>
@@ -1179,17 +1261,18 @@ class AutodartsClassicCard extends HTMLElement {
           <button data-act="next" class="primary">Next player ⏭</button>
         </div>
       </div>
-      ${winner ? `
-        <div class="gameshot">
-          <div class="gs-label">Game shot</div>
-          <div class="gs-name">${esc(winner.name)}</div>
-          <div class="gs-actions">
-            <button class="primary big" data-act="rematch">Rematch</button>
-            <button class="big" data-act="new">New game</button>
-          </div>
-          <button class="ghost gs-undo" data-act="undo">↶ Wrong reading? Undo the last visit</button>
-        </div>` : ""}`;
-    this._finishBoard(wm.visit.map((d) => d.seg));
+      ${winner ? this._resultScreen({
+        winner: winner.name,
+        undo: true,
+        rows: wm.players
+          .map((p, i) => ({ p, i }))
+          .sort((a, b) => (b.i === wm.winner) - (a.i === wm.winner) || b.p.legs - a.p.legs || b.p.points - a.p.points)
+          .map(({ p, i }) => ({
+            name: p.name, color: this._pc(i), main: p.points, mainLabel: "points",
+            stats: [...(legs ? [["legs", p.legs]] : []), ["MPR", this._mpr(p)], ["darts", p.darts || 0]],
+          })),
+      }) : ""}`;
+    this._finishBoard(wm.visit.map((d) => d.seg), this._pc(wm.current));
   }
 
   _renderGame() {
@@ -1212,7 +1295,7 @@ class AutodartsClassicCard extends HTMLElement {
     if (legsToWin > 1 || setsToWin > 1) facts.push(setsToWin > 1 ? `First to ${setsToWin} sets` : `First to ${legsToWin} legs`);
     if (a.round != null) facts.push(`Round ${a.round}${a.rounds ? ` of ${a.rounds}` : ""}`);
 
-    const playerCard = (p) => {
+    const playerCard = (p, i) => {
       const active = p.player === a.player && !winner;
       let big, sub = "", extra = "";
       if (kind === "x01") {
@@ -1230,14 +1313,16 @@ class AutodartsClassicCard extends HTMLElement {
       const legs = legsToWin > 1 || setsToWin > 1
         ? `<div class="legs">${setsToWin > 1 ? `<span>${p.sets ?? 0}<small>sets</small></span>` : ""}<span>${p.legs ?? 0}<small>legs</small></span></div>` : "";
       return `
-        <div class="player ${active ? "active" : ""} ${winner && p.player === a.winner ? "winner" : ""}">
+        <div class="player ${active ? "active" : ""} ${winner && p.player === a.winner ? "winner" : ""}" style="--pc:${this._pc(i)}">
           ${legs}
           <div class="pname">${esc(p.name || `Player ${p.player}`)}</div>
           <div class="score">${esc(big)}</div>
           <div class="stats">${esc(sub)}</div>
+          ${active ? this._turnTag(visit.length) : ""}
           ${extra}
         </div>`;
     };
+    const current = scores.findIndex((p) => p.player === a.player);
 
     const slots = this._slots(visit);
 
@@ -1253,7 +1338,8 @@ class AutodartsClassicCard extends HTMLElement {
       ? chalkboard(
         (a.numbers || []).map((n, i) => ({ label: n === 25 ? "Bull" : n, marks: scores.map((p) => (p.marks || [])[i] || 0) })),
         scores.map((p) => p.name || `Player ${p.player}`),
-        winner ? -1 : scores.findIndex((p) => p.player === a.player),
+        winner ? -1 : current,
+        this._colors,
       )
       : "";
     this._info.innerHTML = `
@@ -1271,17 +1357,8 @@ class AutodartsClassicCard extends HTMLElement {
           <button data-act="next" class="primary">Next player ⏭</button>
         </div>
       </div>
-      ${winner ? `
-        <div class="gameshot">
-          <div class="gs-label">Game shot</div>
-          <div class="gs-name">${esc(winner.name)}</div>
-          <div class="gs-actions">
-            <button class="primary big" data-act="rematch">Rematch</button>
-            <button class="big" data-act="new">New game</button>
-          </div>
-          ${a.undo ? `<button class="ghost gs-undo" data-act="undo">↶ Wrong reading? Undo the last visit</button>` : ""}
-        </div>` : ""}`;
-    this._finishBoard(visit);
+      ${winner ? this._resultScreen({ winner: winner.name, undo: !!a.undo, rows: this._resultRows(kind, a, scores) }) : ""}`;
+    this._finishBoard(visit, this._pc(current));
   }
 
   _renderLobby() {
@@ -1355,6 +1432,8 @@ class AutodartsClassicCard extends HTMLElement {
           ${players}
           ${options ? `<h3>Options</h3>${options}` : ""}
           <button class="primary start" data-act="start">Start ${esc(GAME_NAME[g] || g)}</button>
+          <h3>Screen</h3>
+          <div class="opt"><label>Look</label>${seg("theme", THEMES, this._theme)}</div>
         </aside>
       </div>`;
   }
@@ -1364,14 +1443,44 @@ const CSS = `
   :host { display: block; height: 100%; }
   * { box-sizing: border-box; }
   .stage {
-    --glass: rgba(255, 255, 255, 0.09); --glass-2: rgba(255, 255, 255, 0.16); --line: rgba(255, 255, 255, 0.16);
+    /* Theme tokens: background, glass panels, lines, solid panels, ink on white, overlays, glow. */
+    --glass: rgba(255, 255, 255, 0.045); --glass-2: rgba(255, 255, 255, 0.1); --line: rgba(255, 255, 255, 0.11);
+    --panel: #12141d; --ink: #0b0d14; --overlay: rgba(4, 5, 10, 0.94); --glow: rgba(99, 102, 241, 0.4);
+    --bg:
+      radial-gradient(ellipse at 50% -25%, rgba(99, 102, 241, 0.24), transparent 55%),
+      radial-gradient(ellipse at 100% 110%, rgba(34, 211, 238, 0.1), transparent 50%),
+      #07080c;
     height: calc(100dvh - var(--header-height, 56px)); overflow: hidden; color: #fff;
     font-family: "Open Sans", "Segoe UI", Roboto, system-ui, sans-serif; -webkit-tap-highlight-color: transparent;
-    background:
+    background: var(--bg);
+  }
+  .stage[data-theme="classic"] {
+    --glass: rgba(255, 255, 255, 0.09); --glass-2: rgba(255, 255, 255, 0.16); --line: rgba(255, 255, 255, 0.16);
+    --panel: #1f1a54; --ink: #27307a; --overlay: rgba(12, 11, 38, 0.93); --glow: rgba(80, 220, 200, 0.4);
+    --bg:
       radial-gradient(ellipse at 70% 90%, rgba(60, 170, 190, 0.32), transparent 55%),
       radial-gradient(ellipse at 85% 0%, rgba(90, 120, 230, 0.5), transparent 60%),
       linear-gradient(160deg, #221d5c 0%, #2a3688 45%, #2a55a1 100%);
   }
+  .stage[data-theme="pub"] {
+    --glass: rgba(0, 0, 0, 0.22); --glass-2: rgba(255, 255, 255, 0.1); --line: rgba(255, 255, 255, 0.14);
+    --panel: #0f2e22; --ink: #0c2a1e; --overlay: rgba(4, 18, 12, 0.94); --glow: rgba(250, 204, 21, 0.3);
+    --bg: radial-gradient(ellipse at 50% 40%, #1d5a42 0%, #0e3526 55%, #07190f 100%);
+  }
+  .stage[data-theme="neon"] {
+    --glass: rgba(255, 255, 255, 0.04); --glass-2: rgba(255, 255, 255, 0.09); --line: rgba(236, 72, 153, 0.35);
+    --panel: #130a26; --ink: #1a0b33; --overlay: rgba(6, 2, 16, 0.95); --glow: rgba(236, 72, 153, 0.5);
+    --bg:
+      radial-gradient(ellipse at 0% 0%, rgba(236, 72, 153, 0.28), transparent 50%),
+      radial-gradient(ellipse at 100% 100%, rgba(34, 211, 238, 0.24), transparent 50%),
+      #05010d;
+  }
+  .stage[data-theme="contrast"] {
+    --glass: #141414; --glass-2: #262626; --line: rgba(255, 255, 255, 0.55);
+    --panel: #0a0a0a; --ink: #000; --overlay: rgba(0, 0, 0, 0.97); --glow: transparent;
+    --bg: #000;
+  }
+  .stage[data-theme="contrast"] .players:not(.n1) .player:not(.active):not(.winner) { opacity: 0.8; }
   /* Cover Home Assistant's own header and sidebar: the players only see the game. */
   .stage.overlay-mode { position: fixed; inset: 0; z-index: 10; height: 100dvh; }
 
@@ -1385,7 +1494,7 @@ const CSS = `
   button:disabled { opacity: 0.35; cursor: default; transform: none; }
   button.ghost { background: transparent; }
   button.ghost:hover { background: var(--glass-2); }
-  button.primary { background: #fff; color: #27307a; border-color: #fff; }
+  button.primary { background: #fff; color: var(--ink); border-color: #fff; }
   button.primary:hover { background: #e8ecff; }
   button.danger { background: #dc2626; border-color: #dc2626; }
   button.icon { padding: 10px 13px; }
@@ -1417,11 +1526,11 @@ const CSS = `
   }
   .hero {
     position: relative; height: clamp(170px, 26vh, 260px); border-radius: 16px; overflow: hidden; margin-bottom: 18px;
-    background: var(--photo) right 24% / 58% auto no-repeat, linear-gradient(120deg, #1d1850, #2a3a8e);
+    background: var(--photo) right 24% / 58% auto no-repeat, linear-gradient(120deg, var(--panel), color-mix(in srgb, var(--panel) 70%, #3b4fd8));
     box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
   }
   /* Fade the picture's left edge into the banner so the title sits on a clean ground. */
-  .hero::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, #1f1a54 0%, #1f1a54 44%, rgba(31, 26, 84, 0.55) 58%, transparent 80%); }
+  .hero::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, var(--panel) 0%, var(--panel) 44%, color-mix(in srgb, var(--panel) 55%, transparent) 58%, transparent 80%); }
   .hero-text { position: absolute; left: 26px; bottom: 22px; z-index: 1; display: flex; flex-direction: column; gap: 4px; }
   .hero-text b { font-size: clamp(2rem, 4vw, 3.4rem); font-weight: 800; letter-spacing: -0.02em; line-height: 1; }
   .hero-text span { opacity: 0.85; font-size: 1.05rem; }
@@ -1438,9 +1547,25 @@ const CSS = `
     position: relative; text-align: center; padding: 14px 14px 16px; border-radius: 14px;
     background: var(--glass); border: 2px solid transparent; transition: background 0.25s, border-color 0.25s, opacity 0.25s;
   }
-  .players:not(.n1) .player:not(.active):not(.winner) { opacity: 0.6; }
-  .player.active { background: rgba(255, 255, 255, 0.2); border-color: #fff; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.25); }
+  .players:not(.n1) .player:not(.active):not(.winner) { opacity: 0.55; }
+  /* The player's colour: a bar along the top, and the whole card lit while they throw. */
+  .player { --pc: #93c5fd; overflow: hidden; }
+  .player::before { content: ""; position: absolute; inset: 0 0 auto; height: 5px; background: var(--pc); }
+  .player.active {
+    background: linear-gradient(180deg, color-mix(in srgb, var(--pc) 30%, transparent), color-mix(in srgb, var(--pc) 8%, transparent));
+    border-color: var(--pc); box-shadow: 0 0 0 1px var(--pc), 0 12px 50px color-mix(in srgb, var(--pc) 45%, transparent);
+    animation: throwing 2.4s ease-in-out infinite;
+  }
+  @keyframes throwing { 50% { box-shadow: 0 0 0 1px var(--pc), 0 12px 70px color-mix(in srgb, var(--pc) 65%, transparent); } }
   .player.winner { border-color: #fcd34d; box-shadow: 0 0 40px rgba(252, 211, 77, 0.4); }
+  .turn-tag {
+    display: inline-flex; align-items: center; gap: 12px; margin-top: 8px; padding: 6px 14px; border-radius: 999px;
+    background: var(--pc); color: #fff; font-weight: 800; font-size: clamp(0.9rem, 2.2vh, 1.4rem); text-transform: uppercase; letter-spacing: 0.06em;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+  }
+  .pips { display: inline-flex; gap: 6px; }
+  .pips i { width: clamp(10px, 1.6vh, 16px); height: clamp(10px, 1.6vh, 16px); border-radius: 50%; background: #fff; box-shadow: 0 0 6px rgba(255, 255, 255, 0.7); }
+  .pips i.used { background: rgba(0, 0, 0, 0.3); box-shadow: none; }
   .pname { font-size: clamp(1.1rem, 3.2vh, 2.2rem); font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; }
   .score {
     font-size: clamp(64px, min(10vw, 18vh), 210px); font-weight: 800; line-height: 1.02; letter-spacing: -0.03em;
@@ -1476,10 +1601,11 @@ const CSS = `
   }
   .clab.extra { color: #fcd34d; font-size: clamp(18px, 3.6vh, 42px); }
   .cm { height: 100%; display: grid; place-items: center; border-radius: 8px; min-height: 0; }
-  .cm.cur { background: rgba(255, 255, 255, 0.1); }
-  .chead .cm span { font-weight: 800; font-size: clamp(0.9rem, 2.2vh, 1.4rem); text-transform: uppercase; letter-spacing: 0.05em; }
-  .mk { height: clamp(24px, 5.2vh, 60px); width: auto; stroke: #fff; stroke-width: 11; stroke-linecap: round; fill: none; }
-  .mk.closed { stroke: #6ee7a0; }
+  .cm { --pc: #fff; }
+  .cm.cur { background: color-mix(in srgb, var(--pc) 16%, transparent); }
+  .chead .cm span { color: var(--pc); font-weight: 800; font-size: clamp(0.9rem, 2.2vh, 1.4rem); text-transform: uppercase; letter-spacing: 0.05em; }
+  .mk { height: clamp(24px, 5.2vh, 60px); width: auto; stroke: color-mix(in srgb, var(--pc) 45%, #fff); stroke-width: 11; stroke-linecap: round; fill: none; }
+  .mk.closed { stroke: var(--pc); filter: drop-shadow(0 0 6px color-mix(in srgb, var(--pc) 70%, transparent)); }
   .crow.dead { opacity: 0.3; }
   .crow.dead .clab { text-decoration: line-through; text-decoration-thickness: 3px; }
 
@@ -1519,7 +1645,7 @@ const CSS = `
   .pad-layer.open { display: grid; position: fixed; inset: 0; z-index: 8; place-items: center; }
   .pad-back { position: absolute; inset: 0; background: rgba(5, 5, 20, 0.6); }
   .pad {
-    position: relative; width: min(560px, 94vw); padding: 18px; border-radius: 16px; background: #1f1a54;
+    position: relative; width: min(560px, 94vw); padding: 18px; border-radius: 16px; background: var(--panel);
     border: 1px solid var(--line); box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5); display: flex; flex-direction: column; gap: 12px;
   }
   .pad-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; font-size: 1.25rem; }
@@ -1539,22 +1665,35 @@ const CSS = `
 
   .gameshot {
     position: fixed; inset: 0; z-index: 5; display: grid; place-content: center; gap: 14px; text-align: center;
-    background: radial-gradient(circle, rgba(34, 29, 92, 0.85), rgba(10, 10, 30, 0.95)); animation: pop 0.4s ease-out;
+    background: radial-gradient(circle at 50% 30%, color-mix(in srgb, var(--pc) 28%, transparent), transparent 60%), var(--overlay); animation: pop 0.4s ease-out;
   }
   .has-photo .gameshot {
     /* The picture fills the left at full height (about 0.8 x the height wide) and fades out before its edge. */
-    background: linear-gradient(90deg, rgba(13, 12, 42, 0.2) 0, rgba(13, 12, 42, 0.6) 45vh, #0d0c2a 78vh), var(--photo) 0 25% / auto 100% no-repeat, #0d0c2a;
+    background: linear-gradient(90deg, color-mix(in srgb, var(--panel) 20%, transparent) 0, color-mix(in srgb, var(--panel) 60%, transparent) 45vh, var(--panel) 78vh), var(--photo) 0 25% / auto 100% no-repeat, var(--panel);
   }
   .gs-label { font-size: clamp(1.2rem, 2.5vw, 1.8rem); letter-spacing: 0.4em; text-transform: uppercase; color: #fcd34d; font-weight: 700; }
   .gs-name { font-size: clamp(48px, 9vw, 120px); font-weight: 800; }
   .gs-actions { display: flex; gap: 12px; justify-content: center; margin-top: 12px; flex-wrap: wrap; }
   @keyframes pop { from { opacity: 0; transform: scale(1.05); } }
   .gs-undo { justify-self: center; margin-top: 18px; font-size: 0.95rem; opacity: 0.75; }
+  .gs-name { color: var(--pc); text-shadow: 0 0 40px color-mix(in srgb, var(--pc) 60%, transparent); line-height: 1; }
+  .res-table { display: flex; flex-direction: column; gap: 8px; width: min(820px, 92vw); margin: 10px auto 0; }
+  .res-row {
+    display: flex; align-items: center; gap: clamp(10px, 2vw, 26px); padding: 10px 18px; border-radius: 12px;
+    background: var(--glass); border-left: 6px solid var(--pc); text-align: left;
+  }
+  .res-row.first { background: color-mix(in srgb, var(--pc) 22%, transparent); }
+  .res-rank { font-size: 1.4rem; font-weight: 800; opacity: 0.7; width: 1.4em; }
+  .res-name { flex: 1; font-size: clamp(1.2rem, 3vh, 2rem); font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em; }
+  .res-stat, .res-main { display: flex; flex-direction: column; align-items: center; min-width: 64px; }
+  .res-stat b { font-size: clamp(1.1rem, 2.6vh, 1.6rem); }
+  .res-main b { font-size: clamp(1.6rem, 4.4vh, 2.8rem); font-weight: 800; }
+  .res-stat small, .res-main small { opacity: 0.7; text-transform: uppercase; font-size: 0.72rem; letter-spacing: 0.1em; }
 
   .boardwrap { position: relative; min-height: 220px; display: flex; justify-content: center; align-items: center; container-type: size; }
   .view {
     position: relative; width: min(100cqw, 100cqh); height: min(100cqw, 100cqh); border-radius: 50%; overflow: hidden;
-    box-shadow: 0 0 70px 14px rgba(80, 220, 200, 0.4); background: #0b0b10;
+    box-shadow: 0 0 70px 14px var(--glow); background: #0b0b10;
   }
   .plane { position: absolute; left: 50%; top: 50%; width: ${PLANE}px; height: ${PLANE}px; overflow: hidden; }
   .cam { position: absolute; left: 0; top: 0; transform-origin: 0 0; max-width: none; }
@@ -1565,12 +1704,14 @@ const CSS = `
   .virtual-mode .virtual { display: block; }
   .virtual-mode .plane { display: none; }
   .virtual-mode .view { background: transparent; box-shadow: none; overflow: visible; }
-  .board { width: 100%; height: 100%; filter: drop-shadow(0 0 40px rgba(80, 220, 200, 0.45)); }
+  .board { width: 100%; height: 100%; filter: drop-shadow(0 0 40px var(--glow)); }
   .board .num { fill: #fff; font-weight: 700; text-anchor: middle; dominant-baseline: central; }
   .board .bed { stroke: rgba(210, 210, 220, 0.55); stroke-width: 0.004; }
   .board .lit { fill: #fde047 !important; animation: pulse 1.4s ease-in-out infinite; }
-  .vdart circle { fill: #22d3ee; stroke: #0b1020; stroke-width: 0.012; }
-  .vdart .halo { fill: rgba(34, 211, 238, 0.28); stroke: none; }
+  /* Darts of the visit in the thrower's colour, the newest one white. */
+  .vdart circle { fill: var(--pc, #22d3ee); stroke: #0b1020; stroke-width: 0.012; }
+  .vdart.newest circle:not(.halo) { fill: #fff; }
+  .vdart .halo { fill: color-mix(in srgb, var(--pc, #22d3ee) 35%, transparent); stroke: none; }
   .vdart text { fill: #0b1020; font-weight: 800; text-anchor: middle; dominant-baseline: central; }
   .vdart.newest .halo { animation: ping 1.2s ease-out infinite; transform-origin: center; transform-box: fill-box; }
   @keyframes ping { 0% { transform: scale(0.7); opacity: 1; } 100% { transform: scale(1.9); opacity: 0; } }
@@ -1612,7 +1753,7 @@ const CSS = `
   .sheet-layer.open { display: grid; position: fixed; inset: 0; z-index: 9; place-items: center; }
   .sheet {
     position: relative; width: min(620px, 94vw); max-height: 88vh; overflow: auto; padding: 22px 24px; border-radius: 18px;
-    background: linear-gradient(160deg, color-mix(in srgb, var(--accent) 22%, #1f1a54), #1a1648 60%);
+    background: linear-gradient(160deg, color-mix(in srgb, var(--accent) 22%, var(--panel)), var(--panel) 60%);
     border: 1px solid color-mix(in srgb, var(--accent) 50%, transparent); box-shadow: 0 24px 70px rgba(0, 0, 0, 0.55);
   }
   .sheet-head { display: flex; align-items: center; gap: 14px; }
@@ -1627,7 +1768,7 @@ const CSS = `
   .setup { position: sticky; top: 0; padding: 16px; border-radius: 14px; background: rgba(0, 0, 0, 0.18); display: flex; flex-direction: column; gap: 8px; }
   .plist { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
   .plist li { display: flex; align-items: center; gap: 8px; padding: 6px 6px 6px 10px; border-radius: 10px; background: var(--glass); }
-  .pnum { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; background: #fff; color: #27307a; font-weight: 800; font-size: 0.85rem; }
+  .pnum { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; background: #fff; color: var(--ink); font-weight: 800; font-size: 0.85rem; }
   .pn { flex: 1; font-weight: 700; }
   button.mini { padding: 6px 10px; font-size: 0.85rem; border-radius: 8px; background: transparent; }
   button.mini.wide { background: var(--glass-2); }
@@ -1643,7 +1784,7 @@ const CSS = `
   .opt label { font-size: 0.85rem; opacity: 0.8; }
   .seg { display: flex; flex-wrap: wrap; gap: 4px; }
   .seg button { padding: 8px 12px; font-size: 0.9rem; background: var(--glass); }
-  .seg button.on { background: #fff; color: #27307a; }
+  .seg button.on { background: #fff; color: var(--ink); }
   .toggles { display: flex; gap: 6px; flex-wrap: wrap; }
   .toggle { display: inline-flex; align-items: center; gap: 8px; background: var(--glass); font-size: 0.95rem; }
   .toggle i { width: 30px; height: 18px; border-radius: 999px; background: rgba(255, 255, 255, 0.25); position: relative; transition: background 0.2s; }
