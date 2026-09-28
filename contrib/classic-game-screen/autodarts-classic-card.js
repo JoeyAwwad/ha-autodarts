@@ -240,6 +240,22 @@ class WildMouse {
     this.bedVisit = false;
   }
 
+  // Puts dart i of the visit into another bed: the visit is thrown again from its start
+  // with the right bed, so marks, points and a won leg all follow.
+  correct(i, seg) {
+    if (!(i >= 0 && i < this.visit.length) || !this.history.length) return null;
+    const darts = this.visit.map((d) => d.seg);
+    darts[i] = seg;
+    const { seen } = this;
+    const start = this.history.pop(); // pushed with the visit's first dart
+    const history = this.history;
+    Object.keys(this).forEach((k) => delete this[k]);
+    Object.assign(this, start, { history });
+    darts.forEach((d) => this.dart(d));
+    this.seen = seen;
+    return this.visit[i];
+  }
+
   // Takes back the last visit (or the darts of the one in progress).
   undo() {
     const prev = this.history.pop();
@@ -364,7 +380,7 @@ class AutodartsClassicCard extends HTMLElement {
     this._hass = hass;
     const watched = ["practice_remaining_score", "practice_checkout", "practice_target", "detection_status", "player_profiles"]
       .map((n) => this._st("sensor", n))
-      .concat([this._st("select", "practice_game")]);
+      .concat([this._st("select", "practice_game"), this._st("switch", "practice_manual_entry")]);
     // Re-render only when something the card shows has changed.
     const key = watched.map((s) => s?.last_updated + s?.state).join("|");
     if (key === this._key) return;
@@ -553,6 +569,7 @@ class AutodartsClassicCard extends HTMLElement {
   async _act(act, value) {
     const s = this._setup;
     const wm = this._wm;
+    if (act !== "edit-dart" && !act.startsWith("pad-")) this._pad = null;
     if (wm && ["undo", "next", "end"].includes(act) && !(act === "end" && !this._confirmEnd)) {
       if (act === "undo") {
         if (!wm.undo()) return this._toast("Nothing to undo");
@@ -576,6 +593,15 @@ class AutodartsClassicCard extends HTMLElement {
       case "new": this._lobby = true; break;
       case "close-lobby": this._lobby = false; break;
       case "rematch": return this._start();
+      case "edit-dart": {
+        const i = Number(value);
+        const ring = parseSegment((this._lastVisit || [])[i]).ring;
+        this._pad = this._pad?.dart === i ? null : { dart: i, ring: ["D", "T"].includes(ring) ? ring : "S" };
+        break;
+      }
+      case "pad-ring": if (this._pad) this._pad.ring = value; break;
+      case "pad-close": this._pad = null; break;
+      case "pad-bed": return this._pad && this._padBed(value);
       case "end":
         if (!this._confirmEnd) {
           this._confirmEnd = true;
@@ -643,6 +669,7 @@ class AutodartsClassicCard extends HTMLElement {
           </div>
         </div>
         <div class="lobby"></div>
+        <div class="pad-layer"></div>
         <div class="toast" role="status"></div>
       </div>`;
     this._stage = this.shadowRoot.querySelector(".stage");
@@ -651,6 +678,7 @@ class AutodartsClassicCard extends HTMLElement {
     document.title = this._config.brand;
     this._info = this.shadowRoot.querySelector(".info");
     this._lobbyEl = this.shadowRoot.querySelector(".lobby");
+    this._padEl = this.shadowRoot.querySelector(".pad-layer");
     this._viewEl = this.shadowRoot.querySelector(".view");
     this._plane = this.shadowRoot.querySelector(".plane");
     this._img = this.shadowRoot.querySelector(".cam");
@@ -685,7 +713,57 @@ class AutodartsClassicCard extends HTMLElement {
     this._stage.classList.toggle("in-lobby", lobby);
     if (lobby) this._lobbyEl.innerHTML = this._renderLobby();
     else this._renderGame();
+    const pad = !!this._pad && !lobby;
+    this._padEl.classList.toggle("open", pad);
+    this._padEl.innerHTML = pad ? `<div class="pad-back" data-act="pad-close"></div>${this._renderPad()}` : "";
     this._syncLive();
+  }
+
+  // -- correcting and adding darts -------------------------------------------------------
+
+  // Darts entered by hand need the integration's manual entry; Wild Mouse is the card's own.
+  _manualEntry() {
+    return this._st("switch", "practice_manual_entry")?.state === "on";
+  }
+
+  // The pad for dart i of the visit: pick the ring, then the bed.
+  _renderPad() {
+    const { dart, ring } = this._pad;
+    const cur = (this._lastVisit || [])[dart];
+    const title = cur ? `Dart ${dart + 1}: ${parseSegment(cur).label} is really…` : `Dart ${dart + 1}: add a dart`;
+    const rings = [["Single", "S"], ["Double", "D"], ["Triple", "T"]]
+      .map(([label, r]) => `<button data-act="pad-ring" data-value="${r}" class="${r === ring ? "on" : ""}">${label}</button>`)
+      .join("");
+    const beds = Array.from({ length: 20 }, (_, k) => `${ring}${k + 1}`)
+      .map((b) => `<button data-act="pad-bed" data-value="${b}">${b}</button>`)
+      .join("");
+    return `
+      <div class="pad" role="dialog" aria-label="${esc(title)}">
+        <div class="pad-head"><b>${esc(title)}</b><button class="ghost icon" data-act="pad-close" title="Close">✕</button></div>
+        <div class="seg pad-rings">${rings}</div>
+        <div class="pad-beds">${beds}</div>
+        <div class="pad-extra">
+          <button data-act="pad-bed" data-value="25">25</button>
+          <button data-act="pad-bed" data-value="BULL">Bull</button>
+          <button data-act="pad-bed" data-value="MISS" class="miss">Miss</button>
+        </div>
+      </div>`;
+  }
+
+  // The bed chosen on the pad: corrects dart i, or adds it when the slot was empty.
+  async _padBed(seg) {
+    const i = this._pad.dart;
+    this._pad = null;
+    const wm = this._wm;
+    if (wm) {
+      if (i < wm.visit.length) wm.correct(i, seg);
+      else wm.dart(seg);
+      this._saveWm();
+      return this._render();
+    }
+    this._render();
+    const has = i < (this._lastVisit || []).length;
+    await this._call("autodarts", has ? "correct_dart" : "throw_dart", has ? { dart: i + 1, segment: seg } : { segment: seg });
   }
 
   // Autodarts stands the cameras down after 15 idle minutes; waking is one tap.
@@ -707,13 +785,19 @@ class AutodartsClassicCard extends HTMLElement {
     return `<button class="pill ${bad ? "bad" : "warn"}" data-act="reset" title="Reset the board"><i></i>${esc(text)}</button>`;
   }
 
-  _slots(visit) {
+  // The three darts of the visit. A tap on a dart opens the pad to correct it; the next
+  // empty slot adds a dart the board missed, where darts can be entered by hand.
+  _slots(visit, note = (s) => ({ text: segmentScore(s), miss: parseSegment(s).ring === "M" }), canAdd = this._manualEntry()) {
     return [0, 1, 2]
       .map((i) => {
         const s = visit[i];
+        if (!s && canAdd && i === visit.length) {
+          return `<button class="slot empty add" data-act="edit-dart" data-value="${i}" title="Add a dart the board missed"><b>+</b><small>Add dart</small></button>`;
+        }
         if (!s) return `<div class="slot empty"><svg viewBox="0 0 64 16" class="dart"><path d="M2 8h30M32 5l10 3-10 3zM42 8h20M48 3l8 5-8 5"/></svg></div>`;
-        const p = parseSegment(s);
-        return `<div class="slot ${p.ring === "M" ? "miss" : ""}"><b>${esc(p.label)}</b><small>${segmentScore(s)}</small></div>`;
+        const n = note(s, i);
+        const picked = this._pad?.dart === i ? "picked" : "";
+        return `<button class="slot ${n.miss ? "miss" : ""} ${picked}" data-act="edit-dart" data-value="${i}" title="Correct this dart"><b>${esc(parseSegment(s).label)}</b><small>${esc(n.text)}</small><svg class="edit" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z M13.5 6.5l4 4"/></svg></button>`;
       })
       .join("");
   }
@@ -802,15 +886,14 @@ class AutodartsClassicCard extends HTMLElement {
           </div>`;
       })
       .join("");
-    const slots = [0, 1, 2]
-      .map((i) => {
+    const slots = this._slots(
+      wm.visit.map((d) => d.seg),
+      (s, i) => {
         const d = wm.visit[i];
-        if (!d) return `<div class="slot empty"><svg viewBox="0 0 64 16" class="dart"><path d="M2 8h30M32 5l10 3-10 3zM42 8h20M48 3l8 5-8 5"/></svg></div>`;
-        const p = parseSegment(d.seg);
-        const what = d.target == null ? "no score" : `→ ${WM_LABEL[d.target] || d.target}${d.points ? ` +${d.points}` : ""}`;
-        return `<div class="slot ${d.target == null ? "miss" : ""}"><b>${esc(p.label)}</b><small>${esc(what)}</small></div>`;
-      })
-      .join("");
+        return { text: d.target == null ? "no score" : `→ ${WM_LABEL[d.target] || d.target}${d.points ? ` +${d.points}` : ""}`, miss: d.target == null };
+      },
+      wm.winner == null && wm.legWinner == null,
+    );
     const points = wm.visit.reduce((t, d) => t + d.points, 0);
     const legName = wm.legWinner != null ? wm.players[wm.legWinner].name : "";
     const hint = wm.legWinner != null && wm.winner == null
@@ -1161,6 +1244,31 @@ const CSS = `
   .slot b { font-size: clamp(28px, 6vh, 72px); font-weight: 800; line-height: 1; }
   .slot small { opacity: 0.85; font-size: clamp(0.9rem, 2.1vh, 1.4rem); font-weight: 600; }
   .slot.miss b { color: #fca5a5; }
+  button.slot { width: 100%; padding: 0; position: relative; border: 2px solid transparent; color: #fff; }
+  button.slot:hover { background: var(--glass-2); }
+  button.slot.picked { border-color: #fcd34d; }
+  .slot .edit {
+    position: absolute; top: 8px; right: 8px; width: clamp(16px, 2.6vh, 26px); height: auto; opacity: 0.6;
+    fill: none; stroke: #fff; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round;
+  }
+  button.slot:hover .edit { opacity: 1; }
+  .slot.add { border-style: dashed; border-color: var(--line); }
+  .slot.add b { opacity: 0.8; }
+
+  /* The pad to correct a dart or add one: above the game shot screen, big touch targets. */
+  .pad-layer { display: none; }
+  .pad-layer.open { display: grid; position: fixed; inset: 0; z-index: 8; place-items: center; }
+  .pad-back { position: absolute; inset: 0; background: rgba(5, 5, 20, 0.6); }
+  .pad {
+    position: relative; width: min(560px, 94vw); padding: 18px; border-radius: 16px; background: #1f1a54;
+    border: 1px solid var(--line); box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5); display: flex; flex-direction: column; gap: 12px;
+  }
+  .pad-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; font-size: 1.25rem; }
+  .pad-rings button { flex: 1; padding: 12px; font-size: 1.05rem; }
+  .pad-beds { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+  .pad-extra { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  .pad-beds button, .pad-extra button { padding: 14px 0; font-size: 1.2rem; font-weight: 800; background: var(--glass); }
+  .pad-extra .miss { color: #fca5a5; }
   .dart { width: 70%; max-width: 110px; stroke: rgba(255, 255, 255, 0.45); fill: rgba(255, 255, 255, 0.45); stroke-width: 2; }
 
   .row { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
