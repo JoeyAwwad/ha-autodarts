@@ -927,6 +927,7 @@ class AutodartsClassicCard extends HTMLElement {
 
   set hass(hass) {
     this._hass = hass;
+    this._haControls(hass);
     const watched = ["practice_remaining_score", "practice_checkout", "practice_target", "detection_status", "player_profiles"]
       .map((n) => this._st("sensor", n))
       .concat([this._st("select", "practice_game"), this._st("switch", "practice_manual_entry")]);
@@ -1321,6 +1322,7 @@ class AutodartsClassicCard extends HTMLElement {
     this._tweenScores();
     this._syncCamWindow();
     this._syncReplay();
+    this._haPublish();
     this._fxArmed = true; // the first render after loading replays nothing
   }
 
@@ -1542,6 +1544,7 @@ class AutodartsClassicCard extends HTMLElement {
 
   _statusPill() {
     const status = this._st("sensor", "detection_status")?.state || "offline";
+    if (status !== "offline" && this._cameraProblem()) return `<button class="pill bad" data-act="reset" title="Reset the board"><i></i>A board camera has a problem</button>`;
     if (status === "stopped") return `<button class="pill warn" data-act="wake"><i></i>Board asleep · tap to wake</button>`;
     const text = {
       takeout: "Pull out your darts", takeout_in_progress: "Pulling darts…", calibrating: "Calibrating…",
@@ -1784,6 +1787,98 @@ class AutodartsClassicCard extends HTMLElement {
     if (!booth) return;
     booth.stream?.getTracks().forEach((t) => t.stop()); // the webcam is free again at once
     booth.layer.remove();
+  }
+
+  // -- Home Assistant sync: the screen's game as helpers, and controls from Home Assistant ----
+  // With ha_sync (true, or a prefix other than "darts_screen") and the helpers of
+  // extras/darts-screen-package.yaml, the card writes what it shows to input_text helpers
+  // and follows input_button / input_select / input_text controls.
+
+  _haPrefix() {
+    const v = this._config.ha_sync;
+    if (!v) return "";
+    return typeof v === "string" && /^[a-z0-9_]+$/.test(v) ? v : "darts_screen";
+  }
+
+  // What the screen shows, in a few words per helper.
+  _haSnapshot() {
+    const lobby = this._isLobby();
+    const game = this._currentGame();
+    const wm = this._wm;
+    let player = "", scores = "", last = "", winner = "", status = lobby ? "lobby" : "playing";
+    if (wm) {
+      player = wm.players[wm.current]?.name || "";
+      scores = wm.players.map((p) => `${p.name} ${p.points}`).join(" · ");
+      last = wm.visit[wm.visit.length - 1]?.seg || "";
+      winner = wm.winner != null ? wm.players[wm.winner].name : "";
+    } else if (this._game()) {
+      const a = this._st("sensor", "practice_remaining_score")?.attributes || {};
+      const list = Array.isArray(a.scores) ? a.scores : [];
+      const x01 = X01.has(String(a.game));
+      player = list.find((p) => p.player === a.player)?.name || "";
+      scores = list.map((p) => `${p.name} ${x01 ? p.remaining : p.points ?? p.score ?? ""}`).join(" · ");
+      last = Array.isArray(a.visit) ? a.visit[a.visit.length - 1] || "" : "";
+      winner = a.winner != null ? list.find((p) => p.player === a.winner)?.name || "" : "";
+    } else {
+      status = "idle";
+    }
+    if (winner) status = "finished";
+    return { status, game: game ? GAME_NAME[game] || game : "", player: winner ? "" : player, scores, last_dart: last, winner };
+  }
+
+  // Writes the helpers that changed; never the same value twice, never one that is missing.
+  _haPublish() {
+    const p = this._haPrefix();
+    if (!p || !this._hass) return;
+    const snap = this._haSnapshot();
+    this._haSent ??= {};
+    for (const [key, value] of Object.entries(snap)) {
+      const id = `input_text.${p}_${key}`, v = String(value).slice(0, 255);
+      if (!this._hass.states[id] || this._haSent[id] === v || this._hass.states[id].state === v) { this._haSent[id] = v; continue; }
+      this._haSent[id] = v;
+      this._hass.callService("input_text", "set_value", { entity_id: id, value: v }).catch(() => {});
+    }
+  }
+
+  // Buttons, a game select and a player list in Home Assistant drive the screen. The first
+  // look only remembers where they stand, so loading the page presses nothing.
+  _haControls(hass) {
+    const p = this._haPrefix();
+    if (!p) return;
+    const seen = (this._haSeen ??= {});
+    // Positions are noted from the very first update, before the screen is built.
+    const ready = !!this._stage && !!this._config;
+    const changed = (id) => {
+      const st = hass.states[id]?.state;
+      if (st == null) return false;
+      const was = seen[id];
+      seen[id] = st;
+      return ready && was !== undefined && was !== st && st !== "unknown" && st !== "unavailable";
+    };
+    const button = (name, act) => { if (changed(`input_button.${p}_${name}`)) this._act(act); };
+    button("new_game", "new");
+    button("rematch", "rematch");
+    button("next_player", "next");
+    button("undo", "undo");
+    if (changed(`input_button.${p}_end_game`)) { this._confirmEnd = true; this._act("end"); }
+    const players = `input_text.${p}_players`;
+    if (changed(players)) {
+      const names = hass.states[players].state.split(",").map((n) => n.trim().slice(0, 20)).filter(Boolean);
+      if (names.length) { this._setup.players = [...new Set(names)].slice(0, MAX_PLAYERS); save("setup", this._setup); this._render(); }
+    }
+    const select = `input_select.${p}_game`;
+    if (changed(select)) {
+      const name = hass.states[select].state;
+      const id = Object.keys(GAME_NAME).find((k) => GAME_NAME[k] === name || k === name);
+      if (id) { this._setup.game = id; this._start(); }
+    }
+  }
+
+  // A camera of the board reporting a problem (the integration's camera problem sensors).
+  _cameraProblem() {
+    const pre = `binary_sensor.${this._config.prefix}_`;
+    return Object.values(this._hass?.states || {}).some((s) => s.entity_id?.startsWith(pre) && /camera/.test(s.entity_id)
+      && s.attributes?.device_class === "problem" && s.state === "on");
   }
 
   // -- cameras: thrower replay, board camera window ------------------------------------------
