@@ -11,6 +11,7 @@ A full-screen game screen for a TV or monitor at the board, in the style of play
 - Covers Home Assistant's header and sidebar, so players only see the game.
 - **New game** screen with every game as a tile (X01, Cricket, party and training games), recent players as one-tap chips, bot levels, legs, double in/out and Golf holes.
 - **Game screen**: big scores readable from about 2 m, the three darts of the visit, checkout suggestion, bust, Undo and Next player. Cricket games use a pub-style chalkboard. Training games show the next target and progress. Game shot screen with Rematch.
+- **Correct a dart** the board read wrong: tap it (every dart has a ✎) and pick the right bed. See [Correcting darts](#correcting-darts).
 - **Drawn dartboard** with a marker where each dart landed (from the board's `/api/events` coordinates). The camera picture is one tap away (warped straight-on with the calibration homography from `/api/system`).
 - **Wild Mouse (Minnesota) Cricket**, which the integration does not have. The card scores it itself from the board's darts.
 - Resets the board when it hangs in "Takeout in progress" with no darts on it (seen with Autodarts 2.0.2), and wakes it from standby. With several screens on one board, keep the reset on one of them and set `stuck_takeout_reset: 0` on the others.
@@ -36,6 +37,16 @@ stuck_takeout_reset: 5         # seconds before a stuck takeout is reset; 0 turn
 
 The board's local API must be reachable from the browser (it answers CORS with `*`). If Home Assistant is served over HTTPS, the browser blocks the plain-HTTP board and the card falls back to what the entities carry.
 
+## Correcting darts
+
+When the calibration is off or a dart sits on a wire, the board can read a dart wrong. Tap the dart in the visit and a pad opens: choose Single, Double or Triple, then the number, or 25, Bull or Miss. The dart is corrected through the integration's `autodarts.correct_dart`, and the score, bust, checkout and cricket marks follow at once.
+
+![The correction pad](images/correct-dart.png)
+
+- **A dart the board missed:** with the integration's *Practice manual entry* switch on, the next empty slot shows **+ Add dart**, which enters it with `autodarts.throw_dart`.
+- **After the takeout:** Undo reopens the last visit, then its darts can be corrected; Next player ends it again.
+- **Wild Mouse** is scored by the card, so the card corrects it itself: the visit is replayed with the right bed, and marks, points and a won leg follow. **+ Add dart** always works there while the leg is open.
+
 ## Wild Mouse rules
 
 Cricket on 20–15 and bull, plus **Doubles** and **Triples** to close, and optionally **Three in a bed**.
@@ -43,13 +54,14 @@ Cricket on 20–15 and bull, plus **Doubles** and **Triples** to close, and opti
 - A dart counts toward one target only. A double or triple on a cricket number you still have open marks that number (T20 = 3 marks on 20). Otherwise it is one mark on Doubles or Triples.
 - A closed target scores while an opponent still has it open: numbers as in Cricket, Doubles and Triples the full value of the dart, Three in a bed the visit's total.
 - Win: everything closed and not behind on points. Legs are supported.
-- The visit ends when the darts are pulled (the board's throws drop to zero) or with Next player. Undo takes back the last visit.
+- The visit ends when the darts are pulled (the board's throws drop to zero) or with Next player. Undo takes back the last visit. A tap on a dart corrects it.
 
 The game state lives in the browser's `localStorage`, so it belongs to one screen.
 
 ## Tests
 
 ```bash
+npm ci   # once: the browser tests use happy-dom from the repository's dev dependencies
 node --test "contrib/classic-game-screen/*.test.mjs"
 ```
 

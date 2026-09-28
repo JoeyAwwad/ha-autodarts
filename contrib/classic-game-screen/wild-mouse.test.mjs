@@ -107,3 +107,32 @@ test("three in a bed survives a reload and ends with the visit", () => {
   assert.equal(back.bedVisit, true);
   back.next(); assert.equal(back.bedVisit, false);
 });
+test("correcting a dart replays the visit with the right bed", () => {
+  const g = WildMouse.create(["A", "B"]);
+  g.dart("S5"); g.dart("S20");
+  const r = g.correct(0, "T20"); // T20 closes 20, the S20 after it scores while B is open
+  assert.equal(r.target, 20); assert.equal(g.players[0].marks[20], 3); assert.equal(g.players[0].points, 20);
+  assert.equal(g.visit.map((d) => d.seg).join(" "), "T20 S20");
+});
+test("correcting the winning dart takes the leg back", () => {
+  const g = WildMouse.create(["A"], { legs: 2 });
+  for (const n of [20, 19, 18, 17, 16, 15]) visit(g, "T" + n);
+  visit(g, "BULL", "S25", "D1"); visit(g, "D2", "D3", "T1");
+  g.dart("T2"); g.dart("T3");
+  assert.equal(g.legWinner, 0);
+  g.correct(1, "S3");
+  assert.equal(g.legWinner, null); assert.equal(g.players[0].legs, 0); assert.equal(g.players[0].marks.T, 2);
+  assert.ok(g.dart("T4"), "the visit goes on after the correction"); assert.equal(g.legWinner, 0);
+});
+test("a correction outside the visit changes nothing", () => {
+  const g = WildMouse.create(["A", "B"]);
+  g.dart("S20");
+  assert.equal(g.correct(1, "T20"), null); assert.equal(g.correct(-1, "T20"), null);
+  assert.equal(g.players[0].marks[20], 1);
+});
+test("undo after a correction still takes the whole visit back", () => {
+  const g = WildMouse.create(["A", "B"]);
+  visit(g, "T19"); g.dart("S20"); g.correct(0, "T20");
+  assert.ok(g.undo()); assert.equal(g.players[0].marks[20], 0); assert.equal(g.current, 0 + 1);
+  assert.ok(g.undo()); assert.equal(g.players[0].marks[19], 0); assert.equal(g.current, 0);
+});
