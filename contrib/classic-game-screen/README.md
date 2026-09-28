@@ -4,12 +4,15 @@ A full-screen game screen for a TV or monitor at the board, in the style of play
 
 | New game | X01 | Wild Mouse |
 | --- | --- | --- |
-| ![New game](images/new-game.png) | ![X01](images/x01.png) | ![Wild Mouse](images/wild-mouse.png) |
+| ![New game](images/lobby.png) | ![X01](images/x01.png) | ![Wild Mouse](images/wild-mouse.png) |
 
 ## What it does
 
 - Covers Home Assistant's header and sidebar, so players only see the game.
-- **New game** screen with every game as a tile (X01, Cricket, party and training games), recent players as one-tap chips, bot levels, legs, double in/out and Golf holes.
+- **New game** screen with every game as a tile with its own icon and colour (X01, Cricket, party and training games), recent players as one-tap chips, bot levels, legs, double in/out and Golf holes.
+- **How to play**: an **(i)** on every game tile, and next to the game name while playing, opens that game's rules: who can play, the goal, how it scores and how it is won.
+
+  ![A rules sheet](images/rules-sheet.png)
 - **Game screen**: big scores readable from about 2 m, the three darts of the visit, checkout suggestion, bust, Undo and Next player. Cricket games use a pub-style chalkboard. Training games show the next target and progress. Game shot screen with Rematch.
 - **Correct a dart** the board read wrong: tap it (every dart has a ✎) and pick the right bed. See [Correcting darts](#correcting-darts).
 - **Drawn dartboard** with a marker where each dart landed (from the board's `/api/events` coordinates). The camera picture is one tap away (warped straight-on with the calibration homography from `/api/system`).

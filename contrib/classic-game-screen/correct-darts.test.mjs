@@ -1,46 +1,10 @@
-// Correcting and adding darts on the classic game screen, in a browser (happy-dom from the
-// repository's dev dependencies: npm ci first).
+// Correcting and adding darts on the classic game screen, in a browser.
 // Run: node --test "contrib/classic-game-screen/*.test.mjs"
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { Window } from "happy-dom";
+import { P, settle, states, mount } from "./dom-helpers.mjs";
 
-const window = new Window({ url: "http://localhost:8123/darts-classic/game" });
-globalThis.window = window;
-for (const name of ["document", "customElements", "HTMLElement", "localStorage", "ResizeObserver", "location"]) globalThis[name] = window[name];
-globalThis.WebSocket = class { close() {} }; // no board in the test
-globalThis.fetch = async () => ({ json: async () => ({}) });
-await import("./autodarts-classic-card.js");
-
-const P = "autodarts_board";
-const settle = () => new Promise((resolve) => setTimeout(resolve, 0));
-let tick = 0;
-
-// A running 501 with the given darts in the visit.
-function x01(visit, manual = "off") {
-  tick += 1;
-  return {
-    [`select.${P}_practice_game`]: { state: "501", attributes: {}, last_updated: "1" },
-    [`sensor.${P}_practice_remaining_score`]: {
-      state: "321", last_updated: String(tick),
-      attributes: { game: "501", player: 1, visit, scores: [{ player: 1, name: "A", remaining: 321 }, { player: 2, name: "B", remaining: 501 }] },
-    },
-    [`sensor.${P}_detection_status`]: { state: "throw", attributes: {}, last_updated: "1" },
-    [`switch.${P}_practice_manual_entry`]: { state: manual, attributes: {}, last_updated: "1" },
-    [`switch.${P}_detection`]: { state: "on", attributes: {}, last_updated: "1" },
-  };
-}
-
-function mount(states) {
-  localStorage.clear();
-  const calls = [];
-  const el = document.createElement("autodarts-classic-card");
-  el.setConfig({ board_url: "http://board:3180" });
-  document.body.appendChild(el);
-  el.hass = { states, devices: {}, callService: async (...call) => { calls.push(call); } };
-  const $ = (sel) => el.shadowRoot.querySelector(sel);
-  return { el, calls, $ };
-}
+const x01 = (visit, manual = "off") => states(visit, { manual });
 
 test("a tap on a dart opens the pad, and a bed corrects that dart", async () => {
   const { calls, $ } = mount(x01(["S20", "S5"]));
