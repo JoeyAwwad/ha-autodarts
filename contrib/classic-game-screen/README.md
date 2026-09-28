@@ -49,7 +49,7 @@ The game state lives in the browser's `localStorage`, so it belongs to one scree
 ## Tests
 
 ```bash
-node --test contrib/classic-game-screen/
+node --test "contrib/classic-game-screen/*.test.mjs"
 ```
 
 ## Setting a board up from scratch

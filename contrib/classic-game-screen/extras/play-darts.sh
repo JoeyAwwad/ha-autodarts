@@ -67,4 +67,3 @@ echo "window opened"
 if ! curl -sf -o /dev/null --max-time 2 "$HA_URL"; then
     (cd "$HA_DIR" && docker_cmd compose up -d) || notify "Could not start the scoreboard (Docker)"
 fi
-
