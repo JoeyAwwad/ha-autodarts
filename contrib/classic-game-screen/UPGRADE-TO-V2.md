@@ -154,7 +154,7 @@ Check from another address that a trusted-network login is refused, for example 
 
 ## 8. One-click start
 
-`extras/play-darts.sh` starts the Autodarts app, then the screen window, then Home Assistant (`docker compose up -d`) if it is down; `extras/splash.html` is the loading screen it opens, which waits for the board and Home Assistant and then moves on. The loading screen opens `http://HOST:8123/darts-classic/game`, so create the dashboard with the URL `darts-classic` and a panel view with the path `game` (or change `GAME` in `splash.html`). Set `DARTS_HOST` if the first address of `hostname -I` is not the one to use. Put a `.desktop` entry for the script on the desktop, in `~/.local/share/applications/` (to pin it) and in `~/.config/autostart/` (to start at login).
+`extras/play-darts.sh` starts the Autodarts app, then the screen window, then Home Assistant (`docker compose up -d`) if it is down; `extras/splash.html` is the loading screen it opens, which waits for the board and Home Assistant and then moves on. The loading screen opens `http://HOST:8123/darts-classic/game`, so create the dashboard with the URL `darts-classic` and a panel view with the path `game` (or change `GAME` in `splash.html`). It opens Home Assistant on `127.0.0.1`, since the board and Home Assistant run on the board PC and browsers only give pages on localhost (or https) the webcam for player photos; set `DARTS_HOST` when the screen runs on another machine. Its Chrome profile allows sound without a tap and the webcam without a prompt. Put a `.desktop` entry for the script on the desktop, in `~/.local/share/applications/` (to pin it) and in `~/.config/autostart/` (to start at login).
 
 ## 9. Final check
 

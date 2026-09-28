@@ -51,7 +51,14 @@ const TRAINING = new Set(GROUPS[3].games.map(([id]) => id));
 const LEGS = [1, 2, 3, 5, 7];
 const BOT_LEVELS = [["Off", 0], ["Easy", 30], ["Club", 50], ["Pub pro", 70], ["Pro", 90], ["Legend", 110]];
 // Every player keeps a colour for the whole game: card, chalkboard column, dart markers.
-const PLAYER_COLORS = ["#3b82f6", "#f43f5e", "#22c55e", "#f59e0b"];
+const PLAYER_COLORS = ["#3b82f6", "#f43f5e", "#22c55e", "#f59e0b", "#a855f7", "#06b6d4", "#f97316", "#ec4899",
+  "#84cc16", "#eab308", "#6366f1", "#14b8a6"];
+// Games the card scores itself take a whole party; the integration's games take up to four.
+const LOCAL_GAMES = new Set(["wild_mouse"]);
+const MAX_PLAYERS = 24, MAX_PLAYERS_INTEGRATION = 4;
+const maxPlayers = (game) => (LOCAL_GAMES.has(game) ? MAX_PLAYERS : MAX_PLAYERS_INTEGRATION);
+// Player photos are square JPEGs of this size, small enough to keep many in the browser.
+const PHOTO_PX = 320;
 // Looks for the screen; "machine" is a dark dart-machine look, "classic" the original blue.
 const THEMES = [["Machine", "machine"], ["Classic", "classic"], ["Pub", "pub"], ["Neon", "neon"], ["High contrast", "contrast"]];
 
@@ -779,6 +786,7 @@ class AutodartsClassicCard extends HTMLElement {
   disconnectedCallback() {
     this._stopLive();
     this._closeEvents();
+    this._closeBooth();
   }
 
   _id(domain, name) {
@@ -968,7 +976,8 @@ class AutodartsClassicCard extends HTMLElement {
     }
     this._wm = null;
     this._saveWm();
-    const data = { game: g, players: setup.players.length ? setup.players : ["Player 1"] };
+    // The integration plays up to four: the first four in the list.
+    const data = { game: g, players: setup.players.length ? setup.players.slice(0, MAX_PLAYERS_INTEGRATION) : ["Player 1"] };
     if (X01.has(g) || CRICKET.has(g)) {
       data.legs = setup.legs;
       if (setup.bot) data.bot_level = setup.bot;
@@ -1056,8 +1065,16 @@ class AutodartsClassicCard extends HTMLElement {
       case "double_out": s.double_out = !s.double_out; break;
       case "double_in": s.double_in = !s.double_in; break;
       case "add-player":
-        if (!s.players.includes(value) && s.players.length < 4) s.players.push(value);
+        if (!s.players.includes(value) && s.players.length < MAX_PLAYERS) s.players.push(value);
         break;
+      case "shuffle":
+        for (let i = s.players.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [s.players[i], s.players[j]] = [s.players[j], s.players[i]];
+        }
+        break;
+      case "clear-players": s.players = []; break;
+      case "photo": return this._openBooth(value);
       case "remove-player": s.players.splice(Number(value), 1); break;
       case "up-player": {
         const i = Number(value);
@@ -1408,13 +1425,181 @@ class AutodartsClassicCard extends HTMLElement {
       .sort((x, y) => (y.p.player === a.winner) - (x.p.player === a.winner) || (y.p.sets ?? 0) - (x.p.sets ?? 0)
         || (y.p.legs ?? 0) - (x.p.legs ?? 0) || (low ? main(x.p) - main(y.p) : main(y.p) - main(x.p)))
       .map(({ p, i }) => ({
-        name: p.name || `Player ${p.player}`, color: this._pc(i), main: main(p), mainLabel,
+        name: p.name || `Player ${p.player}`, color: this._pc(i), avatar: this._avatar(p.name || `Player ${p.player}`, i, "sm"), main: main(p), mainLabel,
         stats: [
           ...(sets ? [["sets", p.sets ?? 0]] : []), ...(legs ? [["legs", p.legs ?? 0]] : []),
           ...(p.average != null ? [["average", Number(p.average).toFixed(1)]] : []),
           ...(p.mpr != null ? [["MPR", Number(p.mpr).toFixed(2)]] : []),
         ],
       }));
+  }
+
+  // -- player photos -----------------------------------------------------------------------
+
+  // A player's picture: a photo taken on this screen, the avatars option, the picture of a
+  // Home Assistant person with the same name, or none.
+  _photoUrl(name) {
+    const key = String(name || "").toLowerCase();
+    const photos = this._photos ?? (this._photos = load("photos", {}));
+    if (photos[name]) return photos[name];
+    const conf = this._config.avatars || {};
+    const fromConf = Object.entries(conf).find(([n]) => n.toLowerCase() === key)?.[1];
+    if (fromConf) return String(fromConf);
+    const person = Object.values(this._hass?.states || {}).find((s) => s.entity_id?.startsWith("person.")
+      && String(s.attributes?.friendly_name || "").toLowerCase() === key && s.attributes?.entity_picture);
+    return person ? person.attributes.entity_picture : "";
+  }
+
+  // The round picture of a player in their colour, or their initials.
+  _avatar(name, i, size = "") {
+    const url = this._photoUrl(name);
+    // Only pictures the card took, site paths and web addresses; nothing that runs.
+    const safe = /^(data:image\/(jpeg|png|webp);base64,|\/|https?:\/\/)/i.test(url) ? url : "";
+    const initials = String(name || "?").trim().split(/\s+/).map((w) => w[0]).join("").slice(0, 2).toUpperCase();
+    return safe
+      ? `<img class="pav ${size}" src="${esc(safe)}" alt="" style="--pc:${this._pc(i)}">`
+      : `<span class="pav initials ${size}" style="--pc:${this._pc(i)}" aria-hidden="true">${esc(initials)}</span>`;
+  }
+
+  // The photo booth: the webcam of the screen, a countdown and a square photo. Built once
+  // while open, so the live picture is not torn down by the card's renders.
+  async _openBooth(name) {
+    this._closeBooth();
+    const layer = document.createElement("div");
+    layer.className = "booth-layer";
+    const has = !!this._photos?.[name] || !!load("photos", {})[name];
+    layer.innerHTML = `
+      <div class="pad-back" data-booth="close"></div>
+      <div class="booth" role="dialog" aria-label="Photo of ${esc(name)}">
+        <div class="pad-head"><b>Photo of ${esc(name)}</b><button class="ghost icon" data-booth="close" title="Close">✕</button></div>
+        <div class="booth-view">
+          <video playsinline muted autoplay></video>
+          <img class="booth-shot" alt="">
+          <div class="booth-count"></div>
+          <div class="booth-msg"></div>
+        </div>
+        <div class="booth-actions">
+          <button class="primary big" data-booth="snap">📸 Take photo</button>
+          <button class="primary big" data-booth="keep" hidden>Use this photo</button>
+          <button class="big" data-booth="retake" hidden>Retake</button>
+          <label class="big file-btn">🖼 Choose a picture<input type="file" accept="image/*" hidden></label>
+          ${has ? `<button class="ghost" data-booth="remove">Remove photo</button>` : ""}
+        </div>
+      </div>`;
+    this._stage.appendChild(layer);
+    const booth = { name, layer, stream: null, shot: "" };
+    this._booth = booth;
+    const $ = (sel) => layer.querySelector(sel);
+    const msg = (text) => { $(".booth-msg").textContent = text; $(".booth-msg").hidden = !text; };
+    const show = (mode) => {
+      const shot = mode === "shot";
+      $("video").hidden = shot || !booth.stream;
+      $(".booth-shot").hidden = !shot;
+      $('[data-booth="snap"]').hidden = shot || !booth.stream;
+      $('[data-booth="keep"]').hidden = !shot;
+      $('[data-booth="retake"]').hidden = !shot || !booth.stream;
+    };
+    booth.useShot = (url) => { booth.shot = url; $(".booth-shot").src = url; msg(""); show("shot"); };
+    layer.addEventListener("click", (ev) => {
+      const act = ev.target.closest("[data-booth]")?.dataset.booth;
+      if (act === "close") this._closeBooth();
+      else if (act === "snap") this._snap();
+      else if (act === "retake") { booth.shot = ""; show("live"); }
+      else if (act === "keep") this._keepPhoto(name, booth.shot);
+      else if (act === "remove") this._keepPhoto(name, "");
+    });
+    $("input[type=file]").addEventListener("change", (ev) => {
+      const file = ev.target.files?.[0];
+      if (file) this._photoFromFile(file).then(booth.useShot).catch(() => msg("That picture could not be read."));
+    });
+    show("live");
+    msg("Starting the camera…");
+    // Browsers only give pages on https or localhost a camera.
+    if (!navigator.mediaDevices?.getUserMedia || window.isSecureContext === false) {
+      msg("This browser keeps the webcam from this page: open Home Assistant as http://localhost:8123 on the screen's PC (or over https). A picture from a file works here too.");
+      return show("live");
+    }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: "user" }, audio: false });
+      if (this._booth !== booth) return stream.getTracks().forEach((t) => t.stop());
+      booth.stream = stream;
+      $("video").srcObject = stream;
+      msg("");
+      show("live");
+    } catch (err) {
+      msg(err?.name === "NotAllowedError" ? "The camera was not allowed. Allow it in the browser, or choose a picture." : "No webcam found. Plug one into the screen's PC, or choose a picture.");
+    }
+  }
+
+  // Three, two, one, then the square middle of the picture, mirrored as the players saw it.
+  _snap() {
+    const booth = this._booth;
+    if (!booth?.stream) return;
+    const count = booth.layer.querySelector(".booth-count");
+    let n = 3;
+    const tick = () => {
+      if (this._booth !== booth) return;
+      if (n > 0) {
+        count.textContent = String(n);
+        count.classList.remove("go"); void count.offsetWidth; count.classList.add("go");
+        n -= 1;
+        this._play("single");
+        return setTimeout(tick, 800);
+      }
+      count.textContent = "";
+      const video = booth.layer.querySelector("video");
+      const w = video.videoWidth, h = video.videoHeight, side = Math.min(w, h);
+      if (!side) return;
+      const canvas = document.createElement("canvas");
+      canvas.width = canvas.height = PHOTO_PX;
+      const c = canvas.getContext("2d");
+      c.translate(PHOTO_PX, 0);
+      c.scale(-1, 1);
+      c.drawImage(video, (w - side) / 2, (h - side) / 2, side, side, 0, 0, PHOTO_PX, PHOTO_PX);
+      booth.layer.querySelector(".booth-view").classList.add("flash");
+      setTimeout(() => booth.layer.querySelector(".booth-view")?.classList.remove("flash"), 400);
+      booth.useShot(canvas.toDataURL("image/jpeg", 0.85));
+    };
+    tick();
+  }
+
+  // A picture from a file, cut to the same square.
+  _photoFromFile(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onerror = reject;
+      reader.onload = () => {
+        const img = new Image();
+        img.onerror = reject;
+        img.onload = () => {
+          const side = Math.min(img.width, img.height);
+          const canvas = document.createElement("canvas");
+          canvas.width = canvas.height = PHOTO_PX;
+          canvas.getContext("2d").drawImage(img, (img.width - side) / 2, (img.height - side) / 2, side, side, 0, 0, PHOTO_PX, PHOTO_PX);
+          resolve(canvas.toDataURL("image/jpeg", 0.85));
+        };
+        img.src = reader.result;
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  _keepPhoto(name, url) {
+    const photos = { ...load("photos", {}) };
+    if (url) photos[name] = url;
+    else delete photos[name];
+    save("photos", photos);
+    this._photos = photos;
+    this._closeBooth();
+    this._render();
+  }
+
+  _closeBooth() {
+    const booth = this._booth;
+    this._booth = null;
+    if (!booth) return;
+    booth.stream?.getTracks().forEach((t) => t.stop()); // the webcam is free again at once
+    booth.layer.remove();
   }
 
   _pc(i) {
@@ -1440,7 +1625,7 @@ class AutodartsClassicCard extends HTMLElement {
       .map((r, i) => `
         <div class="res-row ${i === 0 ? "first" : ""}" style="--pc:${r.color}">
           <span class="res-rank">${i + 1}</span>
-          <span class="res-name">${esc(r.name)}</span>
+          ${r.avatar || ""}<span class="res-name">${esc(r.name)}</span>
           ${(r.stats || []).map(([l, v]) => `<span class="res-stat"><b>${esc(v)}</b><small>${esc(l)}</small></span>`).join("")}
           <span class="res-main"><b>${esc(r.main)}</b><small>${esc(r.mainLabel || "")}</small></span>
         </div>`)
@@ -1516,7 +1701,7 @@ class AutodartsClassicCard extends HTMLElement {
         return `
           <div class="player ${active ? "active" : ""} ${wm.winner === i || wm.legWinner === i ? "winner" : ""}" style="--pc:${this._pc(i)}">
             ${legs ? `<div class="legs"><span>${p.legs}<small>legs</small></span></div>` : ""}
-            <div class="pname">${esc(p.name)}</div>
+            ${this._avatar(p.name, i)}<div class="pname">${esc(p.name)}</div>
             <div class="score">${p.points}</div>
             ${active ? this._turnTag(wm.visit.length) : `<div class="stats">${p.darts ? `MPR ${this._mpr(p)}` : ""}</div>`}
           </div>`;
@@ -1542,7 +1727,7 @@ class AutodartsClassicCard extends HTMLElement {
     this._stage.classList.add("cricket-mode");
     this._info.innerHTML = `
       ${this._bar("Wild Mouse", facts)}
-      <div class="players n${Math.min(wm.players.length, 4)}">${cards}</div>
+      <div class="players n${Math.min(wm.players.length, 4)} ${wm.players.length > 4 ? "many" : ""}">${cards}</div>
       ${chalkboard(
         wm.targets.map((t) => ({ label: label(t), extra: typeof t === "string", marks: wm.players.map((p) => p.marks[t]) })),
         wm.players.map((p) => p.name),
@@ -1567,7 +1752,7 @@ class AutodartsClassicCard extends HTMLElement {
           .map((p, i) => ({ p, i }))
           .sort((a, b) => (b.i === wm.winner) - (a.i === wm.winner) || b.p.legs - a.p.legs || b.p.points - a.p.points)
           .map(({ p, i }) => ({
-            name: p.name, color: this._pc(i), main: p.points, mainLabel: "points",
+            name: p.name, color: this._pc(i), avatar: this._avatar(p.name, i, "sm"), main: p.points, mainLabel: "points",
             stats: [...(legs ? [["legs", p.legs]] : []), ["MPR", this._mpr(p)], ["darts", p.darts || 0]],
           })),
       }) : ""}`;
@@ -1619,7 +1804,7 @@ class AutodartsClassicCard extends HTMLElement {
       return `
         <div class="player ${active ? "active" : ""} ${winner && p.player === a.winner ? "winner" : ""}" style="--pc:${this._pc(i)}">
           ${legs}
-          <div class="pname">${esc(p.name || `Player ${p.player}`)}</div>
+          ${this._avatar(p.name || `Player ${p.player}`, i)}<div class="pname">${esc(p.name || `Player ${p.player}`)}</div>
           <div class="score">${esc(big)}</div>
           <div class="stats">${esc(sub)}</div>
           ${active ? this._turnTag(visit.length) : ""}
@@ -1648,7 +1833,7 @@ class AutodartsClassicCard extends HTMLElement {
       : "";
     this._info.innerHTML = `
       ${this._bar(GAME_NAME[game] || game || "", facts)}
-      <div class="players n${Math.min(scores.length, 4)}">${scores.map(playerCard).join("")}</div>
+      <div class="players n${Math.min(scores.length, 4)} ${scores.length > 4 ? "many" : ""}">${scores.map(playerCard).join("")}</div>
       ${board}
       <div class="turn">
         <div class="total ${a.bust ? "bust" : ""}">${a.bust ? "Bust" : visitTotal}</div>
@@ -1681,24 +1866,30 @@ class AutodartsClassicCard extends HTMLElement {
             <div class="tile-wrap" style="--accent:${COLORS[id] || "#93c5fd"}">
               <button class="tile ${id === g ? "on" : ""}" data-act="game" data-value="${id}">
                 ${gameIcon(id)}<b>${esc(name)}</b><small>${esc(blurb)}</small>
+                ${LOCAL_GAMES.has(id) ? `<span class="tile-badge">Up to ${MAX_PLAYERS} players</span>` : s.players.length > maxPlayers(id) ? `<span class="tile-badge dim">Max ${maxPlayers(id)}</span>` : ""}
               </button>
               ${RULES[id] ? `<button class="info-btn" data-act="sheet" data-value="${id}" title="How to play ${esc(name)}" aria-label="How to play ${esc(name)}">i</button>` : ""}
             </div>`)
           .join("")}</div>
       </section>`).join("");
 
-    const known = this._knownPlayers().filter((n) => !s.players.includes(n)).slice(0, 8);
+    const known = this._knownPlayers().filter((n) => !s.players.includes(n)).slice(0, 12);
+    const max = maxPlayers(g);
+    const guest = Array.from({ length: MAX_PLAYERS }, (_, i) => (i ? `Guest ${i + 1}` : "Guest")).find((n) => !s.players.includes(n));
     const players = `
-      <ol class="plist">${s.players
+      <ol class="plist ${s.players.length > 6 ? "compact" : ""}">${s.players
         .map((n, i) => `
-          <li><span class="pnum">${i + 1}</span><span class="pn">${esc(n)}</span>
+          <li class="${i >= max ? "over" : ""}" style="--pc:${this._pc(i)}"><span class="pnum">${i + 1}</span>${this._avatar(n, i, "sm")}<span class="pn">${esc(n)}</span>
+            <button class="mini" data-act="photo" data-value="${esc(n)}" title="Photo of ${esc(n)}" aria-label="Photo of ${esc(n)}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg></button>
             ${i ? `<button class="mini" data-act="up-player" data-value="${i}" title="Move up">▲</button>` : ""}
             <button class="mini" data-act="remove-player" data-value="${i}" title="Remove">✕</button></li>`)
         .join("")}</ol>
-      ${s.players.length < 4 ? `
+      ${s.players.length > 2 ? `<div class="chips"><button class="chip" data-act="shuffle">⇄ Shuffle order</button><button class="chip" data-act="clear-players">Clear all</button></div>` : ""}
+      ${s.players.length > max ? `<p class="note warn">${esc(GAME_NAME[g] || g)} plays up to ${max} players, the first ${max} in the list. Wild Mouse takes up to ${MAX_PLAYERS}.</p>` : ""}
+      ${s.players.length < MAX_PLAYERS ? `
         <form class="addp"><input maxlength="20" placeholder="Add a player" enterkeyhint="done"><button class="mini wide">Add</button></form>
         ${known.length ? `<div class="chips">${known.map((n) => `<button class="chip" data-act="add-player" data-value="${esc(n)}">+ ${esc(n)}</button>`).join("")}</div>` : ""}
-        <div class="chips">${!s.players.includes("Guest") ? `<button class="chip" data-act="add-player" data-value="Guest">+ Guest</button>` : ""}</div>` : ""}`;
+        <div class="chips">${guest ? `<button class="chip" data-act="add-player" data-value="${esc(guest)}">+ ${esc(guest)}</button>` : ""}</div>` : ""}`;
 
     const seg = (act, options, current) =>
       `<div class="seg">${options.map(([label, value]) => `<button data-act="${act}" data-value="${value}" class="${String(value) === String(current) ? "on" : ""}">${label}</button>`).join("")}</div>`;
@@ -1881,6 +2072,67 @@ const CSS = `
     font-variant-numeric: tabular-nums; text-shadow: 0 4px 24px rgba(0, 0, 0, 0.25);
   }
   .players.n3 .score, .players.n4 .score { font-size: clamp(52px, min(7vw, 13vh), 150px); }
+  /* A party of five or more: small cards for everybody, the thrower's card big. */
+  .players.many { grid-template-columns: repeat(auto-fill, minmax(clamp(110px, 11vw, 170px), 1fr)); gap: 8px; }
+  .players.many .player { padding: 8px 8px 10px; }
+  .players.many .pname { font-size: clamp(0.85rem, 1.9vh, 1.2rem); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .players.many .score { font-size: clamp(30px, 5vh, 60px); }
+  .players.many .stats { font-size: clamp(0.75rem, 1.6vh, 1rem); }
+  .players.many .player.active { grid-column: span 2; grid-row: span 2; display: flex; flex-direction: column; justify-content: center; }
+  .players.many .player.active .score { font-size: clamp(56px, 11vh, 130px); }
+  .players.many .player.active .pname { font-size: clamp(1.1rem, 3vh, 2rem); }
+  .players.many .turn-tag { font-size: clamp(0.75rem, 1.7vh, 1.05rem); padding: 4px 10px; }
+  .players.many .pav { width: clamp(30px, 4.5vh, 48px); height: clamp(30px, 4.5vh, 48px); }
+  .players.many .player.active .pav { width: clamp(56px, 9vh, 100px); height: clamp(56px, 9vh, 100px); }
+  .players.many .legs { font-size: 1rem; top: 6px; right: 8px; }
+  /* Cricket games with a party: one-line cards, so the chalkboard keeps the height. */
+  .cricket-mode .players.many { grid-template-columns: repeat(auto-fill, minmax(clamp(120px, 10vw, 180px), 1fr)); gap: 6px; }
+  .cricket-mode .players.many .player { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 6px; padding: 5px 8px; text-align: left; }
+  .cricket-mode .players.many .player .pav { width: 28px; height: 28px; margin: 0; font-size: 0.7rem; border-width: 2px; }
+  .cricket-mode .players.many .score { font-size: clamp(20px, 3.4vh, 38px); }
+  .cricket-mode .players.many .stats, .cricket-mode .players.many .legs { display: none; }
+  .cricket-mode .players.many .player.active { grid-row: auto; grid-column: span 2; display: grid; }
+  .cricket-mode .players.many .player.active .pav { width: 36px; height: 36px; }
+  .cricket-mode .players.many .player.active .score { font-size: clamp(26px, 4.4vh, 50px); }
+  .cricket-mode .players.many .player.active .pname { font-size: clamp(0.95rem, 2.2vh, 1.4rem); }
+  .cricket-mode .players.many .turn-tag { grid-column: 1 / -1; justify-self: start; margin-top: 2px; }
+  .chalk { overflow: hidden; }
+  .chalk.many .crow { grid-template-columns: clamp(64px, 9vh, 150px) repeat(var(--cols), minmax(0, 1fr)); }
+  .chalk.many .mk { height: clamp(14px, min(3.4vh, calc(40vw / var(--cols))), 48px); stroke-width: 12; }
+  .ico { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linejoin: round; vertical-align: middle; }
+  .chalk.many .chead .cm span { font-size: clamp(0.6rem, 1.5vh, 1.2rem); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; padding: 0 2px; }
+
+  /* Player pictures: a round photo in the player's colour, or their initials. */
+  .pav {
+    place-items: center; width: clamp(54px, 9vh, 110px); height: clamp(54px, 9vh, 110px); border-radius: 50%;
+    object-fit: cover; border: 3px solid var(--pc); background: color-mix(in srgb, var(--pc) 35%, #111); flex: none;
+    font-weight: 800; font-size: clamp(1rem, 3vh, 2rem); letter-spacing: 0.02em; margin: 0 auto 4px; display: block;
+    box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.3), 0 0 22px color-mix(in srgb, var(--pc) 40%, transparent);
+  }
+  span.pav { display: grid; }
+  .pav.sm { width: 34px; height: 34px; font-size: 0.8rem; margin: 0; border-width: 2px; box-shadow: none; }
+  .cricket-mode .player .pav:not(.sm) { width: clamp(40px, 6vh, 70px); height: clamp(40px, 6vh, 70px); }
+  .res-row .pav.sm { width: 44px; height: 44px; }
+
+  /* The photo booth. */
+  .booth-layer { position: fixed; inset: 0; z-index: 9; display: grid; place-items: center; }
+  .booth {
+    position: relative; width: min(640px, 94vw); padding: 18px; border-radius: 18px; background: var(--panel);
+    border: 1px solid var(--line); box-shadow: 0 24px 70px rgba(0, 0, 0, 0.55); display: flex; flex-direction: column; gap: 14px;
+  }
+  .booth-view { position: relative; aspect-ratio: 1; width: min(460px, 80vw, 60vh); margin: 0 auto; border-radius: 50%; overflow: hidden; background: #000; border: 4px solid #fff; }
+  .booth-view video, .booth-view .booth-shot { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .booth-view video { transform: scaleX(-1); }
+  .booth-view [hidden] { display: none; }
+  .booth-view.flash::after { content: ""; position: absolute; inset: 0; background: #fff; animation: flash 0.4s ease-out forwards; }
+  @keyframes flash { to { opacity: 0; } }
+  .booth-count { position: absolute; inset: 0; display: grid; place-items: center; font-size: 160px; font-weight: 900; text-shadow: 0 0 30px rgba(0, 0, 0, 0.8); pointer-events: none; }
+  .booth-count.go { animation: slam 0.8s ease-out; }
+  .booth-msg { position: absolute; inset: auto 12% 30%; text-align: center; font-weight: 600; line-height: 1.4; }
+  .booth-msg[hidden] { display: none; }
+  .booth-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; align-items: center; }
+  .booth-actions [hidden] { display: none; }
+  .file-btn { font-weight: 600; cursor: pointer; border-radius: 10px; background: var(--glass-2); border: 1px solid var(--line); font-size: 1.1rem; padding: 14px 22px; }
   .stats { font-size: clamp(1rem, 2.6vh, 1.8rem); font-weight: 600; opacity: 0.9; min-height: 1.2em; }
   .legs { position: absolute; top: 10px; right: 14px; display: flex; gap: 12px; font-weight: 800; font-size: clamp(1.4rem, 3.6vh, 2.4rem); line-height: 1; }
   .legs small { display: block; font-size: clamp(0.6rem, 1.4vh, 0.9rem); font-weight: 700; opacity: 0.7; text-transform: uppercase; }
@@ -2084,6 +2336,8 @@ const CSS = `
   .tile:hover { background: linear-gradient(150deg, color-mix(in srgb, var(--accent) 40%, transparent), var(--glass-2) 70%); }
   .tile b { display: block; font-size: 1.15rem; margin-top: 8px; }
   .tile small { display: block; margin-top: 4px; font-weight: 400; opacity: 0.7; font-size: 0.8rem; }
+  .tile-badge { display: inline-block; margin-top: 8px; padding: 2px 8px; border-radius: 999px; font-size: 0.72rem; font-weight: 700; background: var(--accent); color: #0b0d14; }
+  .tile-badge.dim { background: rgba(255, 255, 255, 0.15); color: #fff; }
   .tile.on { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent), 0 8px 28px color-mix(in srgb, var(--accent) 35%, transparent); }
   .gicon { width: 44px; height: 44px; display: block; fill: none; stroke: var(--accent); stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
   .gicon .fill { fill: var(--accent); fill-opacity: 0.35; }
@@ -2117,7 +2371,11 @@ const CSS = `
   .sheet-pick { width: 100%; margin-top: 18px; padding: 14px; font-size: 1.15rem; font-weight: 800; }
   .setup { position: sticky; top: 0; padding: 16px; border-radius: 14px; background: rgba(0, 0, 0, 0.18); display: flex; flex-direction: column; gap: 8px; }
   .plist { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
-  .plist li { display: flex; align-items: center; gap: 8px; padding: 6px 6px 6px 10px; border-radius: 10px; background: var(--glass); }
+  .plist li { display: flex; align-items: center; gap: 8px; padding: 6px 6px 6px 10px; border-radius: 10px; background: var(--glass); border-left: 4px solid var(--pc, transparent); }
+  .plist li.over { opacity: 0.45; }
+  .plist.compact { max-height: 46vh; overflow: auto; }
+  .plist.compact li { padding: 3px 4px 3px 8px; }
+  .plist.compact .mini { padding: 4px 8px; }
   .pnum { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; background: #fff; color: var(--ink); font-weight: 800; font-size: 0.85rem; }
   .pn { flex: 1; font-weight: 700; }
   button.mini { padding: 6px 10px; font-size: 0.85rem; border-radius: 8px; background: transparent; }
@@ -2142,6 +2400,7 @@ const CSS = `
   .toggle.on i { background: #22c55e; }
   .toggle.on i::after { left: 14px; }
   .note { margin: 0; font-size: 0.85rem; opacity: 0.7; }
+  .note.warn { color: #fcd34d; opacity: 1; }
   .start { margin-top: 8px; padding: 16px; font-size: 1.25rem; font-weight: 800; }
 
   .toast {

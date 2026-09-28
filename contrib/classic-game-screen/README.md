@@ -46,9 +46,26 @@ sound: true                    # sound effects (also on the New game screen and 
 caller: true                   # the caller: scores, "You require", "Game shot"
 voice_path: /local/darts/voice/   # optional: your own recordings, see Feedback, sound and the caller
 caller_voice: Daniel           # optional: part of the name of a browser voice to use
+avatars:                       # optional: pictures by player name, shared by every screen
+  Joey: /local/darts/joey.png
 ```
 
 The board's local API must be reachable from the browser (it answers CORS with `*`). If Home Assistant is served over HTTPS, the browser blocks the plain-HTTP board and the card falls back to what the entities carry.
+
+## Players and photos
+
+Add as many players as there are: Wild Mouse takes up to 24, and with five or more the thrower's card is shown big and everybody else small. The integration's own games (X01, Cricket, party and training games) play up to four; with more in the list they start with the first four, and the New game screen says so. *Shuffle order* mixes up who throws first.
+
+![Twelve players in Wild Mouse](images/party-12.png)
+
+Every player has a picture on their score card, in the player list and on the result screen, in their colour:
+
+1. **A photo taken at the screen**: 📷 next to a name opens the photo booth. It uses the webcam of the screen's PC, counts down and takes a square photo; *Choose a picture* takes one from a file instead. Photos are kept in that screen's browser.
+2. **The `avatars` option**, for pictures every screen shares: `avatars: {Joey: /local/darts/joey.png}`.
+3. **The picture of a Home Assistant person** with the same name, automatically.
+4. Otherwise the player's initials.
+
+**Webcam**: any USB webcam works (1080p with autofocus is plenty). Plug it into the PC that shows the screen, on a different USB controller from the Autodarts cameras so it cannot take their bandwidth; the booth only turns it on while it is open. Browsers give pages the webcam only over https or on localhost, so open Home Assistant as `http://localhost:8123` on the screen's PC: the launcher in `extras/` does this, and allows the webcam without a prompt.
 
 ## Feedback, sound and the caller
 

@@ -14,7 +14,9 @@
 
 set -uo pipefail
 
-HOST="${DARTS_HOST:-$(hostname -I | awk '{print $1}')}"   # the address the screen opens Home Assistant on
+# localhost: the board and Home Assistant run on this PC, and browsers give pages on localhost
+# the webcam for player photos. Set DARTS_HOST when the screen runs on another machine.
+HOST="${DARTS_HOST:-127.0.0.1}"
 HA_URL="http://127.0.0.1:8123/manifest.json"
 APP="$HOME/.local/bin/autodarts-desktop.AppImage"
 HA_DIR="$HOME/homeassistant"
@@ -56,10 +58,11 @@ if ! ps -eo comm= | grep -qx autodarts-deskt; then
 fi
 
 # The window next (after the Autodarts app, so it opens on top), before Home Assistant is
-# up: its loading screen does the waiting.
+# up: its loading screen does the waiting. This profile is only for the darts screen, so it
+# plays sound without a tap and lets the photo booth use the webcam without a prompt.
 setsid nohup google-chrome --user-data-dir="$PROFILE" --no-first-run --no-default-browser-check \
     --app="$SPLASH" --start-fullscreen --autoplay-policy=no-user-gesture-required \
-    --class=darts-screen >/dev/null 2>&1 < /dev/null &
+    --use-fake-ui-for-media-stream --class=darts-screen >/dev/null 2>&1 < /dev/null &
 echo "window opened"
 
 # 2. Home Assistant. The launcher starts it rather than Docker at boot: a container
