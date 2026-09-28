@@ -1,5 +1,5 @@
 // Wild Mouse (Minnesota) Cricket rules of the classic game screen.
-// Run: node --test contrib/classic-game-screen/
+// Run: node --test "contrib/classic-game-screen/*.test.mjs"
 import { test } from "node:test";
 import fs from "node:fs";
 import vm from "node:vm";
