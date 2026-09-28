@@ -51,6 +51,246 @@ const TRAINING = new Set(GROUPS[3].games.map(([id]) => id));
 const LEGS = [1, 2, 3, 5, 7];
 const BOT_LEVELS = [["Off", 0], ["Easy", 30], ["Club", 50], ["Pub pro", 70], ["Pro", 90], ["Legend", 110]];
 
+// -- Game icons, colours and rules ----------------------------------------------------------
+// Line icons on a 48 x 48 grid, drawn in the tile's accent colour. A game without a drawing
+// shows its number instead (the X01 games, 121, Bob's 27, Catch 40).
+const ICONS = {
+  cricket: '<circle cx="24" cy="24" r="17"/><path d="M16 16l16 16M32 16L16 32"/>',
+  cut_throat: '<circle cx="24" cy="24" r="11"/><path d="M19 19l10 10M29 19L19 29M24 3v6M24 39v6M3 24h6M39 24h6"/>',
+  tactics: '<path d="M10 9h28M10 19h28M10 29h28M10 39h28"/><path d="M14 5l6 8M28 15l6 8M30 25l4 8M14 35l6 8"/>',
+  wild_mouse: '<circle cx="24" cy="28" r="12"/><circle cx="12" cy="13" r="7"/><circle cx="36" cy="13" r="7"/><circle cx="20" cy="27" r="1.5"/><circle cx="28" cy="27" r="1.5"/><path d="M22 33q2 2 4 0"/>',
+  killer: '<path d="M11 22a13 13 0 1126 0v8l-4 2v6H15v-6l-4-2z"/><circle cx="18" cy="22" r="3.5"/><circle cx="30" cy="22" r="3.5"/><path d="M22 38v-4M26 38v-4"/>',
+  shanghai: '<circle cx="24" cy="24" r="18"/><circle cx="24" cy="24" r="12"/><circle cx="24" cy="24" r="6"/><path d="M24 6v12"/>',
+  halve_it: '<circle cx="24" cy="24" r="17"/><path d="M24 7v34"/><path d="M24 7a17 17 0 010 34z" class="fill"/>',
+  golf: '<path d="M16 42V6l18 7-18 7"/><ellipse cx="20" cy="42" rx="12" ry="3"/>',
+  baseball: '<circle cx="24" cy="24" r="17"/><path d="M13 11q7 13 0 26M35 11q-7 13 0 26"/><path d="M11 17l4-1M11 31l4 1M37 17l-4-1M37 31l-4 1"/>',
+  count_up: '<path d="M8 40h32"/><path d="M12 40V30h6v10M21 40V22h6v18M30 40V12h6v28"/>',
+  around_the_clock: '<circle cx="24" cy="24" r="17"/><path d="M24 13v11l7 5"/><path d="M24 4v3M24 41v3M4 24h3M41 24h3"/>',
+  doubles: '<circle cx="24" cy="24" r="18"/><circle cx="24" cy="24" r="14"/><path d="M11 11l4 4" class="thick"/><circle cx="24" cy="24" r="2"/>',
+  checkout: '<circle cx="24" cy="24" r="17"/><path d="M15 25l6 6 12-13"/>',
+  jdc_challenge: '<path d="M15 7h18v10a9 9 0 01-18 0z"/><path d="M15 10H9a6 6 0 006 7M33 10h6a6 6 0 01-6 7M24 26v7M17 41h14M19 41l2-8h6l2 8"/>',
+  singles: '<path d="M24 24L17 6a19 19 0 0114 0z" class="fill"/><circle cx="24" cy="24" r="19"/><circle cx="24" cy="24" r="3"/>',
+};
+const ICON_TEXT = { bobs_27: "27", checkout_121: "121", catch_40: "40" };
+const COLORS = {
+  101: "#60a5fa", 301: "#3b82f6", 501: "#6366f1", 701: "#8b5cf6", 901: "#a855f7", 1001: "#d946ef",
+  cricket: "#22c55e", cut_throat: "#ef4444", tactics: "#14b8a6", wild_mouse: "#f472b6",
+  killer: "#dc2626", shanghai: "#f59e0b", halve_it: "#fb923c", golf: "#84cc16", baseball: "#f87171", count_up: "#38bdf8",
+  around_the_clock: "#2dd4bf", doubles: "#e11d48", checkout: "#10b981", bobs_27: "#eab308",
+  checkout_121: "#06b6d4", catch_40: "#a3e635", jdc_challenge: "#fbbf24", singles: "#c084fc",
+};
+
+function gameIcon(id, cls = "gicon") {
+  const color = COLORS[id] || "#93c5fd";
+  const text = ICON_TEXT[id] || (X01.has(id) ? id : null);
+  const body = text
+    ? `<text x="24" y="25" class="itext" font-size="${text.length > 3 ? 13 : text.length > 2 ? 16 : 20}">${esc(text)}</text><circle cx="24" cy="24" r="21"/>`
+    : ICONS[id] || '<circle cx="24" cy="24" r="17"/><circle cx="24" cy="24" r="3"/>';
+  return `<svg viewBox="0 0 48 48" class="${cls}" style="--accent:${color}" aria-hidden="true">${body}</svg>`;
+}
+
+// How to play, one sheet per game: who can play, the goal, the steps and how it is won.
+const X01_RULES = (n) => ({
+  players: "1–4 players, or two teams of two",
+  goal: `Count down from ${n} to exactly zero.`,
+  steps: [
+    "Every dart takes its score off your remaining points: a double counts twice, a triple three times, the outer bull 25, the bullseye 50.",
+    "Double out (on by default): the last dart has to be a double or the bullseye.",
+    "Double in (optional): your score only starts counting after a double.",
+    "Bust: going below zero, landing on exactly 1, or reaching zero without a double when double out is on. The visit counts for nothing and the turn passes.",
+    "The screen shows a checkout route whenever three darts can finish.",
+  ],
+  win: "The first to zero wins the leg. Play first to 1, 2, 3, 5 or 7 legs.",
+});
+const RULES = {
+  ...Object.fromEntries([...X01].map((n) => [n, X01_RULES(n)])),
+  cricket: {
+    players: "1–4 players, or two teams of two",
+    goal: "Close 20, 19, 18, 17, 16, 15 and the bull, and score more points than everybody else.",
+    steps: [
+      "A single is one mark, a double two, a triple three. The outer bull is one mark, the bullseye two.",
+      "Three marks close a number.",
+      "Once you have closed a number, further marks on it score its value (25 for the bull) as long as an opponent still has it open.",
+      "Only 20 to 15 and the bull count; every other number does nothing.",
+    ],
+    win: "Close everything with at least as many points as everybody else. A closing dart wins at once if your points are enough.",
+  },
+  cut_throat: {
+    players: "1–4 players, or two teams of two",
+    goal: "Close 20 to 15 and the bull with the fewest points.",
+    steps: [
+      "Marks work as in Cricket: single 1, double 2, triple 3; outer bull 1, bullseye 2.",
+      "Scoring on a number you closed gives its value to every opponent who still has it open, not to you.",
+      "So you want to close numbers quickly and load points onto the others.",
+    ],
+    win: "Close everything with no more points than anybody else. Fewest points wins.",
+  },
+  tactics: {
+    players: "1–4 players, or two teams of two",
+    goal: "Cricket on the twelve targets 20 down to 10 and the bull.",
+    steps: [
+      "Marks, closing and scoring work exactly as in Cricket, on 20 to 10 and the bull.",
+      "Longer than Cricket: more numbers to close, more chances to score.",
+    ],
+    win: "Close all twelve targets with at least as many points as everybody else.",
+  },
+  wild_mouse: {
+    players: "1–4 players",
+    goal: "Cricket on 20 to 15 and the bull, plus Doubles and Triples (and optionally Three in a bed) to close.",
+    steps: [
+      "Each dart counts for one target only. A double or triple on a cricket number you still have open marks that number (T20 = three marks on 20).",
+      "Otherwise a double is one mark on Doubles, a triple one mark on Triples.",
+      "Three in a bed (optional): three darts in the same bed in one visit is one mark.",
+      "A closed target scores while an opponent still has it open: numbers as in Cricket, Doubles and Triples the full value of the dart, Three in a bed the visit's total.",
+    ],
+    win: "Close everything and not be behind on points.",
+  },
+  shanghai: {
+    players: "1–4 players",
+    goal: "Score the most points on the numbers 1 to 7, one number per round.",
+    steps: [
+      "Round 1 is played on 1, round 2 on 2, and so on up to 7.",
+      "Every dart in any bed of the round's number scores its value; other numbers score nothing.",
+      "Shanghai: a single, a double and a triple of the number in one visit wins the game at once.",
+    ],
+    win: "A Shanghai, or the most points after seven rounds. A tie goes to the player with more hits.",
+  },
+  halve_it: {
+    players: "1–4 players",
+    goal: "Hit the target of every round, or lose half your points.",
+    steps: [
+      "Everybody starts with 40 points.",
+      "The nine rounds aim at 15, 16, any double, 17, 18, any triple, 19, 20 and the bull.",
+      "Hits on the round's target add their score. In the bull round the outer bull is 25, the bullseye 50.",
+      "A visit without a single hit on the target halves your points, rounded down.",
+    ],
+    win: "The most points after nine rounds.",
+  },
+  killer: {
+    players: "2–4 players, 3 lives each",
+    goal: "Be the last player with a life left.",
+    steps: [
+      "First, throw one dart to claim a number of your own (1 to 20, one nobody has).",
+      "After that only doubles count. Hit the double of your own number to become a killer.",
+      "A killer takes a life with every hit on another player's double, and loses one on their own double.",
+      "A player with no lives left is out and is skipped.",
+    ],
+    win: "The last player standing wins.",
+  },
+  golf: {
+    players: "1–4 players",
+    goal: "Play 9 or 18 holes in the fewest strokes. Hole n is played on the number n.",
+    steps: [
+      "Up to three darts per hole. You may stop after any dart by pulling your darts; the last dart thrown counts.",
+      "Double = hole in one (1 stroke), triple 2, inner single 3, outer single 4, anything else 5.",
+      "Inner or outer single comes from where the dart landed, split at the treble ring.",
+    ],
+    win: "The fewest strokes after the last hole. Ties play extra holes.",
+  },
+  baseball: {
+    players: "1–4 players",
+    goal: "Score the most runs in nine innings. Inning n is played on the number n.",
+    steps: [
+      "One visit of three darts per inning.",
+      "A single on the inning's number scores 1 run, a double 2, a triple 3.",
+    ],
+    win: "The most runs after nine innings. Ties play extra innings on 10, 11 and so on.",
+  },
+  count_up: {
+    players: "1–4 players",
+    goal: "Score the most points.",
+    steps: ["Every dart scores its full value.", "8 rounds by default."],
+    win: "The highest total after the last round. Ties play extra rounds.",
+  },
+  around_the_clock: {
+    players: "Solo training",
+    goal: "Hit 1 to 20 and then the bull, in order, in as few darts as possible.",
+    steps: ["Any bed of the number counts: single, double or triple.", "For the bull, the outer bull and the bullseye both count."],
+    win: "Done after the bull. Beat your fewest darts.",
+  },
+  doubles: {
+    players: "Solo training",
+    goal: "Hit every double from D1 to D20 and then the bullseye.",
+    steps: ["Only the double ring (and the bullseye at the end) counts.", "Every dart feeds your per-double hit rate in the statistics."],
+    win: "Done after the bullseye. Beat your fewest darts.",
+  },
+  checkout: {
+    players: "Solo training",
+    goal: "Finish random scores from 2 to 170 on a double.",
+    steps: [
+      "You get three visits per score.",
+      "As in X01, a bust only voids its visit.",
+      "The screen shows the checkout route while the attempt is on.",
+    ],
+    win: "Your checkout rate is the share of scores you finished.",
+  },
+  bobs_27: {
+    players: "Solo training",
+    goal: "Get round every double without your score dropping to zero.",
+    steps: [
+      "Start with 27 points. One visit at each double, D1 to D20, then the bullseye.",
+      "Every hit adds the double's value; a visit with no hit subtracts it.",
+    ],
+    win: "Finish after the bullseye with as many points as you can. Zero or below and the game is lost.",
+  },
+  checkout_121: {
+    players: "Solo training",
+    goal: "Check out 121 within nine darts, then climb.",
+    steps: [
+      "Three visits to finish the target on a double; a bust only voids its visit.",
+      "A finish raises the target by one. Three visits without a finish lower it by one, never below 121.",
+      "170 is the top.",
+    ],
+    win: "Your personal best is the highest score you checked out.",
+  },
+  catch_40: {
+    players: "Solo training",
+    goal: "Check out every score from 61 to 100 within six darts.",
+    steps: [
+      "Two visits per score.",
+      "A finish in two darts is 3 points, in three darts 2, in four to six darts 1.",
+    ],
+    win: "Up to 120 points over the 40 scores.",
+  },
+  jdc_challenge: {
+    players: "Solo training",
+    goal: "The Junior Darts Corporation's 57-dart routine.",
+    steps: [
+      "One visit at each number from 10 to 15: every dart in the number scores its value; single, double and triple in one visit add 100.",
+      "One dart at each double from D1 to D20 (50 points a hit), then one at the bullseye (100).",
+      "One visit at each number from 15 to 20, like the first part.",
+    ],
+    win: "Up to 3,380 points.",
+  },
+  singles: {
+    players: "Solo training",
+    goal: "One visit at each number from 1 to 20, then the bull.",
+    steps: ["A single on the target is 1 point, a double 2, a triple 3. Outer bull 1, bullseye 2."],
+    win: "Up to 186 points.",
+  },
+};
+
+// The (i) sheet: how to play one game, with a button to pick it from the lobby.
+function rulesSheet(id, { pick = false } = {}) {
+  const r = RULES[id];
+  if (!r) return "";
+  const name = GAME_NAME[id] || id;
+  return `
+    <div class="sheet" role="dialog" aria-label="How to play ${esc(name)}" style="--accent:${COLORS[id] || "#93c5fd"}">
+      <div class="sheet-head">
+        ${gameIcon(id, "gicon big")}
+        <div><b>${esc(name)}</b><small>${esc(r.players)}</small></div>
+        <button class="ghost icon" data-act="sheet-close" title="Close">✕</button>
+      </div>
+      <p class="sheet-goal">${esc(r.goal)}</p>
+      <h4>How to play</h4>
+      <ul>${r.steps.map((s) => `<li>${esc(s)}</li>`).join("")}</ul>
+      <h4>Winning</h4>
+      <p>${esc(r.win)}</p>
+      ${pick ? `<button class="primary sheet-pick" data-act="sheet-pick" data-value="${esc(id)}">Play ${esc(name)}</button>` : ""}
+    </div>`;
+}
+
 // "T20" -> {ring: "T", number: 20}; bulls and misses too.
 function parseSegment(name) {
   const s = String(name || "").toUpperCase();
@@ -520,6 +760,12 @@ class AutodartsClassicCard extends HTMLElement {
     return g && g !== "off" && g !== "unknown" && g !== "unavailable" ? g : null;
   }
 
+  // The game on the screen: the card's own, a training game, or the integration's.
+  _currentGame() {
+    if (this._wm) return this._wm.kind;
+    return this._st("sensor", "practice_target")?.attributes?.drill || this._st("sensor", "practice_remaining_score")?.attributes?.game || this._game();
+  }
+
   _isLobby() {
     return this._lobby ?? !(this._wm || this._game());
   }
@@ -570,6 +816,7 @@ class AutodartsClassicCard extends HTMLElement {
     const s = this._setup;
     const wm = this._wm;
     if (act !== "edit-dart" && !act.startsWith("pad-")) this._pad = null;
+    if (act !== "sheet") this._sheet = null;
     if (wm && ["undo", "next", "end"].includes(act) && !(act === "end" && !this._confirmEnd)) {
       if (act === "undo") {
         if (!wm.undo()) return this._toast("Nothing to undo");
@@ -601,6 +848,9 @@ class AutodartsClassicCard extends HTMLElement {
       }
       case "pad-ring": if (this._pad) this._pad.ring = value; break;
       case "pad-close": this._pad = null; break;
+      case "sheet": this._sheet = this._sheet === value ? null : value; break;
+      case "sheet-close": break;
+      case "sheet-pick": s.game = value; break;
       case "pad-bed": return this._pad && this._padBed(value);
       case "end":
         if (!this._confirmEnd) {
@@ -670,6 +920,7 @@ class AutodartsClassicCard extends HTMLElement {
         </div>
         <div class="lobby"></div>
         <div class="pad-layer"></div>
+        <div class="sheet-layer"></div>
         <div class="toast" role="status"></div>
       </div>`;
     this._stage = this.shadowRoot.querySelector(".stage");
@@ -679,6 +930,7 @@ class AutodartsClassicCard extends HTMLElement {
     this._info = this.shadowRoot.querySelector(".info");
     this._lobbyEl = this.shadowRoot.querySelector(".lobby");
     this._padEl = this.shadowRoot.querySelector(".pad-layer");
+    this._sheetEl = this.shadowRoot.querySelector(".sheet-layer");
     this._viewEl = this.shadowRoot.querySelector(".view");
     this._plane = this.shadowRoot.querySelector(".plane");
     this._img = this.shadowRoot.querySelector(".cam");
@@ -716,6 +968,9 @@ class AutodartsClassicCard extends HTMLElement {
     const pad = !!this._pad && !lobby;
     this._padEl.classList.toggle("open", pad);
     this._padEl.innerHTML = pad ? `<div class="pad-back" data-act="pad-close"></div>${this._renderPad()}` : "";
+    const sheet = this._sheet ? rulesSheet(this._sheet, { pick: lobby }) : "";
+    this._sheetEl.classList.toggle("open", !!sheet);
+    this._sheetEl.innerHTML = sheet ? `<div class="pad-back" data-act="sheet-close"></div>${sheet}` : "";
     this._syncLive();
   }
 
@@ -805,9 +1060,10 @@ class AutodartsClassicCard extends HTMLElement {
   _bar(title, facts) {
     return `
       <header class="bar">
-        <div class="title"><span class="avatar" title="${esc(this._config.brand)}"></span><span class="gname">${esc(title)}</span>${facts.map((f) => `<span class="fact">${esc(f)}</span>`).join("")}</div>
+        <div class="title"><span class="avatar" title="${esc(this._config.brand)}"></span>${this._currentGame() ? gameIcon(this._currentGame(), "gicon bar-icon") : ""}<span class="gname">${esc(title)}</span>${facts.map((f) => `<span class="fact">${esc(f)}</span>`).join("")}</div>
         <div class="bar-actions">
           ${this._statusPill()}
+          ${RULES[this._currentGame()] ? `<button data-act="sheet" data-value="${esc(this._currentGame())}" class="ghost icon info-bar" title="How to play" aria-label="How to play">i</button>` : ""}
           <button data-act="new" class="ghost">New game</button>
           <button data-act="end" class="ghost ${this._confirmEnd ? "danger" : ""}">${this._confirmEnd ? "Tap again to end" : "End game"}</button>
           <button data-act="full" class="ghost icon" title="Full screen">⛶</button>
@@ -1037,9 +1293,12 @@ class AutodartsClassicCard extends HTMLElement {
         <h3>${grp.name}</h3>
         <div class="tiles">${grp.games
           .map(([id, name, blurb]) => `
-            <button class="tile ${id === g ? "on" : ""}" data-act="game" data-value="${id}">
-              <b>${esc(name)}</b><small>${esc(blurb)}</small>
-            </button>`)
+            <div class="tile-wrap" style="--accent:${COLORS[id] || "#93c5fd"}">
+              <button class="tile ${id === g ? "on" : ""}" data-act="game" data-value="${id}">
+                ${gameIcon(id)}<b>${esc(name)}</b><small>${esc(blurb)}</small>
+              </button>
+              ${RULES[id] ? `<button class="info-btn" data-act="sheet" data-value="${id}" title="How to play ${esc(name)}" aria-label="How to play ${esc(name)}">i</button>` : ""}
+            </div>`)
           .join("")}</div>
       </section>`).join("");
 
@@ -1325,11 +1584,46 @@ const CSS = `
   @media (min-width: 900px) { .lobby-grid { grid-template-columns: minmax(0, 1fr) 360px; align-items: start; } }
   .lobby h3 { margin: 6px 0 10px; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.14em; opacity: 0.7; }
   .games section + section { margin-top: 16px; }
-  .tiles { display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
-  .tile { text-align: left; padding: 14px; background: var(--glass); border: 2px solid transparent; min-height: 78px; }
-  .tile b { display: block; font-size: 1.15rem; }
+  .tiles { display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
+  .tile-wrap { position: relative; }
+  .tile {
+    width: 100%; height: 100%; text-align: left; padding: 14px; min-height: 118px; border: 2px solid transparent;
+    background: linear-gradient(150deg, color-mix(in srgb, var(--accent) 26%, transparent), var(--glass) 70%);
+  }
+  .tile:hover { background: linear-gradient(150deg, color-mix(in srgb, var(--accent) 40%, transparent), var(--glass-2) 70%); }
+  .tile b { display: block; font-size: 1.15rem; margin-top: 8px; }
   .tile small { display: block; margin-top: 4px; font-weight: 400; opacity: 0.7; font-size: 0.8rem; }
-  .tile.on { background: rgba(255, 255, 255, 0.24); border-color: #fff; }
+  .tile.on { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent), 0 8px 28px color-mix(in srgb, var(--accent) 35%, transparent); }
+  .gicon { width: 44px; height: 44px; display: block; fill: none; stroke: var(--accent); stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
+  .gicon .fill { fill: var(--accent); fill-opacity: 0.35; }
+  .gicon .thick { stroke-width: 6; }
+  .gicon .itext { fill: var(--accent); stroke: none; font-weight: 800; text-anchor: middle; dominant-baseline: central; font-family: inherit; }
+  .gicon.big { width: 64px; height: 64px; }
+  .gicon.bar-icon { width: clamp(30px, 4.6vh, 48px); height: auto; align-self: center; }
+  .info-btn {
+    position: absolute; top: 8px; right: 8px; width: 30px; height: 30px; padding: 0; border-radius: 50%;
+    font: italic 800 1rem Georgia, serif; background: rgba(0, 0, 0, 0.25); border-color: rgba(255, 255, 255, 0.3);
+  }
+  .info-btn:hover { background: var(--accent); border-color: var(--accent); }
+  button.info-bar { font: italic 800 1.1rem Georgia, serif; width: 42px; }
+
+  /* How to play: a sheet over the lobby or the game. */
+  .sheet-layer { display: none; }
+  .sheet-layer.open { display: grid; position: fixed; inset: 0; z-index: 9; place-items: center; }
+  .sheet {
+    position: relative; width: min(620px, 94vw); max-height: 88vh; overflow: auto; padding: 22px 24px; border-radius: 18px;
+    background: linear-gradient(160deg, color-mix(in srgb, var(--accent) 22%, #1f1a54), #1a1648 60%);
+    border: 1px solid color-mix(in srgb, var(--accent) 50%, transparent); box-shadow: 0 24px 70px rgba(0, 0, 0, 0.55);
+  }
+  .sheet-head { display: flex; align-items: center; gap: 14px; }
+  .sheet-head div { flex: 1; display: flex; flex-direction: column; }
+  .sheet-head b { font-size: 1.7rem; font-weight: 800; }
+  .sheet-head small { opacity: 0.75; }
+  .sheet-goal { font-size: 1.15rem; font-weight: 600; margin: 16px 0 6px; }
+  .sheet h4 { margin: 16px 0 6px; font-size: 0.8rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); }
+  .sheet ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; line-height: 1.4; }
+  .sheet p { margin: 0; line-height: 1.4; }
+  .sheet-pick { width: 100%; margin-top: 18px; padding: 14px; font-size: 1.15rem; font-weight: 800; }
   .setup { position: sticky; top: 0; padding: 16px; border-radius: 14px; background: rgba(0, 0, 0, 0.18); display: flex; flex-direction: column; gap: 8px; }
   .plist { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
   .plist li { display: flex; align-items: center; gap: 8px; padding: 6px 6px 6px 10px; border-radius: 10px; background: var(--glass); }
