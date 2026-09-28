@@ -539,13 +539,27 @@ function chalkboard(rows, players, current, colors = PLAYER_COLORS) {
   const pc = (i) => `style="--pc:${colors[i % colors.length]}"`;
   const cell = (m, i) => `<div class="cm ${i === current ? "cur" : ""}" ${pc(i)}>${MARK_SVG[Math.min(m || 0, 3)]}</div>`;
   const head = two ? "" : `<div class="crow chead"><div class="clab"></div>${players.map((p, i) => `<div class="cm ${i === current ? "cur" : ""}" ${pc(i)}><span>${esc(p)}</span></div>`).join("")}</div>`;
+  // Aim hints for the thrower: SCORE where they have closed and somebody is still open,
+  // CLOSE where somebody else has closed and could score on them.
+  const hint = (r) => {
+    if (current < 0 || r.marks.every((m) => m >= 3)) return "";
+    const me = r.marks[current] || 0, others = r.marks.filter((_, i) => i !== current);
+    if (me >= 3 && others.some((m) => (m || 0) < 3)) return "score";
+    if (me < 3 && others.some((m) => m >= 3)) return "close";
+    return "";
+  };
   const body = rows
     .map((r) => {
       const dead = r.marks.every((m) => m >= 3) ? "dead" : "";
+      const h = hint(r);
+      // The hint sits in the thrower's own cell, next to their marks.
+      const tag = h ? `<span class="ctag ${h}">${h === "score" ? "Score" : "Close"}</span>` : "";
+      const mcell = (m, i) => (i === current && tag ? cell(m, i).replace(/<\/div>$/, `${tag}</div>`) : cell(m, i));
       const label = `<div class="clab ${r.extra ? "extra" : ""}">${esc(r.label)}</div>`;
+      const attrs = `class="crow ${dead} ${h ? `hint-${h}` : ""}" data-row="${esc(r.key ?? r.label)}"`;
       return two
-        ? `<div class="crow ${dead}">${cell(r.marks[0], 0)}${label}${cell(r.marks[1], 1)}</div>`
-        : `<div class="crow ${dead}">${label}${r.marks.map(cell).join("")}</div>`;
+        ? `<div ${attrs}>${mcell(r.marks[0], 0)}${label}${mcell(r.marks[1], 1)}</div>`
+        : `<div ${attrs}>${label}${r.marks.map(mcell).join("")}</div>`;
     })
     .join("");
   return `<div class="chalk ${two ? "two" : "many"}" style="--cols:${players.length}">${head}${body}</div>`;
@@ -895,6 +909,8 @@ class AutodartsClassicCard extends HTMLElement {
     this._closeEvents();
     this._closeBooth();
     this._replayBuf?.stop();
+    clearTimeout(this._autoTimer);
+    this._autoKey = null;
     this._closeReplay();
     this._closeCamWall();
     this._closeCamSetup();
@@ -1177,6 +1193,7 @@ class AutodartsClassicCard extends HTMLElement {
         break;
       }
       case "bed": s.bed = !s.bed; break;
+      case "auto_next": s.autoNext = Number(value); break;
       case "double_out": s.double_out = !s.double_out; break;
       case "double_in": s.double_in = !s.double_in; break;
       case "add-player":
@@ -1329,6 +1346,7 @@ class AutodartsClassicCard extends HTMLElement {
       const seg = visit[visit.length - 1];
       this._hitFlash(seg, ctx.color);
       this._play(dartKind(seg));
+      if (ctx.shield != null) this._shieldRow(ctx.shield);
       if (dartKind(seg) === "bull") this._maybeReplay("bull");
       if (parseSegment(seg).label === "T20") this._maybeReplay("t20");
       if (ctx.closed) {
@@ -1376,6 +1394,21 @@ class AutodartsClassicCard extends HTMLElement {
       const r = Number(ctx.remaining);
       if (ctx.kind === "x01" && ctx.requires && r >= 2 && r <= 170) this._announce(this._nameLine(ctx.turnName), ["you_require", "you require"], [`score_${r}`, numberWords(r)]);
     }
+  }
+
+  // The cricket number a dart hit when everybody has it closed, or null.
+  _deadNumber(seg, numbers, scores) {
+    const n = parseSegment(seg).number, i = numbers.indexOf(n);
+    return i >= 0 && scores.length && scores.every((p) => ((p.marks || [])[i] || 0) >= 3) ? n : null;
+  }
+
+  // A shield on a chalkboard row: the dart hit a target nobody can score on any more.
+  _shieldRow(key) {
+    const row = [...(this._info?.querySelectorAll(".crow[data-row]") || [])].find((r) => r.dataset.row === String(key));
+    if (!row) return;
+    row.classList.add("shielded");
+    row.insertAdjacentHTML("beforeend", `<span class="shield" aria-label="Closed by everybody"><svg viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/></svg></span>`);
+    setTimeout(() => { row.classList.remove("shielded"); row.querySelector(".shield")?.remove(); }, 1500);
   }
 
   // A player's name for the caller: name_<name>.mp3, or spoken.
@@ -1437,6 +1470,10 @@ class AutodartsClassicCard extends HTMLElement {
       if (!Number.isFinite(to) || el.textContent.trim() === "") return;
       now[i] = to;
       const from = this._scoreVals?.[i];
+      // Games played for points: a badge floats up from the card that just scored.
+      if (this._fxArmed && this._pointsGame && from != null && to > from) {
+        el.closest(".player")?.insertAdjacentHTML("beforeend", `<span class="pts-badge">+${to - from}</span>`);
+      }
       if (!this._fxArmed || reduced || from == null || from === to || typeof requestAnimationFrame !== "function") return;
       const start = performance.now(), len = Math.min(900, 250 + Math.abs(to - from) * 4);
       const step = (t) => {
@@ -1968,10 +2005,37 @@ class AutodartsClassicCard extends HTMLElement {
   }
 
   // Whose turn it is and how many darts are left: shown on the thrower's card.
+  // Seconds after the third dart before Wild Mouse moves on by itself; 0 waits for the takeout.
+  _autoNextS() {
+    return Number(this._setup.autoNext ?? this._config.auto_next ?? 0) || 0;
+  }
+
+  // Wild Mouse moves to the next player a few seconds after the third dart, for boards whose
+  // takeout is not seen reliably. Any change to the visit starts the wait again.
+  _autoNext(wm) {
+    const secs = this._autoNextS();
+    const due = secs > 0 && wm.visit.length >= 3 && wm.winner == null && wm.legWinner == null;
+    const key = due ? `${wm.leg}:${wm.current}:${wm.history.length}:${wm.visit.map((d) => d.seg).join()}` : null;
+    if (key === this._autoKey) return;
+    clearTimeout(this._autoTimer);
+    this._autoKey = key;
+    this._autoTimer = null;
+    if (!due) return;
+    this._autoTimer = setTimeout(() => {
+      if (this._wm !== wm || this._autoKey !== key) return;
+      this._autoKey = null;
+      wm.next();
+      wm.seen = this._boardThrows || 0; // darts still in the board are not thrown again
+      this._saveWm();
+      this._render();
+    }, secs * 1000);
+  }
+
   _turnTag(thrown) {
     const pips = [0, 1, 2].map((i) => `<i class="${i < thrown ? "used" : ""}"></i>`).join("");
-    const text = thrown >= 3 ? "Pull your darts" : `Throwing · dart ${thrown + 1} of 3`;
-    return `<div class="turn-tag"><span>${text}</span><span class="pips" aria-label="${3 - Math.min(thrown, 3)} darts left">${pips}</span></div>`;
+    const auto = thrown >= 3 && this._wm && this._autoKey ? this._autoNextS() : 0;
+    const text = auto ? `Next player in ${auto} s` : thrown >= 3 ? "Pull your darts" : `Throwing · dart ${thrown + 1} of 3`;
+    return `<div class="turn-tag ${auto ? "auto" : ""}" style="${auto ? `--auto:${auto}s` : ""}"><span>${text}</span><span class="pips" aria-label="${3 - Math.min(thrown, 3)} darts left">${pips}</span></div>`;
   }
 
   // The end of a game: the winner big, then everybody ranked with their numbers.
@@ -2002,6 +2066,7 @@ class AutodartsClassicCard extends HTMLElement {
   // Training games ("drills") keep their state on the target sensor: one thrower, a
   // target to hit next and the progress through the drill.
   _renderDrill(target, d) {
+    this._pointsGame = false;
     this._stage.classList.remove("cricket-mode");
     const game = d.drill || this._game();
     const visit = Array.isArray(d.visit) ? d.visit : [];
@@ -2049,6 +2114,8 @@ class AutodartsClassicCard extends HTMLElement {
 
   _renderWildMouse() {
     const wm = this._wm;
+    this._pointsGame = true;
+    this._autoNext(wm);
     const label = (t) => (t === 25 ? "Bull" : t === "D" ? "Dbl" : t === "T" ? "Trp" : t === "B" ? "3-Bed" : t);
     const legs = wm.legsToWin > 1;
     const cards = wm.players
@@ -2085,7 +2152,7 @@ class AutodartsClassicCard extends HTMLElement {
       ${this._bar("Wild Mouse", facts)}
       <div class="players n${Math.min(wm.players.length, 4)} ${wm.players.length > 4 ? "many" : ""}">${cards}</div>
       ${chalkboard(
-        wm.targets.map((t) => ({ label: label(t), extra: typeof t === "string", marks: wm.players.map((p) => p.marks[t]) })),
+        wm.targets.map((t) => ({ key: t, label: label(t), extra: typeof t === "string", marks: wm.players.map((p) => p.marks[t]) })),
         wm.players.map((p) => p.name),
         wm.winner == null ? wm.current : -1,
         this._colors,
@@ -2117,6 +2184,7 @@ class AutodartsClassicCard extends HTMLElement {
       game: "wild_mouse", kind: "wm", winner: winner?.name, match: legs, bed: !!wm.bedVisit, turn: wm.current,
       legs: wm.players.map((p) => p.legs).join(),
       closed: last && last.marks > 0 && wm.players[wm.current].marks[last.target] >= 3 ? last.target : null,
+      shield: last && last.target == null ? WildMouse.candidates(last.seg)[0]?.t ?? null : null,
     });
   }
 
@@ -2126,6 +2194,7 @@ class AutodartsClassicCard extends HTMLElement {
     if (tgt?.attributes?.drill) return this._renderDrill(tgt.state, tgt.attributes);
     const a = this._st("sensor", "practice_remaining_score")?.attributes || {};
     const kind = X01.has(String(a.game)) ? "x01" : CRICKET.has(a.game) ? "cricket" : "other";
+    this._pointsGame = kind !== "x01" && a.game !== "golf" && a.game !== "killer";
     const visit = Array.isArray(a.visit) ? a.visit : [];
     const visitTotal = visit.reduce((t, s) => t + segmentScore(s), 0);
     const checkout = this._st("sensor", "practice_checkout")?.state;
@@ -2181,7 +2250,7 @@ class AutodartsClassicCard extends HTMLElement {
     this._stage.classList.toggle("cricket-mode", kind === "cricket");
     const board = kind === "cricket"
       ? chalkboard(
-        (a.numbers || []).map((n, i) => ({ label: n === 25 ? "Bull" : n, marks: scores.map((p) => (p.marks || [])[i] || 0) })),
+        (a.numbers || []).map((n, i) => ({ key: n, label: n === 25 ? "Bull" : n, marks: scores.map((p) => (p.marks || [])[i] || 0) })),
         scores.map((p) => p.name || `Player ${p.player}`),
         winner ? -1 : current,
         this._colors,
@@ -2207,6 +2276,7 @@ class AutodartsClassicCard extends HTMLElement {
       game, kind, bust: !!a.bust, winner: winner?.name, match: legsToWin > 1 || setsToWin > 1, turn: a.player,
       turnName: scores[current]?.name, legs: scores.map((p) => `${p.sets ?? 0}.${p.legs ?? 0}`).join(),
       remaining: scores[current]?.remaining, requires: !!checkout && checkout !== "unknown",
+      shield: kind === "cricket" ? this._deadNumber(visit[visit.length - 1], a.numbers || [], scores) : null,
     });
   }
 
@@ -2261,6 +2331,7 @@ class AutodartsClassicCard extends HTMLElement {
     if (g === "wild_mouse") {
       options += `<div class="opt"><label>Legs to win</label>${seg("legs", LEGS.map((n) => [n, n]), s.legs)}</div>`;
       options += `<div class="opt"><label>Extra target</label><div class="toggles">${toggle("bed", "Three in a bed", s.bed)}</div></div>`;
+      options += `<div class="opt"><label>Next player after three darts</label>${seg("auto_next", [["When darts are pulled", 0], ["3 s", 3], ["5 s", 5], ["10 s", 10]], this._autoNextS())}</div>`;
       options += `<p class="note">Close 20–15, bull, 3 doubles and 3 triples. A double or triple on an open number counts for the number first.</p>`;
     }
     if (TRAINING.has(g)) options += `<p class="note">Training game: best played alone.</p>`;
@@ -2564,6 +2635,35 @@ const CSS = `
   .mk { height: clamp(24px, 5.2vh, 60px); width: auto; stroke: color-mix(in srgb, var(--pc) 45%, #fff); stroke-width: 11; stroke-linecap: round; fill: none; }
   .mk.closed { stroke: var(--pc); filter: drop-shadow(0 0 6px color-mix(in srgb, var(--pc) 70%, transparent)); }
   .crow.dead { opacity: 0.3; }
+  /* Aim hints for the thrower, a shield when a dart hits a closed-out target. */
+  .crow { position: relative; }
+  .clab { position: relative; }
+  .cm { position: relative; }
+  .ctag {
+    position: absolute; right: 8px; top: 50%; transform: translateY(-50%); padding: 1px 8px; border-radius: 999px; font-size: clamp(0.55rem, 1.3vh, 0.8rem);
+    font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; line-height: 1.5;
+  }
+  .ctag.score { background: #16a34a; color: #fff; }
+  .ctag.close { background: #f59e0b; color: #1a1205; }
+  .crow.hint-score { box-shadow: inset 0 0 0 2px rgba(34, 197, 94, 0.55); animation: hint 1.8s ease-in-out infinite; }
+  .crow.hint-close { box-shadow: inset 0 0 0 2px rgba(245, 158, 11, 0.55); }
+  @keyframes hint { 50% { box-shadow: inset 0 0 0 2px rgba(34, 197, 94, 0.15); } }
+  .chalk.many .ctag { display: none; }
+  .crow.shielded { animation: shielded 1.5s ease-out; }
+  @keyframes shielded { 0%, 60% { background: rgba(148, 163, 184, 0.35); } }
+  .shield { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); width: clamp(22px, 4vh, 40px); animation: pop 0.3s ease-out; }
+  .shield svg { width: 100%; fill: rgba(148, 163, 184, 0.9); stroke: #fff; stroke-width: 1.5; }
+  /* Points just scored float up from the card. */
+  .pts-badge {
+    position: absolute; right: 10px; top: 8px; padding: 2px 10px; border-radius: 999px; background: var(--pc); color: #fff; font-weight: 900;
+    font-size: clamp(1rem, 2.6vh, 1.6rem); animation: pts 1.8s ease-out forwards; pointer-events: none; box-shadow: 0 0 20px var(--pc);
+  }
+  @keyframes pts { 0% { opacity: 0; transform: translateY(10px) scale(0.6); } 15% { opacity: 1; transform: translateY(0) scale(1.1); } 70% { opacity: 1; } 100% { opacity: 0; transform: translateY(-30px); } }
+  /* Wild Mouse counting down to the next player. */
+  .turn-tag.auto { position: relative; overflow: hidden; }
+  .turn-tag.auto::after { content: ""; position: absolute; left: 0; bottom: 0; height: 3px; background: #fff; animation: autonext var(--auto) linear forwards; }
+  @keyframes autonext { from { width: 0; } to { width: 100%; } }
+  @media (prefers-reduced-motion: reduce) { .crow.hint-score, .pts-badge { animation: none !important; } }
   .crow.dead .clab { text-decoration: line-through; text-decoration-thickness: 3px; }
 
   /* Cricket games: compact score cards, the chalkboard takes the height, the board a

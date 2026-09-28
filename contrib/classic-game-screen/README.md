@@ -48,6 +48,7 @@ voice_path: /local/darts/voice/   # optional: your own recordings, see Feedback,
 caller_voice: Daniel           # optional: part of the name of a browser voice to use
 camera_window: false           # optional: small live board camera on the game screen
 replay_on: ["180", "game_shot"]   # optional: moments that get a thrower replay (180, game_shot, bull, t20, ton)
+auto_next: 0                   # optional: Wild Mouse moves on this many seconds after the third dart (0: when darts are pulled)
 avatars:                       # optional: pictures by player name, shared by every screen
   Joey: /local/darts/joey.png
 ```
@@ -131,6 +132,17 @@ When the calibration is off or a dart sits on a wire, the board can read a dart 
 - **A dart the board missed:** with the integration's *Practice manual entry* switch on, the next empty slot shows **+ Add dart**, which enters it with `autodarts.throw_dart`.
 - **After the takeout:** Undo reopens the last visit, then its darts can be corrected; Next player ends it again.
 - **Wild Mouse** is scored by the card, so the card corrects it itself: the visit is replayed with the right bed, and marks, points and a won leg follow. **+ Add dart** always works there while the leg is open.
+
+## Cricket boards
+
+The chalkboard of every cricket game (Cricket, Cut-Throat, Tactics, Wild Mouse) helps the thrower like a dart machine does:
+
+- **Score** in green next to the thrower's marks where they have closed a target and somebody is still open, and **Close** in amber where somebody else has closed it and could score on them.
+- A **shield** on a row when a dart hits a target that everybody has closed, so it scored nothing.
+- The points a dart scored float up from the player's card (**+20**).
+- Wild Mouse can move to the next player by itself 3, 5 or 10 seconds after the third dart (*Next player after three darts* on the New game screen, or `auto_next: 5`), for boards whose takeout is not seen reliably. The thrower's tag counts down.
+
+![Aim hints on the chalkboard](images/cricket-hints.png)
 
 ## Wild Mouse rules
 
