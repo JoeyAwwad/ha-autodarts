@@ -46,6 +46,8 @@ sound: true                    # sound effects (also on the New game screen and 
 caller: true                   # the caller: scores, "You require", "Game shot"
 voice_path: /local/darts/voice/   # optional: your own recordings, see Feedback, sound and the caller
 caller_voice: Daniel           # optional: part of the name of a browser voice to use
+camera_window: false           # optional: small live board camera on the game screen
+replay_on: ["180", "game_shot"]   # optional: moments that get a thrower replay (180, game_shot, bull, t20, ton)
 avatars:                       # optional: pictures by player name, shared by every screen
   Joey: /local/darts/joey.png
 ```
@@ -66,6 +68,18 @@ Every player has a picture on their score card, in the player list and on the re
 4. Otherwise the player's initials.
 
 **Webcam**: any USB webcam works (1080p with autofocus is plenty). Plug it into the PC that shows the screen, on a different USB controller from the Autodarts cameras so it cannot take their bandwidth; the booth only turns it on while it is open. Browsers give pages the webcam only over https or on localhost, so open Home Assistant as `http://localhost:8123` on the screen's PC: the launcher in `extras/` does this, and allows the webcam without a prompt.
+
+## Cameras and replays
+
+Up to two webcams on the screen's PC, next to the Autodarts cameras (which stay untouched: the card only reads their picture):
+
+- **Photo webcam**, on the monitor: player photos (see *Players and photos*).
+- **Thrower webcam**, in front of the oche facing the player: **instant replay**. While a game is on the screen the card keeps the last seconds of this webcam in memory; after a 180 or a game shot (choose which moments: 180, game shot, bullseye, T20, ton plus) it shows **"Let's see that again"**: the last five seconds, then the last two and a half in **slow motion**. *Again* and *Slow motion* replay it, and the video button in the game bar replays the last throw at any time. Nothing is saved or sent anywhere.
+- **Board camera window**: a small live picture from an Autodarts camera in a corner of the board area; tap it for all board cameras big, and tap one to show it in the window. It only streams while it is on the screen.
+
+Set them up on the New game screen under *Screen → Cameras*: which webcam takes photos, which records the thrower (or off), which moments get a replay, and the board camera window. `camera_window: true` and `replay_on: ["180", "game_shot"]` set the defaults in the card options.
+
+What it takes: two USB webcams (a 1080p webcam at 30 fps is plenty; 60 fps ones make smoother slow motion). The replay is recorded by the browser's own video encoder, a few megabits a second, and only while a game is on. Plug the webcams into a different USB controller from the Autodarts cameras, so the board keeps all its bandwidth; if the board PC is short on USB or CPU, the screen can run on a second PC or mini PC with the webcams, pointing at the same Home Assistant and board. Browsers only allow webcams on https or localhost.
 
 ## Your brand and moment pictures
 
