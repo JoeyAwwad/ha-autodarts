@@ -1,0 +1,77 @@
+# Home Assistant helpers for the classic game screen (card option ha_sync: true).
+#
+# Put this file in config/packages/ and add to configuration.yaml:
+#
+#   homeassistant:
+#     packages: !include_dir_named packages
+#
+# The screen writes what it shows into the input_text helpers (for automations, other
+# dashboards, a voice assistant) and follows the buttons, the game select and the player
+# list, so Home Assistant can run the screen. The integration's own games also keep their
+# own entities; these helpers cover every game the screen plays, Wild Mouse included.
+# Turn ha_sync on for one screen only.
+
+input_text:
+  darts_screen_status:
+    name: Darts screen status          # idle, lobby, playing or finished
+    max: 32
+  darts_screen_game:
+    name: Darts screen game
+    max: 64
+  darts_screen_player:
+    name: Darts screen current player
+    max: 64
+  darts_screen_scores:
+    name: Darts screen scores          # "Joey 60 · Sam 20"
+    max: 255
+  darts_screen_last_dart:
+    name: Darts screen last dart       # T20, D16, BULL, 25, MISS
+    max: 16
+  darts_screen_winner:
+    name: Darts screen winner
+    max: 64
+  darts_screen_players:
+    name: Darts screen players         # set it to "Joey, Sam, Alex" to fill the list
+    max: 255
+
+input_button:
+  darts_screen_new_game:
+    name: Darts screen new game
+  darts_screen_rematch:
+    name: Darts screen rematch
+  darts_screen_next_player:
+    name: Darts screen next player
+  darts_screen_undo:
+    name: Darts screen undo
+  darts_screen_end_game:
+    name: Darts screen end game
+
+input_select:
+  darts_screen_game:
+    name: Darts screen start game      # picking a game starts it with the players in the list
+    options:
+      - "—"
+      - "301"
+      - "501"
+      - "701"
+      - "101"
+      - "901"
+      - "1001"
+      - Cricket
+      - Cut-Throat
+      - Tactics
+      - Wild Mouse
+      - Killer
+      - Shanghai
+      - Halve-It
+      - Golf
+      - Baseball
+      - Count-Up
+      - Around the Clock
+      - Doubles
+      - Checkout
+      - Bob's 27
+      - "121"
+      - Catch 40
+      - JDC Challenge
+      - Singles

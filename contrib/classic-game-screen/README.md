@@ -49,6 +49,7 @@ caller_voice: Daniel           # optional: part of the name of a browser voice t
 camera_window: false           # optional: small live board camera on the game screen
 replay_on: ["180", "game_shot"]   # optional: moments that get a thrower replay (180, game_shot, bull, t20, ton)
 auto_next: 0                   # optional: Wild Mouse moves on this many seconds after the third dart (0: when darts are pulled)
+ha_sync: false                 # optional: write the game to Home Assistant helpers and take controls from them
 avatars:                       # optional: pictures by player name, shared by every screen
   Joey: /local/darts/joey.png
 ```
@@ -69,6 +70,20 @@ Every player has a picture on their score card, in the player list and on the re
 4. Otherwise the player's initials.
 
 **Webcam**: any USB webcam works (1080p with autofocus is plenty). Plug it into the PC that shows the screen, on a different USB controller from the Autodarts cameras so it cannot take their bandwidth; the booth only turns it on while it is open. Browsers give pages the webcam only over https or on localhost, so open Home Assistant as `http://localhost:8123` on the screen's PC: the launcher in `extras/` does this, and allows the webcam without a prompt.
+
+## Home Assistant in control
+
+The integration's own games already have their entities. With `ha_sync: true` and the helpers of [`extras/darts-screen-package.yaml`](extras/darts-screen-package.yaml) (a Home Assistant package), every game the screen plays, Wild Mouse included, is also written to Home Assistant, and Home Assistant can run the screen:
+
+| Helper | |
+| --- | --- |
+| `input_text.darts_screen_status` | `idle`, `lobby`, `playing` or `finished` |
+| `input_text.darts_screen_game`, `_player`, `_scores`, `_last_dart`, `_winner` | the game, who is throwing, "Joey 60 · Sam 20", the last dart (T20, BULL …), the winner |
+| `input_text.darts_screen_players` | set it to "Joey, Sam, Alex" to fill the player list |
+| `input_select.darts_screen_game` | picking a game starts it with those players |
+| `input_button.darts_screen_new_game`, `_rematch`, `_next_player`, `_undo`, `_end_game` | the screen's buttons |
+
+So an automation can flash the lights for the winner, a voice assistant can say who is throwing, and a phone dashboard can start the next game. Turn `ha_sync` on for one screen. The status pill also warns when one of the board's cameras reports a problem (the integration's camera problem sensors).
 
 ## Cameras and replays
 
