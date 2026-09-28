@@ -86,7 +86,7 @@ No sign-in, CORS `*`, on port 3180:
 
 Two things to know when building on it:
 
-- **Stuck takeout (2.0.2).** Sometimes, right after a normal takeout, the board goes back to "Takeout in progress" with 0 darts and stays there; darts thrown then are not counted. `POST /api/reset` frees it. The game screen does this after 5 seconds.
+- **Stuck takeout (2.0.2).** Sometimes, right after a normal takeout, the board goes back to "Takeout in progress" with 0 darts and stays there; darts thrown then are not counted. `POST /api/reset` frees it. The game screen does this after 5 seconds (card option `stuck_takeout_reset`; 0 turns it off).
 - **Standby.** Detection stops after 15 idle minutes (`Standby: 15 minutes without activity`). The integration's detection switch starts it again.
 
 ## 5. Home Assistant in Docker

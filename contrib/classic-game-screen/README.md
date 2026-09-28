@@ -13,7 +13,7 @@ A full-screen game screen for a TV or monitor at the board, in the style of play
 - **Game screen**: big scores readable from about 2 m, the three darts of the visit, checkout suggestion, bust, Undo and Next player. Cricket games use a pub-style chalkboard. Training games show the next target and progress. Game shot screen with Rematch.
 - **Drawn dartboard** with a marker where each dart landed (from the board's `/api/events` coordinates). The camera picture is one tap away (warped straight-on with the calibration homography from `/api/system`).
 - **Wild Mouse (Minnesota) Cricket**, which the integration does not have. The card scores it itself from the board's darts.
-- Resets the board when it hangs in "Takeout in progress" with no darts on it (seen with Autodarts 2.0.2), and wakes it from standby.
+- Resets the board when it hangs in "Takeout in progress" with no darts on it (seen with Autodarts 2.0.2), and wakes it from standby. With several screens on one board, keep the reset on one of them and set `stuck_takeout_reset: 0` on the others.
 
 ## Install
 
@@ -31,6 +31,7 @@ camera: 0                      # first camera for the live view
 brand: Darts                   # name on the screens
 photo: /local/my-photo.jpg     # optional picture on the New game and Game shot screens
 overlay: true                  # cover Home Assistant's header and sidebar
+stuck_takeout_reset: 5         # seconds before a stuck takeout is reset; 0 turns it off
 ```
 
 The board's local API must be reachable from the browser (it answers CORS with `*`). If Home Assistant is served over HTTPS, the browser blocks the plain-HTTP board and the card falls back to what the entities carry.
