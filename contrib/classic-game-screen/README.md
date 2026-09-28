@@ -40,7 +40,7 @@ brand: Darts                   # name on the screens
 photo: /local/my-photo.jpg     # optional picture on the New game and Game shot screens
 overlay: true                  # cover Home Assistant's header and sidebar
 stuck_takeout_reset: 5         # seconds before a stuck takeout is reset; 0 turns it off
-theme: machine                 # machine (dark, default), classic (blue), pub, neon or contrast; also on the New game screen
+theme: machine                 # machine (dark, default), red, classic (blue), pub, neon or contrast; also on the New game screen
 player_colors: ["#3b82f6", "#f43f5e", "#22c55e", "#f59e0b"]   # one colour per player, in throwing order
 sound: true                    # sound effects (also on the New game screen and the 🔊 button)
 caller: true                   # the caller: scores, "You require", "Game shot"
@@ -66,6 +66,27 @@ Every player has a picture on their score card, in the player list and on the re
 4. Otherwise the player's initials.
 
 **Webcam**: any USB webcam works (1080p with autofocus is plenty). Plug it into the PC that shows the screen, on a different USB controller from the Autodarts cameras so it cannot take their bandwidth; the booth only turns it on while it is open. Browsers give pages the webcam only over https or on localhost, so open Home Assistant as `http://localhost:8123` on the screen's PC: the launcher in `extras/` does this, and allows the webcam without a prompt.
+
+## Your brand and moment pictures
+
+Make the screen yours with your own artwork, kept in `config/www/darts/` (not in this repository):
+
+```yaml
+brand: Joey Auto Darts
+logo: /local/darts/logo.png          # lobby title and a corner of the board
+hero: /local/darts/hero.jpg          # a wide banner over the games in the lobby
+hero_position: center 30%            # which part of the banner picture to show
+theme: red                           # a black and red look to go with it
+moments:                             # a picture slammed in over the screen when it happens
+  "180": /local/darts/180.jpg
+  bull: /local/darts/bullseye.jpg
+  t20: /local/darts/triple20.jpg     # t1 … t20 for one treble, treble for any
+  bounce_out: /local/darts/bounce-out.jpg
+  miss: /local/darts/out-of-board.jpg
+  game_shot: /local/darts/game-shot.jpg
+```
+
+Every moment is optional; without a picture the built-in effect plays. The keys: `180`, `ton` (100+), `ton40` (140+), `bull`, `outer`, `double`, `treble`, `t1` … `t20`, `miss`, `bounce_out` (a dart the board flagged as a bouncer), `bust`, `three_in_a_bed`, `game_shot`. Square pictures work best for moments; web-optimised JPEGs of about 1024 px keep them quick on a TV. Pictures must be site paths (`/local/…`) or web addresses.
 
 ## Feedback, sound and the caller
 

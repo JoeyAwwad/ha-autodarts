@@ -60,7 +60,7 @@ const maxPlayers = (game) => (LOCAL_GAMES.has(game) ? MAX_PLAYERS : MAX_PLAYERS_
 // Player photos are square JPEGs of this size, small enough to keep many in the browser.
 const PHOTO_PX = 320;
 // Looks for the screen; "machine" is a dark dart-machine look, "classic" the original blue.
-const THEMES = [["Machine", "machine"], ["Classic", "classic"], ["Pub", "pub"], ["Neon", "neon"], ["High contrast", "contrast"]];
+const THEMES = [["Machine", "machine"], ["Red", "red"], ["Classic", "classic"], ["Pub", "pub"], ["Neon", "neon"], ["High contrast", "contrast"]];
 
 // -- Game icons, colours and rules ----------------------------------------------------------
 // Line icons on a 48 x 48 grid, drawn in the tile's accent colour. A game without a drawing
@@ -551,6 +551,12 @@ function chalkboard(rows, players, current, colors = PLAYER_COLORS) {
   return `<div class="chalk ${two ? "two" : "many"}" style="--cols:${players.length}">${head}${body}</div>`;
 }
 
+// Pictures from options and players: only data images, site paths and web addresses, so a
+// picture can never run anything.
+function safeImage(url) {
+  const u = String(url || "");
+  return /^(data:image\/(jpeg|png|webp);base64,|\/|https?:\/\/)/i.test(u) ? u : "";
+}
 function esc(v) {
   return String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 }
@@ -832,7 +838,10 @@ class AutodartsClassicCard extends HTMLElement {
         return;
       }
       if (m.type !== "state" || !m.data) return;
-      this._boardThrows = (m.data.throws || []).length;
+      const throws = m.data.throws || [];
+      // The board flags a dart that bounced out; the miss it becomes shows as a bounce out.
+      if (throws.slice(this._boardThrows || 0).some((t) => t.bouncer)) this._bouncedAt = Date.now();
+      this._boardThrows = throws.length;
       this._drawDarts(m.data.throws || []);
       this._watchTakeout(m.data);
       this._wmThrows(m.data.throws || []);
@@ -1129,6 +1138,8 @@ class AutodartsClassicCard extends HTMLElement {
     this._stage = this.shadowRoot.querySelector(".stage");
     if (this._config.photo) this._stage.style.setProperty("--photo", `url("${this._config.photo}")`);
     this._stage.classList.toggle("has-photo", !!this._config.photo);
+    const logo = safeImage(this._config.logo);
+    if (logo) this._stage.querySelector(".boardwrap").insertAdjacentHTML("beforeend", `<img class="logo-mark" src="${esc(logo)}" alt="${esc(this._config.brand)}">`);
     document.title = this._config.brand;
     this._info = this.shadowRoot.querySelector(".info");
     this._lobbyEl = this.shadowRoot.querySelector(".lobby");
@@ -1212,12 +1223,13 @@ class AutodartsClassicCard extends HTMLElement {
       if (visit.length === 3 && ctx.kind === "x01" && !ctx.bust && !ctx.winner) {
         const total = visit.reduce((t, s) => t + segmentScore(s), 0);
         if (total === 180) {
-          this._celebrate("180", "One hundred and eighty!", "max", ctx.color);
+          this._moment("180", ctx.color, 2600) || this._celebrate("180", "One hundred and eighty!", "max", ctx.color);
           this._play("180");
           this._announce(["180", "One hundred and eighty!"]);
         } else {
           if (total >= 100) {
-            this._celebrate(String(total), total >= 140 ? "Ton forty plus" : "Ton plus", "ton", ctx.color);
+            (total >= 140 && this._moment("ton40", ctx.color)) || this._moment("ton", ctx.color)
+              || this._celebrate(String(total), total >= 140 ? "Ton forty plus" : "Ton plus", "ton", ctx.color);
             this._play("ton");
           }
           this._announce(total ? [`score_${total}`, numberWords(total)] : ["no_score", "No score"]);
@@ -1225,17 +1237,18 @@ class AutodartsClassicCard extends HTMLElement {
       }
     }
     if (ctx.bed && !was.bed) {
-      this._celebrate("3 in a bed", "", "ton", ctx.color);
+      this._moment("three_in_a_bed", ctx.color) || this._celebrate("3 in a bed", "", "ton", ctx.color);
       this._play("ton");
       this._announce(["three_in_a_bed", "Three in a bed!"]);
     }
     if (ctx.bust && !was.bust) {
-      this._celebrate("Bust", "", "bust", ctx.color);
+      this._moment("bust", ctx.color) || this._celebrate("Bust", "", "bust", ctx.color);
       this._play("bust");
       this._announce(["bust", "Bust!"]);
     }
     if (ctx.winner && ctx.winner !== was.winner) {
       this._confetti();
+      this._moment("game_shot", ctx.color, 3200);
       this._play("win");
       this._announce([ctx.match ? "game_shot_match" : "game_shot", ctx.match ? "Game shot, and the match!" : "Game shot!"], this._nameLine(ctx.winner));
     } else if (!ctx.winner && ctx.legs && was.legs && ctx.legs !== was.legs) {
@@ -1255,9 +1268,23 @@ class AutodartsClassicCard extends HTMLElement {
   // The dart that just landed, big over the board for a moment.
   _hitFlash(seg, color) {
     const p = parseSegment(seg), kind = dartKind(seg);
+    // A picture for this kind of dart, if the moments option has one: the treble of the
+    // number first (t20), then any treble; a miss that bounced out is a bounce out.
+    const bounced = kind === "miss" && Date.now() - (this._bouncedAt || 0) < 5000;
+    if (bounced) this._announce(["bounce_out", "Bounce out!"]);
+    const keys = { bull: ["bull"], outer: ["outer"], double: ["double"], triple: [`t${p.number}`, "treble"], miss: [bounced ? "bounce_out" : "miss"] }[kind] || [];
+    if (keys.some((k) => this._moment(k, color, 1700))) return;
     const word = { single: "", double: "Double", triple: "Treble", bull: "Bullseye", outer: "Outer bull", miss: "Miss" }[kind];
     const big = kind === "bull" ? "50" : kind === "outer" ? "25" : kind === "miss" ? "✕" : p.label;
     this._fx(`<div class="hitfx ${kind}" style="--pc:${color}"><b>${esc(big)}</b>${word ? `<small>${esc(word)}</small>` : ""}</div>`, 1100);
+  }
+
+  // A picture from the moments option slammed in over the screen; false when there is none.
+  _moment(key, color, ms = 2200) {
+    const url = safeImage((this._config.moments || {})[key]);
+    if (!url) return false;
+    this._fx(`<div class="moment m-${esc(key)}" style="--pc:${color}"><img src="${esc(url)}" alt=""></div>`, ms);
+    return true;
   }
 
   _celebrate(big, small, kind, color) {
@@ -1454,7 +1481,7 @@ class AutodartsClassicCard extends HTMLElement {
   _avatar(name, i, size = "") {
     const url = this._photoUrl(name);
     // Only pictures the card took, site paths and web addresses; nothing that runs.
-    const safe = /^(data:image\/(jpeg|png|webp);base64,|\/|https?:\/\/)/i.test(url) ? url : "";
+    const safe = safeImage(url);
     const initials = String(name || "?").trim().split(/\s+/).map((w) => w[0]).join("").slice(0, 2).toUpperCase();
     return safe
       ? `<img class="pav ${size}" src="${esc(safe)}" alt="" style="--pc:${this._pc(i)}">`
@@ -1911,7 +1938,7 @@ class AutodartsClassicCard extends HTMLElement {
 
     return `
       <header class="bar">
-        <div class="title"><span class="avatar"></span><span class="gname">${esc(this._config.brand)}</span><span class="fact">New game</span></div>
+        <div class="title">${safeImage(this._config.logo) ? `<img class="logo-head" src="${esc(safeImage(this._config.logo))}" alt="">` : ""}<span class="avatar"></span><span class="gname">${esc(this._config.brand)}</span><span class="fact">New game</span></div>
         <div class="bar-actions">
           ${this._statusPill()}
           ${running ? `<button data-act="close-lobby" class="ghost">Back to game</button>` : ""}
@@ -1920,7 +1947,8 @@ class AutodartsClassicCard extends HTMLElement {
       </header>
       <div class="lobby-grid">
         <div class="games">
-          ${this._config.photo ? `
+          ${safeImage(this._config.hero) ? `
+            <div class="hero wide" style="background-image:url('${esc(safeImage(this._config.hero)).replace(/'/g, "%27")}');background-position:${esc(String(this._config.hero_position || "center 35%").replace(/[^a-z0-9% .-]/gi, ""))}"></div>` : this._config.photo ? `
             <div class="hero">
               <div class="hero-text"><b>${esc(this._config.brand)}</b><span>Pick a game, add the players, game on.</span></div>
             </div>` : ""}
@@ -1961,6 +1989,14 @@ const CSS = `
       radial-gradient(ellipse at 70% 90%, rgba(60, 170, 190, 0.32), transparent 55%),
       radial-gradient(ellipse at 85% 0%, rgba(90, 120, 230, 0.5), transparent 60%),
       linear-gradient(160deg, #221d5c 0%, #2a3688 45%, #2a55a1 100%);
+  }
+  .stage[data-theme="red"] {
+    --glass: rgba(255, 255, 255, 0.045); --glass-2: rgba(255, 255, 255, 0.1); --line: rgba(239, 68, 68, 0.28);
+    --panel: #170a0c; --ink: #1a0506; --overlay: rgba(10, 2, 3, 0.95); --glow: rgba(239, 68, 68, 0.5);
+    --bg:
+      radial-gradient(ellipse at 50% -25%, rgba(220, 38, 38, 0.38), transparent 55%),
+      radial-gradient(ellipse at 100% 110%, rgba(220, 38, 38, 0.16), transparent 50%),
+      #080405;
   }
   .stage[data-theme="pub"] {
     --glass: rgba(0, 0, 0, 0.22); --glass-2: rgba(255, 255, 255, 0.1); --line: rgba(255, 255, 255, 0.14);
@@ -2275,6 +2311,20 @@ const CSS = `
   @keyframes cel { 0% { opacity: 0; } 8% { opacity: 1; } 82% { opacity: 1; } 100% { opacity: 0; } }
   @keyframes slam { 0% { transform: scale(2.6); opacity: 0; } 12% { transform: scale(0.94); opacity: 1; } 20% { transform: scale(1.04); } 28% { transform: scale(1); } }
   @keyframes spin { to { transform: translate(-50%, -50%) rotate(360deg); } }
+  /* Moment pictures: a square image slammed in over the screen, glowing in the thrower's colour. */
+  .moment { position: absolute; inset: 0; display: grid; place-items: center; background: radial-gradient(circle, color-mix(in srgb, var(--pc) 30%, transparent), rgba(0, 0, 0, 0.7) 70%); animation: cel 2.2s ease-out forwards; }
+  .moment img {
+    width: min(78vh, 86vw); height: min(78vh, 86vw); object-fit: cover; border-radius: 22px;
+    box-shadow: 0 0 0 4px var(--pc), 0 0 80px color-mix(in srgb, var(--pc) 70%, transparent), 0 30px 90px rgba(0, 0, 0, 0.7);
+    animation: moment-in 2.2s cubic-bezier(0.2, 0.9, 0.3, 1.1) forwards;
+  }
+  .moment.m-game_shot img { animation-duration: 3.2s; }
+  @keyframes moment-in { 0% { transform: scale(0.4) rotate(-8deg); opacity: 0; } 14% { transform: scale(1.06) rotate(1deg); opacity: 1; } 24% { transform: scale(1) rotate(0); } 85% { opacity: 1; transform: scale(1.02); } 100% { opacity: 0; transform: scale(1.08); } }
+  .logo-mark { position: absolute; right: 0; top: 0; width: clamp(64px, 10vh, 130px); height: auto; border-radius: 12px; opacity: 0.9; pointer-events: none; z-index: 1; }
+  .logo-head { height: clamp(40px, 6vh, 64px); width: auto; border-radius: 10px; align-self: center; }
+  .hero.wide { background-size: cover; background-repeat: no-repeat; height: clamp(200px, 32vh, 360px); }
+  .hero.wide::after { display: none; }
+  @media (prefers-reduced-motion: reduce) { .moment, .moment img { animation: none !important; } }
   .confetti i { position: absolute; top: -20px; height: 14px; border-radius: 2px; animation: fall linear forwards; }
   @keyframes fall { to { transform: translateY(110vh) rotate(var(--r)); } }
   @media (prefers-reduced-motion: reduce) { .hitfx, .celebrate, .celebrate b, .celebrate .rays, .player.active { animation: none !important; } .confetti { display: none; } }
