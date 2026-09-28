@@ -562,10 +562,168 @@ function save(key, value) {
   } catch (err) { /* private mode: the choice is just not remembered */ }
 }
 
+// -- Sound effects and the caller --------------------------------------------------------------
+// Effects are synthesised with Web Audio, so the card needs no sound files. The caller plays
+// the recording <voice_path><name>.mp3 when there is one and speaks the line otherwise.
+
+const ONES = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve",
+  "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen", "nineteen"];
+const TENS = ["", "", "twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety"];
+
+// 140 -> "one hundred and forty", the way a caller says it.
+function numberWords(n) {
+  n = Math.round(Math.abs(Number(n) || 0));
+  if (n >= 1000) return String(n);
+  const under100 = (m) => (m < 20 ? ONES[m] : TENS[Math.floor(m / 10)] + (m % 10 ? `-${ONES[m % 10]}` : ""));
+  if (n < 100) return under100(n);
+  const rest = n % 100;
+  return `${ONES[Math.floor(n / 100)]} hundred${rest ? ` and ${under100(rest)}` : ""}`;
+}
+
+class Sound {
+  constructor() {
+    this.ctx = null;
+  }
+
+  // Browsers start audio only after a tap, unless the kiosk allows autoplay.
+  unlock() {
+    try {
+      this.ctx ??= new (window.AudioContext || window.webkitAudioContext)();
+      if (this.ctx.state === "suspended") this.ctx.resume();
+    } catch (err) {
+      this.ctx = null;
+    }
+  }
+
+  // One tone: frequency (Hz, or [from, to] for a glide), start offset and length in seconds.
+  _tone(freq, at, len, { type = "sine", gain = 0.25 } = {}) {
+    const c = this.ctx, t = c.currentTime + at;
+    const o = c.createOscillator(), g = c.createGain();
+    o.type = type;
+    const [f1, f2] = Array.isArray(freq) ? freq : [freq, freq];
+    o.frequency.setValueAtTime(f1, t);
+    if (f2 !== f1) o.frequency.exponentialRampToValueAtTime(f2, t + len);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(gain, t + 0.01);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + len);
+    o.connect(g).connect(c.destination);
+    o.start(t);
+    o.stop(t + len + 0.05);
+  }
+
+  // A short burst of noise: the thud of a dart in the board.
+  _thud(at = 0, gain = 0.5) {
+    const c = this.ctx, t = c.currentTime + at, len = 0.09;
+    const buf = c.createBuffer(1, Math.floor(c.sampleRate * len), c.sampleRate);
+    const d = buf.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / d.length) ** 3;
+    const src = c.createBufferSource(), f = c.createBiquadFilter(), g = c.createGain();
+    f.type = "lowpass";
+    f.frequency.value = 900;
+    g.gain.value = gain;
+    src.buffer = buf;
+    src.connect(f).connect(g).connect(c.destination);
+    src.start(t);
+  }
+
+  play(name) {
+    if (!this.ctx) return;
+    try {
+      const T = (...a) => this._tone(...a);
+      switch (name) {
+        case "single": this._thud(); T(220, 0, 0.12, { gain: 0.12 }); break;
+        case "double": this._thud(); T(523, 0.02, 0.14); T(784, 0.12, 0.2); break;
+        case "triple": this._thud(); T(523, 0.02, 0.12); T(659, 0.1, 0.12); T(1047, 0.18, 0.28); break;
+        case "outer": this._thud(); T(330, 0.02, 0.2, { type: "triangle" }); break;
+        case "bull": this._thud(0, 0.7); T([90, 45], 0, 0.5, { gain: 0.5 }); T(1319, 0.05, 0.5, { gain: 0.12, type: "triangle" }); break;
+        case "miss": T([160, 90], 0, 0.22, { type: "square", gain: 0.06 }); break;
+        case "bust": T([300, 70], 0, 0.6, { type: "sawtooth", gain: 0.18 }); break;
+        case "closed": T(880, 0, 0.1, { type: "triangle" }); T(1175, 0.08, 0.18, { type: "triangle" }); break;
+        case "ton": [523, 659, 784].forEach((f, i) => T(f, i * 0.09, 0.25, { type: "triangle" })); break;
+        case "180": [523, 659, 784, 1047, 1319].forEach((f, i) => T(f, i * 0.1, 0.35, { type: "sawtooth", gain: 0.12 })); T([60, 40], 0, 1.2, { gain: 0.4 }); break;
+        case "win": [[523, 659, 784], [587, 740, 880], [659, 831, 988, 1319]].forEach((ch, i) => ch.forEach((f) => T(f, i * 0.28, i === 2 ? 1.2 : 0.3, { type: "triangle", gain: 0.1 }))); break;
+        default: break;
+      }
+    } catch (err) { /* audio is a nicety */ }
+  }
+}
+
+// Calls lines one after the other, never over each other.
+class Caller {
+  constructor() {
+    this.queue = [];
+    this.busy = false;
+    this.voicePath = "";
+    this.voiceName = "";
+  }
+
+  // line: [recording name, text to speak]; several lines are called in turn.
+  say(...lines) {
+    this.queue.push(...lines);
+    if (!this.busy) this._next();
+  }
+
+  stop() {
+    this.queue = [];
+    this.busy = false;
+    try { window.speechSynthesis?.cancel(); } catch (err) { /* nothing to stop */ }
+  }
+
+  _next() {
+    const line = this.queue.shift();
+    if (!line) { this.busy = false; return; }
+    this.busy = true;
+    const [file, text] = line;
+    // A missing recording fails twice (error event and play()); the line is spoken once.
+    let settled = false;
+    const once = (fn) => () => { if (!settled) { settled = true; fn(); } };
+    const speak = once(() => this._speak(text));
+    if (this.voicePath && file) {
+      try {
+        const audio = new Audio(`${this.voicePath}${file}.mp3`);
+        audio.onended = once(() => this._next());
+        audio.onerror = speak;
+        const p = audio.play();
+        if (p?.catch) p.catch(speak);
+        return;
+      } catch (err) { /* fall back to speech */ }
+    }
+    speak();
+  }
+
+  _speak(text) {
+    const synth = window.speechSynthesis;
+    if (!synth || !text || typeof SpeechSynthesisUtterance === "undefined") return this._next();
+    const u = new SpeechSynthesisUtterance(text);
+    const voices = synth.getVoices?.() || [];
+    const voice = (this.voiceName && voices.find((v) => v.name.includes(this.voiceName)))
+      || voices.find((v) => /en[-_]GB/i.test(v.lang)) || voices.find((v) => /^en/i.test(v.lang));
+    if (voice) u.voice = voice;
+    u.rate = 1.02;
+    u.pitch = 0.95;
+    u.onend = () => this._next();
+    u.onerror = () => this._next();
+    synth.speak(u);
+  }
+}
+
+// What the board saw, as the caller and the effects name it.
+function dartKind(seg) {
+  const p = parseSegment(seg);
+  return { BULL: "bull", OUTER: "outer", T: "triple", D: "double", S: "single", M: "miss" }[p.ring] || "miss";
+}
+
 class AutodartsClassicCard extends HTMLElement {
   setConfig(config) {
     this._config = { prefix: "autodarts_board", camera: 0, view: "virtual", overlay: true, brand: "Darts", photo: "", stuck_takeout_reset: STUCK_TAKEOUT_S, theme: "machine", ...config };
     this._theme = load("theme", this._config.theme);
+    this._soundOn = load("sound", this._config.sound !== false);
+    this._callerOn = load("caller", this._config.caller !== false);
+    this._sfx ??= new Sound();
+    this._caller ??= new Caller();
+    const vp = String(this._config.voice_path || "");
+    this._caller.voicePath = vp && !vp.endsWith("/") ? `${vp}/` : vp;
+    this._caller.voiceName = String(this._config.caller_voice || "");
     const colors = Array.isArray(this._config.player_colors) && this._config.player_colors.length ? this._config.player_colors : PLAYER_COLORS;
     // Colours go into style attributes: only hex values and plain colour names.
     this._colors = colors.map(String).filter((c) => /^(#[0-9a-f]{3,8}|[a-z]{3,20})$/i.test(c));
@@ -805,6 +963,7 @@ class AutodartsClassicCard extends HTMLElement {
       this._saveWm();
       this._lobby = null;
       this._confirmEnd = false;
+      this._announce(["game_on", "Game on!"]);
       return this._render();
     }
     this._wm = null;
@@ -823,6 +982,7 @@ class AutodartsClassicCard extends HTMLElement {
       this._lobby = null;
       this._confirmEnd = false;
       this._key = null;
+      this._announce(["game_on", "Game on!"]);
       this._render();
     }
   }
@@ -883,6 +1043,15 @@ class AutodartsClassicCard extends HTMLElement {
       case "bot": s.bot = Number(value); break;
       case "holes": s.holes = value; break;
       case "theme": this._theme = value; save("theme", value); break;
+      case "sound": this._soundOn = !this._soundOn; save("sound", this._soundOn); if (this._soundOn) this._sfx.unlock(); break;
+      case "caller": this._callerOn = !this._callerOn; save("caller", this._callerOn); if (!this._callerOn) this._caller.stop(); break;
+      case "mute": {
+        const on = !(this._soundOn || this._callerOn);
+        this._soundOn = this._callerOn = on;
+        save("sound", on); save("caller", on);
+        if (on) this._sfx.unlock(); else this._caller.stop();
+        break;
+      }
       case "bed": s.bed = !s.bed; break;
       case "double_out": s.double_out = !s.double_out; break;
       case "double_in": s.double_in = !s.double_in; break;
@@ -937,6 +1106,7 @@ class AutodartsClassicCard extends HTMLElement {
         <div class="lobby"></div>
         <div class="pad-layer"></div>
         <div class="sheet-layer"></div>
+        <div class="fx-layer" aria-live="polite"></div>
         <div class="toast" role="status"></div>
       </div>`;
     this._stage = this.shadowRoot.querySelector(".stage");
@@ -947,6 +1117,7 @@ class AutodartsClassicCard extends HTMLElement {
     this._lobbyEl = this.shadowRoot.querySelector(".lobby");
     this._padEl = this.shadowRoot.querySelector(".pad-layer");
     this._sheetEl = this.shadowRoot.querySelector(".sheet-layer");
+    this._fxEl = this.shadowRoot.querySelector(".fx-layer");
     this._viewEl = this.shadowRoot.querySelector(".view");
     this._plane = this.shadowRoot.querySelector(".plane");
     this._img = this.shadowRoot.querySelector(".cam");
@@ -959,6 +1130,7 @@ class AutodartsClassicCard extends HTMLElement {
     });
     new ResizeObserver(() => this._fit()).observe(this._viewEl);
     this._stage.addEventListener("click", (ev) => {
+      if (this._soundOn) this._sfx.unlock(); // browsers start audio on a tap
       const b = ev.target.closest("[data-act]");
       if (b && !b.disabled) this._act(b.dataset.act, b.dataset.value);
     });
@@ -969,6 +1141,7 @@ class AutodartsClassicCard extends HTMLElement {
       if (name) this._act("add-player", name);
     });
     this._connectEvents();
+    if (this._soundOn) this._sfx.unlock(); // works at once where the kiosk allows autoplay
   }
 
   _render() {
@@ -989,6 +1162,130 @@ class AutodartsClassicCard extends HTMLElement {
     this._sheetEl.classList.toggle("open", !!sheet);
     this._sheetEl.innerHTML = sheet ? `<div class="pad-back" data-act="sheet-close"></div>${sheet}` : "";
     this._syncLive();
+    this._tweenScores();
+    this._fxArmed = true; // the first render after loading replays nothing
+  }
+
+  // -- feedback: effects, celebrations and the caller -------------------------------------
+
+  _play(name) {
+    if (this._soundOn) this._sfx.play(name);
+  }
+
+  _announce(...lines) {
+    if (this._callerOn) this._caller.say(...lines);
+  }
+
+  // What changed since the last render, told with effects and the caller: every new dart,
+  // the end of a visit, a bust, a closed target, a new thrower, a won leg or game.
+  // ctx: {game, kind, color, bust, winner, match, legs, turn, turnName, remaining, requires, closed, bed}
+  _feedback(prev, visit, ctx) {
+    const was = this._fxPrev || {};
+    this._fxPrev = ctx;
+    if (!this._fxArmed || ctx.game !== was.game) return;
+    const grew = visit.length > prev.length && prev.every((s, i) => visit[i] === s);
+    if (grew) {
+      const seg = visit[visit.length - 1];
+      this._hitFlash(seg, ctx.color);
+      this._play(dartKind(seg));
+      if (ctx.closed) {
+        this._play("closed");
+        if (ctx.closed === "D" || ctx.closed === "T") this._announce([`${ctx.closed === "D" ? "doubles" : "triples"}_closed`, `${ctx.closed === "D" ? "Doubles" : "Triples"} closed!`]);
+      }
+      if (visit.length === 3 && ctx.kind === "x01" && !ctx.bust && !ctx.winner) {
+        const total = visit.reduce((t, s) => t + segmentScore(s), 0);
+        if (total === 180) {
+          this._celebrate("180", "One hundred and eighty!", "max", ctx.color);
+          this._play("180");
+          this._announce(["180", "One hundred and eighty!"]);
+        } else {
+          if (total >= 100) {
+            this._celebrate(String(total), total >= 140 ? "Ton forty plus" : "Ton plus", "ton", ctx.color);
+            this._play("ton");
+          }
+          this._announce(total ? [`score_${total}`, numberWords(total)] : ["no_score", "No score"]);
+        }
+      }
+    }
+    if (ctx.bed && !was.bed) {
+      this._celebrate("3 in a bed", "", "ton", ctx.color);
+      this._play("ton");
+      this._announce(["three_in_a_bed", "Three in a bed!"]);
+    }
+    if (ctx.bust && !was.bust) {
+      this._celebrate("Bust", "", "bust", ctx.color);
+      this._play("bust");
+      this._announce(["bust", "Bust!"]);
+    }
+    if (ctx.winner && ctx.winner !== was.winner) {
+      this._confetti();
+      this._play("win");
+      this._announce([ctx.match ? "game_shot_match" : "game_shot", ctx.match ? "Game shot, and the match!" : "Game shot!"], this._nameLine(ctx.winner));
+    } else if (!ctx.winner && ctx.legs && was.legs && ctx.legs !== was.legs) {
+      this._play("win");
+      this._announce(["game_shot_leg", "Game shot, and the leg!"]);
+    } else if (ctx.turn != null && was.turn != null && ctx.turn !== was.turn && !ctx.winner) {
+      const r = Number(ctx.remaining);
+      if (ctx.kind === "x01" && ctx.requires && r >= 2 && r <= 170) this._announce(this._nameLine(ctx.turnName), ["you_require", "you require"], [`score_${r}`, numberWords(r)]);
+    }
+  }
+
+  // A player's name for the caller: name_<name>.mp3, or spoken.
+  _nameLine(name) {
+    return [`name_${String(name || "").toLowerCase().replace(/[^a-z0-9]+/g, "_")}`, String(name || "")];
+  }
+
+  // The dart that just landed, big over the board for a moment.
+  _hitFlash(seg, color) {
+    const p = parseSegment(seg), kind = dartKind(seg);
+    const word = { single: "", double: "Double", triple: "Treble", bull: "Bullseye", outer: "Outer bull", miss: "Miss" }[kind];
+    const big = kind === "bull" ? "50" : kind === "outer" ? "25" : kind === "miss" ? "✕" : p.label;
+    this._fx(`<div class="hitfx ${kind}" style="--pc:${color}"><b>${esc(big)}</b>${word ? `<small>${esc(word)}</small>` : ""}</div>`, 1100);
+  }
+
+  _celebrate(big, small, kind, color) {
+    this._fx(`<div class="celebrate ${kind}" style="--pc:${color}"><i class="rays"></i><b>${esc(big)}</b>${small ? `<small>${esc(small)}</small>` : ""}</div>`, 2600);
+  }
+
+  // Paper in the players' colours, falling over the game shot screen.
+  _confetti() {
+    const bits = Array.from({ length: 90 }, (_, i) => {
+      const c = this._colors[i % this._colors.length], x = Math.random() * 100, d = (Math.random() * 1.4).toFixed(2);
+      const t = (2.4 + Math.random() * 1.8).toFixed(2), r = Math.round(Math.random() * 720 - 360), w = 6 + Math.round(Math.random() * 8);
+      return `<i style="left:${x.toFixed(1)}%;background:${i % 5 === 0 ? "#fcd34d" : c};width:${w}px;animation-delay:${d}s;animation-duration:${t}s;--r:${r}deg"></i>`;
+    }).join("");
+    this._fx(`<div class="confetti">${bits}</div>`, 5000);
+  }
+
+  // One effect at a time in the effects layer; it clears itself.
+  _fx(html, ms) {
+    if (!this._fxEl) return;
+    this._fxEl.insertAdjacentHTML("beforeend", html);
+    const el = this._fxEl.lastElementChild;
+    [...this._fxEl.children].slice(0, -1).forEach((c) => { if (!c.classList.contains("confetti")) c.remove(); });
+    setTimeout(() => el.remove(), ms);
+  }
+
+  // Scores run down (or up) to their new value instead of jumping.
+  _tweenScores() {
+    const now = {};
+    const reduced = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
+    this._info?.querySelectorAll(".player .score").forEach((el, i) => {
+      const to = Number(el.textContent);
+      if (!Number.isFinite(to) || el.textContent.trim() === "") return;
+      now[i] = to;
+      const from = this._scoreVals?.[i];
+      if (!this._fxArmed || reduced || from == null || from === to || typeof requestAnimationFrame !== "function") return;
+      const start = performance.now(), len = Math.min(900, 250 + Math.abs(to - from) * 4);
+      const step = (t) => {
+        const k = Math.min(1, (t - start) / len), e = 1 - (1 - k) ** 3;
+        if (!el.isConnected) return;
+        el.textContent = String(Math.round(from + (to - from) * e));
+        if (k < 1) requestAnimationFrame(step);
+      };
+      requestAnimationFrame(step);
+    });
+    this._scoreVals = now;
   }
 
   // -- correcting and adding darts -------------------------------------------------------
@@ -1083,12 +1380,14 @@ class AutodartsClassicCard extends HTMLElement {
           ${RULES[this._currentGame()] ? `<button data-act="sheet" data-value="${esc(this._currentGame())}" class="ghost icon info-bar" title="How to play" aria-label="How to play">i</button>` : ""}
           <button data-act="new" class="ghost">New game</button>
           <button data-act="end" class="ghost ${this._confirmEnd ? "danger" : ""}">${this._confirmEnd ? "Tap again to end" : "End game"}</button>
+          <button data-act="mute" class="ghost icon" title="Sound and caller" aria-label="Sound and caller">${this._soundOn || this._callerOn ? "🔊" : "🔇"}</button>
           <button data-act="full" class="ghost icon" title="Full screen">⛶</button>
         </div>
       </header>`;
   }
 
-  _finishBoard(visit, color = this._colors[0]) {
+  _finishBoard(visit, color = this._colors[0], ctx = {}) {
+    this._feedback(this._lastVisit || [], visit, { color, ...ctx });
     this._lastVisit = visit;
     if (!visit.length && !(this._lastThrows || []).length) this._lastThrows = [];
     this._virtual.style.setProperty("--pc", color);
@@ -1204,7 +1503,7 @@ class AutodartsClassicCard extends HTMLElement {
             <button class="big" data-act="new">New game</button>
           </div>
         </div>` : ""}`;
-    this._finishBoard(visit);
+    this._finishBoard(visit, this._colors[0], { game, kind: "drill" });
   }
 
   _renderWildMouse() {
@@ -1272,7 +1571,12 @@ class AutodartsClassicCard extends HTMLElement {
             stats: [...(legs ? [["legs", p.legs]] : []), ["MPR", this._mpr(p)], ["darts", p.darts || 0]],
           })),
       }) : ""}`;
-    this._finishBoard(wm.visit.map((d) => d.seg), this._pc(wm.current));
+    const last = wm.visit[wm.visit.length - 1];
+    this._finishBoard(wm.visit.map((d) => d.seg), this._pc(wm.current), {
+      game: "wild_mouse", kind: "wm", winner: winner?.name, match: legs, bed: !!wm.bedVisit, turn: wm.current,
+      legs: wm.players.map((p) => p.legs).join(),
+      closed: last && last.marks > 0 && wm.players[wm.current].marks[last.target] >= 3 ? last.target : null,
+    });
   }
 
   _renderGame() {
@@ -1358,7 +1662,11 @@ class AutodartsClassicCard extends HTMLElement {
         </div>
       </div>
       ${winner ? this._resultScreen({ winner: winner.name, undo: !!a.undo, rows: this._resultRows(kind, a, scores) }) : ""}`;
-    this._finishBoard(visit, this._pc(current));
+    this._finishBoard(visit, this._pc(current), {
+      game, kind, bust: !!a.bust, winner: winner?.name, match: legsToWin > 1 || setsToWin > 1, turn: a.player,
+      turnName: scores[current]?.name, legs: scores.map((p) => `${p.sets ?? 0}.${p.legs ?? 0}`).join(),
+      remaining: scores[current]?.remaining, requires: !!checkout && checkout !== "unknown",
+    });
   }
 
   _renderLobby() {
@@ -1434,6 +1742,7 @@ class AutodartsClassicCard extends HTMLElement {
           <button class="primary start" data-act="start">Start ${esc(GAME_NAME[g] || g)}</button>
           <h3>Screen</h3>
           <div class="opt"><label>Look</label>${seg("theme", THEMES, this._theme)}</div>
+          <div class="opt"><label>Sound</label><div class="toggles">${toggle("sound", "Effects", this._soundOn)}${toggle("caller", "Caller", this._callerOn)}</div></div>
         </aside>
       </div>`;
   }
@@ -1676,6 +1985,47 @@ const CSS = `
   .gs-actions { display: flex; gap: 12px; justify-content: center; margin-top: 12px; flex-wrap: wrap; }
   @keyframes pop { from { opacity: 0; transform: scale(1.05); } }
   .gs-undo { justify-self: center; margin-top: 18px; font-size: 0.95rem; opacity: 0.75; }
+  /* Effects: the dart that just landed, celebrations and confetti, above the game shot screen. */
+  .fx-layer { position: fixed; inset: 0; z-index: 7; pointer-events: none; overflow: hidden; }
+  .hitfx {
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center;
+    padding: 18px 42px; border-radius: 22px; background: rgba(0, 0, 0, 0.55); border: 3px solid var(--pc);
+    box-shadow: 0 0 60px color-mix(in srgb, var(--pc) 55%, transparent); animation: hit 1.1s cubic-bezier(0.2, 0.9, 0.3, 1.2) forwards;
+  }
+  @media (min-aspect-ratio: 5/4) { .hitfx { left: 74%; } }
+  .hitfx b { font-size: clamp(64px, 14vh, 170px); font-weight: 900; line-height: 1; letter-spacing: -0.02em; }
+  .hitfx small { font-size: clamp(1.1rem, 3vh, 2rem); font-weight: 800; text-transform: uppercase; letter-spacing: 0.25em; color: var(--pc); }
+  .hitfx.double b { color: #4ade80; text-shadow: 0 0 30px rgba(74, 222, 128, 0.7); }
+  .hitfx.triple b { color: #f87171; text-shadow: 0 0 30px rgba(248, 113, 113, 0.8); }
+  .hitfx.triple { animation-name: hit-big; }
+  .hitfx.bull b, .hitfx.outer b { color: #fde047; text-shadow: 0 0 40px rgba(253, 224, 71, 0.9); }
+  .hitfx.bull { animation-name: hit-big; border-color: #fde047; }
+  .hitfx.miss { border-color: rgba(255, 255, 255, 0.3); box-shadow: none; animation-name: hit-miss; }
+  .hitfx.miss b { opacity: 0.6; }
+  @keyframes hit { 0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); } 18% { opacity: 1; transform: translate(-50%, -50%) scale(1.08); } 30% { transform: translate(-50%, -50%) scale(1); } 80% { opacity: 1; } 100% { opacity: 0; transform: translate(-50%, -50%) scale(0.96); } }
+  @keyframes hit-big { 0% { opacity: 0; transform: translate(-50%, -50%) scale(0.3) rotate(-6deg); } 20% { opacity: 1; transform: translate(-50%, -50%) scale(1.22) rotate(2deg); } 34% { transform: translate(-50%, -50%) scale(1) rotate(0); } 80% { opacity: 1; } 100% { opacity: 0; } }
+  @keyframes hit-miss { 0% { opacity: 0; } 15% { opacity: 1; transform: translate(-54%, -50%); } 25% { transform: translate(-46%, -50%); } 35% { transform: translate(-50%, -50%); } 75% { opacity: 1; } 100% { opacity: 0; } }
+  .celebrate {
+    position: absolute; inset: 0; display: grid; place-content: center; text-align: center; animation: cel 2.6s ease-out forwards;
+    background: radial-gradient(circle, color-mix(in srgb, var(--pc) 35%, transparent), rgba(0, 0, 0, 0.75) 70%);
+  }
+  .celebrate b { position: relative; font-size: clamp(120px, 34vh, 380px); font-weight: 900; line-height: 0.9; letter-spacing: -0.04em; color: #fff; text-shadow: 0 0 60px var(--pc), 0 0 120px var(--pc); animation: slam 2.6s cubic-bezier(0.2, 0.9, 0.3, 1.1) forwards; }
+  .celebrate small { position: relative; font-size: clamp(1.4rem, 4vh, 3rem); font-weight: 800; text-transform: uppercase; letter-spacing: 0.3em; color: #fcd34d; margin-top: 10px; }
+  .celebrate.ton b { font-size: clamp(90px, 24vh, 260px); }
+  .celebrate.bust { background: radial-gradient(circle, rgba(220, 38, 38, 0.45), rgba(0, 0, 0, 0.7) 70%); }
+  .celebrate.bust b { color: #fecaca; text-shadow: 0 0 60px #dc2626; text-transform: uppercase; font-size: clamp(90px, 22vh, 240px); }
+  .celebrate .rays {
+    position: absolute; left: 50%; top: 50%; width: 180vmax; height: 180vmax; transform: translate(-50%, -50%); opacity: 0.35;
+    background: repeating-conic-gradient(from 0deg, color-mix(in srgb, var(--pc) 70%, transparent) 0 6deg, transparent 6deg 18deg);
+    animation: spin 8s linear infinite; -webkit-mask-image: radial-gradient(circle, #000 10%, transparent 55%); mask-image: radial-gradient(circle, #000 10%, transparent 55%);
+  }
+  .celebrate.bust .rays { display: none; }
+  @keyframes cel { 0% { opacity: 0; } 8% { opacity: 1; } 82% { opacity: 1; } 100% { opacity: 0; } }
+  @keyframes slam { 0% { transform: scale(2.6); opacity: 0; } 12% { transform: scale(0.94); opacity: 1; } 20% { transform: scale(1.04); } 28% { transform: scale(1); } }
+  @keyframes spin { to { transform: translate(-50%, -50%) rotate(360deg); } }
+  .confetti i { position: absolute; top: -20px; height: 14px; border-radius: 2px; animation: fall linear forwards; }
+  @keyframes fall { to { transform: translateY(110vh) rotate(var(--r)); } }
+  @media (prefers-reduced-motion: reduce) { .hitfx, .celebrate, .celebrate b, .celebrate .rays, .player.active { animation: none !important; } .confetti { display: none; } }
   .gs-name { color: var(--pc); text-shadow: 0 0 40px color-mix(in srgb, var(--pc) 60%, transparent); line-height: 1; }
   .res-table { display: flex; flex-direction: column; gap: 8px; width: min(820px, 92vw); margin: 10px auto 0; }
   .res-row {

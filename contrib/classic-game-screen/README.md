@@ -42,9 +42,33 @@ overlay: true                  # cover Home Assistant's header and sidebar
 stuck_takeout_reset: 5         # seconds before a stuck takeout is reset; 0 turns it off
 theme: machine                 # machine (dark, default), classic (blue), pub, neon or contrast; also on the New game screen
 player_colors: ["#3b82f6", "#f43f5e", "#22c55e", "#f59e0b"]   # one colour per player, in throwing order
+sound: true                    # sound effects (also on the New game screen and the 🔊 button)
+caller: true                   # the caller: scores, "You require", "Game shot"
+voice_path: /local/darts/voice/   # optional: your own recordings, see Feedback, sound and the caller
+caller_voice: Daniel           # optional: part of the name of a browser voice to use
 ```
 
 The board's local API must be reachable from the browser (it answers CORS with `*`). If Home Assistant is served over HTTPS, the browser blocks the plain-HTTP board and the card falls back to what the entities carry.
+
+## Feedback, sound and the caller
+
+Every dart flashes big over the board for a moment, styled by what it hit (single, double, treble, bull, miss), with its own sound. A 180 and a ton plus get a full-screen celebration, and so do three in a bed and a bust; a won game gets confetti and a fanfare. Scores run down to their new value instead of jumping.
+
+| Treble | Bullseye | 180 |
+| --- | --- | --- |
+| ![](images/hit-treble.png) | ![](images/hit-bull.png) | ![](images/celebrate-180.png) |
+
+The **caller** calls every X01 visit ("One hundred and forty"), tells the next thrower what they require when they are on a finish, and calls "Game on", "Bust", "Three in a bed", "Doubles closed" and "Game shot, and the match". It uses the browser's voice, or your own recordings: put MP3 files named as below in `config/www/darts/voice/` and set `voice_path: /local/darts/voice/`. A missing file is spoken instead, so recordings can be added a few at a time.
+
+| File | Line |
+| --- | --- |
+| `game_on`, `180`, `game_shot`, `game_shot_leg`, `game_shot_match` | "Game on!", "One hundred and eighty!", "Game shot!" … |
+| `bust`, `no_score`, `you_require` | "Bust!", "No score", "You require…" |
+| `three_in_a_bed`, `doubles_closed`, `triples_closed` | Wild Mouse |
+| `score_0` … `score_180` | every visit score, and the number after "You require" |
+| `name_<name>`, for example `name_joey` | player names, lower case, spaces as `_` |
+
+Most browsers play sound only after a first tap on the screen; the launcher in `extras/` starts Chrome with autoplay allowed, so it works at once. The 🔊 button in the game bar mutes effects and caller together.
 
 ## Correcting darts
 
