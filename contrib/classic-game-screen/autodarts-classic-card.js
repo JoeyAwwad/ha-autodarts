@@ -13,6 +13,7 @@
  *   overlay: true              # optional: cover Home Assistant's own header and sidebar
  *   brand: Darts               # optional: the name on the screens
  *   photo: /local/my-photo.jpg # optional: a picture for the New game and Game shot screens
+ *   stuck_takeout_reset: 5     # optional: seconds before a stuck takeout is reset; 0 turns it off
  */
 
 const ORDER = [20, 1, 18, 4, 13, 6, 10, 15, 2, 17, 3, 19, 7, 16, 8, 11, 14, 9, 12, 5];
@@ -22,8 +23,9 @@ const R = { bull: 6.35 / 170, outer: 15.9 / 170, tripleIn: 99 / 170, tripleOut: 
 // bull at (500, 500) and the double ring's outer edge at radius PLANE_R.
 const PLANE = 1000, PLANE_R = 360, PLANE_SHOW = 440;
 // A takeout the board starts on an empty board and never finishes (Autodarts 2.0.2) is
-// reset after this long, so play can go on.
-const STUCK_TAKEOUT_MS = 5000;
+// reset after this many seconds, so play can go on. The stuck_takeout_reset option
+// changes it; 0 leaves the board alone.
+const STUCK_TAKEOUT_S = 5;
 
 const GROUPS = [
   { name: "X01", games: [
@@ -295,7 +297,7 @@ function save(key, value) {
 
 class AutodartsClassicCard extends HTMLElement {
   setConfig(config) {
-    this._config = { prefix: "autodarts_board", camera: 0, view: "virtual", overlay: true, brand: "Darts", photo: "", ...config };
+    this._config = { prefix: "autodarts_board", camera: 0, view: "virtual", overlay: true, brand: "Darts", photo: "", stuck_takeout_reset: STUCK_TAKEOUT_S, ...config };
     this._key = null;
     this._view = load("board-view", this._config.view);
     this._cam = load("camera", Number(this._config.camera) || 0);
@@ -415,7 +417,8 @@ class AutodartsClassicCard extends HTMLElement {
   }
 
   _watchTakeout(state) {
-    const stuck = state.status === "Takeout in progress" && !state.numThrows;
+    const wait = Number(this._config.stuck_takeout_reset);
+    const stuck = state.status === "Takeout in progress" && !state.numThrows && wait > 0;
     if (!stuck) {
       clearTimeout(this._stuckTimer);
       this._stuckTimer = null;
@@ -426,7 +429,7 @@ class AutodartsClassicCard extends HTMLElement {
       this._stuckTimer = null;
       fetch(`${this._boardUrl()}/api/reset`, { method: "POST" }).catch(() => {});
       this._toast("The board got stuck after the takeout, so it was reset");
-    }, STUCK_TAKEOUT_MS);
+    }, wait * 1000);
   }
 
   _stopLive() {
