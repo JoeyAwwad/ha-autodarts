@@ -100,3 +100,10 @@ test("a leader who closes everything but trails on points has not won", () => {
   visit(g, "BULL", "S25", "D1"); visit(g, "S1"); visit(g, "D2", "D3", "T1"); visit(g, "S1"); visit(g, "T2", "T3");
   assert.equal(g.legWinner, null); assert.ok(g.players[1].points > g.players[0].points);
 });
+test("three in a bed survives a reload and ends with the visit", () => {
+  const g = WildMouse.create(["A", "B"], { bed: true });
+  ["S5", "S5", "S5"].forEach((d) => g.dart(d));
+  const back = new WildMouse(JSON.parse(JSON.stringify(g)));
+  assert.equal(back.bedVisit, true);
+  back.next(); assert.equal(back.bedVisit, false);
+});

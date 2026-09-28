@@ -139,7 +139,7 @@ class WildMouse {
     return new WildMouse({
       kind: "wild_mouse", targets, legsToWin: legs, bed, leg: 1, starter: 0, current: 0,
       players: players.map((name) => ({ name, marks: Object.fromEntries(targets.map((t) => [t, 0])), points: 0, legs: 0 })),
-      visit: [], seen: 0, winner: null, legWinner: null, history: [],
+      visit: [], bedVisit: false, seen: 0, winner: null, legWinner: null, history: [],
     });
   }
 
@@ -209,7 +209,7 @@ class WildMouse {
     const me = this.players[this.current];
     if (this._open(me, "B")) me.marks.B += 1;
     else if (this._scorable("B")) me.points += this.visit.reduce((t, d) => t + segmentScore(d.seg), 0);
-    this.visit.bed = true;
+    this.bedVisit = true;
   }
 
   _winCheck() {
@@ -237,6 +237,7 @@ class WildMouse {
       this.current = (this.current + 1) % this.players.length;
     }
     this.visit = [];
+    this.bedVisit = false;
   }
 
   // Takes back the last visit (or the darts of the one in progress).
@@ -541,7 +542,6 @@ class AutodartsClassicCard extends HTMLElement {
       data.double_in = setup.double_in;
     }
     if (g === "golf") data.holes = setup.holes;
-    save("setup", setup);
     if (await this._call("autodarts", "start_game", data)) {
       this._lobby = null;
       this._confirmEnd = false;
@@ -815,7 +815,7 @@ class AutodartsClassicCard extends HTMLElement {
     const legName = wm.legWinner != null ? wm.players[wm.legWinner].name : "";
     const hint = wm.legWinner != null && wm.winner == null
       ? `<div class="banner win">Leg to ${esc(legName)}: pull the darts for leg ${wm.leg + 1}</div>`
-      : wm.visit.bed ? `<div class="banner">Three in a bed!</div>` : "";
+      : wm.bedVisit ? `<div class="banner">Three in a bed!</div>` : "";
     const facts = ["Cricket + doubles & triples"];
     if (wm.bed) facts.push("3 in a bed");
     if (legs) facts.push(`First to ${wm.legsToWin} legs · Leg ${wm.leg}`);
