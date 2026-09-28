@@ -720,6 +720,97 @@ class Caller {
   }
 }
 
+// -- Instant replay ------------------------------------------------------------------------------
+// The thrower webcam is recorded by two MediaRecorders taking turns: each restarts every
+// SEGMENT seconds, half a segment apart, so one of them always holds at least the last
+// SEGMENT / 2 seconds. A replay stops that one and hands over its clip; recording goes on.
+// The browser encodes the video (in hardware where it can), so this costs little.
+const REPLAY_SEGMENT_S = 10;
+
+class ReplayBuffer {
+  constructor(Recorder = globalThis.MediaRecorder) {
+    this.Recorder = Recorder;
+    this.stream = null;
+    this.slots = [];
+    this.timers = [];
+  }
+
+  get running() {
+    return !!this.stream;
+  }
+
+  start(stream) {
+    this.stop();
+    if (!this.Recorder || !stream) return false;
+    this.stream = stream;
+    this.slots = [0, 1].map(() => ({ rec: null, chunks: [], since: 0 }));
+    this._begin(this.slots[0]);
+    this.timers.push(setTimeout(() => this._begin(this.slots[1]), (REPLAY_SEGMENT_S / 2) * 1000));
+    return true;
+  }
+
+  // (Re)starts one recorder; it restarts itself every segment.
+  _begin(slot) {
+    if (!this.stream) return;
+    clearTimeout(slot.timer);
+    try {
+      const type = ["video/webm;codecs=vp9", "video/webm;codecs=vp8", "video/webm", "video/mp4"]
+        .find((t) => !this.Recorder.isTypeSupported || this.Recorder.isTypeSupported(t));
+      slot.rec = new this.Recorder(this.stream, { mimeType: type, videoBitsPerSecond: 2_500_000 });
+      slot.chunks = [];
+      slot.since = Date.now();
+      slot.rec.ondataavailable = (ev) => { if (ev.data?.size) slot.chunks.push(ev.data); };
+      slot.rec.start(1000);
+      slot.timer = setTimeout(() => this._restart(slot), REPLAY_SEGMENT_S * 1000);
+    } catch (err) {
+      slot.rec = null;
+    }
+  }
+
+  _restart(slot) {
+    const rec = slot.rec;
+    slot.rec = null;
+    if (rec && rec.state !== "inactive") {
+      rec.onstop = () => this._begin(slot);
+      rec.stop();
+    } else {
+      this._begin(slot);
+    }
+  }
+
+  // The clip of the recorder that has run longest (the last few seconds), as a Blob.
+  clip() {
+    const slot = this.slots.filter((s) => s.rec && s.rec.state !== "inactive").sort((a, b) => a.since - b.since)[0];
+    if (!slot) return Promise.resolve(null);
+    const rec = slot.rec;
+    slot.rec = null;
+    clearTimeout(slot.timer);
+    return new Promise((resolve) => {
+      rec.onstop = () => {
+        const blob = slot.chunks.length ? new Blob(slot.chunks, { type: rec.mimeType || "video/webm" }) : null;
+        this._begin(slot);
+        resolve(blob);
+      };
+      try { rec.stop(); } catch (err) { resolve(null); }
+    });
+  }
+
+  stop() {
+    this.timers.forEach(clearTimeout);
+    this.timers = [];
+    for (const slot of this.slots) {
+      clearTimeout(slot.timer);
+      if (slot.rec && slot.rec.state !== "inactive") {
+        slot.rec.onstop = null;
+        try { slot.rec.stop(); } catch (err) { /* already stopped */ }
+      }
+    }
+    this.slots = [];
+    this.stream?.getTracks?.().forEach((t) => t.stop());
+    this.stream = null;
+  }
+}
+
 // What the board saw, as the caller and the effects name it.
 function dartKind(seg) {
   const p = parseSegment(seg);
@@ -737,6 +828,14 @@ class AutodartsClassicCard extends HTMLElement {
     const vp = String(this._config.voice_path || "");
     this._caller.voicePath = vp && !vp.endsWith("/") ? `${vp}/` : vp;
     this._caller.voiceName = String(this._config.caller_voice || "");
+    // Cameras: which webcam takes photos and which records the thrower for replays, whether
+    // the board camera window shows, and which moments get a replay.
+    this._camSet = {
+      photo: "", replay: "", window: !!this._config.camera_window,
+      replayOn: Array.isArray(this._config.replay_on) ? this._config.replay_on.map(String) : ["180", "game_shot"],
+      ...load("cameras", {}),
+    };
+    this._replayBuf ??= new ReplayBuffer();
     const colors = Array.isArray(this._config.player_colors) && this._config.player_colors.length ? this._config.player_colors : PLAYER_COLORS;
     // Colours go into style attributes: only hex values and plain colour names.
     this._colors = colors.map(String).filter((c) => /^(#[0-9a-f]{3,8}|[a-z]{3,20})$/i.test(c));
@@ -786,6 +885,8 @@ class AutodartsClassicCard extends HTMLElement {
     if (this._stage) {
       this._syncLive();
       this._connectEvents();
+      this._syncCamWindow();
+      this._syncReplay();
     }
   }
 
@@ -793,6 +894,11 @@ class AutodartsClassicCard extends HTMLElement {
     this._stopLive();
     this._closeEvents();
     this._closeBooth();
+    this._replayBuf?.stop();
+    this._closeReplay();
+    this._closeCamWall();
+    this._closeCamSetup();
+    this._syncCamWindow();
   }
 
   _id(domain, name) {
@@ -1084,6 +1190,9 @@ class AutodartsClassicCard extends HTMLElement {
         break;
       case "clear-players": s.players = []; break;
       case "photo": return this._openBooth(value);
+      case "camwall": return this._openCamWall();
+      case "cams": return this._openCamSetup();
+      case "replay": return this._replay(300, 0);
       case "remove-player": s.players.splice(Number(value), 1); break;
       case "up-player": {
         const i = Number(value);
@@ -1123,6 +1232,7 @@ class AutodartsClassicCard extends HTMLElement {
               <div class="plane"><img class="cam" alt=""><svg class="overlay" viewBox="0 0 ${PLANE} ${PLANE}"></svg></div>
               <div class="virtual"></div>
             </div>
+            <div class="camwin" hidden data-act="camwall" title="Board cameras"><img alt="Board camera"><span>Live</span></div>
             <div class="viewctl">
               <button data-act="view" class="ghost"></button>
               <button data-act="cam" class="ghost"></button>
@@ -1146,6 +1256,7 @@ class AutodartsClassicCard extends HTMLElement {
     this._padEl = this.shadowRoot.querySelector(".pad-layer");
     this._sheetEl = this.shadowRoot.querySelector(".sheet-layer");
     this._fxEl = this.shadowRoot.querySelector(".fx-layer");
+    this._camWin = this.shadowRoot.querySelector(".camwin");
     this._viewEl = this.shadowRoot.querySelector(".view");
     this._plane = this.shadowRoot.querySelector(".plane");
     this._img = this.shadowRoot.querySelector(".cam");
@@ -1191,6 +1302,8 @@ class AutodartsClassicCard extends HTMLElement {
     this._sheetEl.innerHTML = sheet ? `<div class="pad-back" data-act="sheet-close"></div>${sheet}` : "";
     this._syncLive();
     this._tweenScores();
+    this._syncCamWindow();
+    this._syncReplay();
     this._fxArmed = true; // the first render after loading replays nothing
   }
 
@@ -1216,6 +1329,8 @@ class AutodartsClassicCard extends HTMLElement {
       const seg = visit[visit.length - 1];
       this._hitFlash(seg, ctx.color);
       this._play(dartKind(seg));
+      if (dartKind(seg) === "bull") this._maybeReplay("bull");
+      if (parseSegment(seg).label === "T20") this._maybeReplay("t20");
       if (ctx.closed) {
         this._play("closed");
         if (ctx.closed === "D" || ctx.closed === "T") this._announce([`${ctx.closed === "D" ? "doubles" : "triples"}_closed`, `${ctx.closed === "D" ? "Doubles" : "Triples"} closed!`]);
@@ -1224,6 +1339,7 @@ class AutodartsClassicCard extends HTMLElement {
         const total = visit.reduce((t, s) => t + segmentScore(s), 0);
         if (total === 180) {
           this._moment("180", ctx.color, 2600) || this._celebrate("180", "One hundred and eighty!", "max", ctx.color);
+          this._maybeReplay("180");
           this._play("180");
           this._announce(["180", "One hundred and eighty!"]);
         } else {
@@ -1231,6 +1347,7 @@ class AutodartsClassicCard extends HTMLElement {
             (total >= 140 && this._moment("ton40", ctx.color)) || this._moment("ton", ctx.color)
               || this._celebrate(String(total), total >= 140 ? "Ton forty plus" : "Ton plus", "ton", ctx.color);
             this._play("ton");
+            this._maybeReplay("ton");
           }
           this._announce(total ? [`score_${total}`, numberWords(total)] : ["no_score", "No score"]);
         }
@@ -1249,6 +1366,7 @@ class AutodartsClassicCard extends HTMLElement {
     if (ctx.winner && ctx.winner !== was.winner) {
       this._confetti();
       this._moment("game_shot", ctx.color, 3200);
+      this._maybeReplay("game_shot");
       this._play("win");
       this._announce([ctx.match ? "game_shot_match" : "game_shot", ctx.match ? "Game shot, and the match!" : "Game shot!"], this._nameLine(ctx.winner));
     } else if (!ctx.winner && ctx.legs && was.legs && ctx.legs !== was.legs) {
@@ -1424,6 +1542,7 @@ class AutodartsClassicCard extends HTMLElement {
           ${RULES[this._currentGame()] ? `<button data-act="sheet" data-value="${esc(this._currentGame())}" class="ghost icon info-bar" title="How to play" aria-label="How to play">i</button>` : ""}
           <button data-act="new" class="ghost">New game</button>
           <button data-act="end" class="ghost ${this._confirmEnd ? "danger" : ""}">${this._confirmEnd ? "Tap again to end" : "End game"}</button>
+          ${this._replayBuf?.running ? `<button data-act="replay" class="ghost icon" title="Replay the last throw" aria-label="Replay the last throw"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7h12v10H3zM15 10l6-3v10l-6-3"/></svg></button>` : ""}
           <button data-act="mute" class="ghost icon" title="Sound and caller" aria-label="Sound and caller">${this._soundOn || this._callerOn ? "🔊" : "🔇"}</button>
           <button data-act="full" class="ghost icon" title="Full screen">⛶</button>
         </div>
@@ -1547,7 +1666,8 @@ class AutodartsClassicCard extends HTMLElement {
       return show("live");
     }
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: "user" }, audio: false });
+      const cam = this._camSet.photo ? { deviceId: { exact: this._camSet.photo } } : { facingMode: "user" };
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { width: { ideal: 1280 }, height: { ideal: 720 }, ...cam }, audio: false });
       if (this._booth !== booth) return stream.getTracks().forEach((t) => t.stop());
       booth.stream = stream;
       $("video").srcObject = stream;
@@ -1627,6 +1747,215 @@ class AutodartsClassicCard extends HTMLElement {
     if (!booth) return;
     booth.stream?.getTracks().forEach((t) => t.stop()); // the webcam is free again at once
     booth.layer.remove();
+  }
+
+  // -- cameras: thrower replay, board camera window ------------------------------------------
+
+  _saveCams() {
+    save("cameras", this._camSet);
+  }
+
+  // The thrower webcam records while a game is on the screen, and stops in the lobby.
+  async _syncReplay() {
+    const want = !!this._camSet.replay && this.isConnected && !!this._stage && !this._isLobby();
+    const buf = this._replayBuf;
+    if (!want) {
+      if (buf.running) buf.stop();
+      this._replayCam = null;
+      return;
+    }
+    if (buf.running && this._replayCam === this._camSet.replay) return;
+    if (this._replayStarting) return;
+    this._replayStarting = true;
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { deviceId: { exact: this._camSet.replay }, width: { ideal: 1280 }, height: { ideal: 720 }, frameRate: { ideal: 30 } }, audio: false,
+      });
+      if (!this._camSet.replay || this._isLobby()) stream.getTracks().forEach((t) => t.stop());
+      else if (buf.start(stream)) this._replayCam = this._camSet.replay;
+    } catch (err) {
+      this._replayCam = null;
+      if (!this._replayWarned) this._toast("The replay camera could not start: is it plugged in?");
+      this._replayWarned = true;
+    } finally {
+      this._replayStarting = false;
+    }
+  }
+
+  // A replay after a big moment, if that moment is one the players want replayed.
+  _maybeReplay(key) {
+    if (this._replayBuf.running && this._camSet.replayOn.includes(key)) this._replay(this._replayDelay ?? 1200, this._replayShowAfter ?? 2600);
+  }
+
+  // Keeps recording a moment longer (the dart settling), then shows the clip once the
+  // celebration is over.
+  async _replay(settle = 0, showAfter = 0) {
+    if (this._replayPending) return;
+    this._replayPending = true;
+    await new Promise((r) => setTimeout(r, settle));
+    const blob = await this._replayBuf.clip();
+    this._replayPending = false;
+    if (!blob) return;
+    setTimeout(() => this._showReplay(blob), Math.max(0, showAfter - settle));
+  }
+
+  // "Let's see that again": the last seconds at normal speed, then the end in slow motion.
+  _showReplay(blob) {
+    this._closeReplay();
+    const url = URL.createObjectURL(blob);
+    const layer = document.createElement("div");
+    layer.className = "replay-layer";
+    layer.innerHTML = `
+      <div class="pad-back" data-rp="close"></div>
+      <div class="replay">
+        <div class="replay-head"><b>Let's see that again</b><span class="replay-speed"></span><button class="ghost icon" data-rp="close" title="Close">✕</button></div>
+        <video playsinline muted></video>
+        <div class="replay-actions"><button data-rp="again">↺ Again</button><button data-rp="slow">Slow motion</button></div>
+      </div>`;
+    this._stage.appendChild(layer);
+    const video = layer.querySelector("video"), speed = layer.querySelector(".replay-speed");
+    const r = { layer, url, video };
+    this._replayView = r;
+    // Recordings arrive without a length; asking for a time far past the end reveals it.
+    const length = () => new Promise((resolve) => {
+      if (Number.isFinite(video.duration)) return resolve(video.duration);
+      video.addEventListener("timeupdate", function once() {
+        video.removeEventListener("timeupdate", once);
+        resolve(Number.isFinite(video.duration) ? video.duration : video.currentTime);
+      });
+      try { video.currentTime = 1e6; } catch (err) { resolve(0); }
+    });
+    const play = async (rate, lastSeconds) => {
+      const d = await length();
+      video.playbackRate = rate;
+      try { video.currentTime = Math.max(0, d - lastSeconds); } catch (err) { /* from the start */ }
+      speed.textContent = rate < 1 ? "Slow motion" : "";
+      layer.classList.toggle("slow", rate < 1);
+      return video.play()?.catch?.(() => {});
+    };
+    r.step = 0;
+    video.addEventListener("ended", () => {
+      if (this._replayView !== r) return;
+      r.step += 1;
+      if (r.step === 1) play(0.35, 2.5);
+      else setTimeout(() => this._replayView === r && this._closeReplay(), 800);
+    });
+    layer.addEventListener("click", (ev) => {
+      const act = ev.target.closest("[data-rp]")?.dataset.rp;
+      if (act === "close") this._closeReplay();
+      else if (act === "again") { r.step = 0; play(1, 5); }
+      else if (act === "slow") { r.step = 1; play(0.35, 2.5); }
+    });
+    video.addEventListener("loadedmetadata", () => play(1, 5), { once: true });
+    video.src = url;
+    r.timer = setTimeout(() => this._replayView === r && this._closeReplay(), 30000);
+  }
+
+  _closeReplay() {
+    const r = this._replayView;
+    this._replayView = null;
+    if (!r) return;
+    clearTimeout(r.timer);
+    r.video.pause?.();
+    r.layer.remove();
+    URL.revokeObjectURL(r.url);
+  }
+
+  // The small live board camera in a corner of the board area; only streams while shown.
+  _syncCamWindow() {
+    const el = this._camWin;
+    if (!el) return;
+    const want = this._camSet.window && !this._isLobby() && this.isConnected;
+    el.hidden = !want;
+    const img = el.querySelector("img");
+    const src = want ? `${this._boardUrl()}/api/streams/cams/${this._cam}` : "";
+    if (img.dataset.src !== src) {
+      img.dataset.src = src;
+      if (src) img.src = src; else img.removeAttribute("src");
+    }
+  }
+
+  // Every board camera big, over the game; tap one to use it in the window.
+  _openCamWall() {
+    this._closeCamWall();
+    const n = this._cams?.length || 3, base = this._boardUrl();
+    const layer = document.createElement("div");
+    layer.className = "camwall-layer";
+    layer.innerHTML = `
+      <div class="pad-back" data-cw="close"></div>
+      <div class="camwall">
+        <div class="replay-head"><b>Board cameras</b><button class="ghost icon" data-cw="close" title="Close">✕</button></div>
+        <div class="camwall-grid">${Array.from({ length: n }, (_, i) => `
+          <button class="camwall-cam ${i === this._cam % n ? "on" : ""}" data-cw="cam" data-value="${i}"><img src="${esc(base)}/api/streams/cams/${i}" alt="Camera ${i + 1}"><span>Camera ${i + 1}</span></button>`).join("")}
+        </div>
+      </div>`;
+    layer.addEventListener("click", (ev) => {
+      const b = ev.target.closest("[data-cw]");
+      if (!b) return;
+      if (b.dataset.cw === "cam") { this._cam = Number(b.dataset.value); save("camera", this._cam); }
+      this._closeCamWall();
+      this._render();
+    });
+    this._stage.appendChild(layer);
+    this._camWall = layer;
+  }
+
+  _closeCamWall() {
+    if (!this._camWall) return;
+    this._camWall.querySelectorAll("img").forEach((i) => i.removeAttribute("src")); // stop the streams
+    this._camWall.remove();
+    this._camWall = null;
+  }
+
+  // Which webcam does what: photos, thrower replays; and what gets replayed.
+  async _openCamSetup() {
+    this._closeCamSetup();
+    const layer = document.createElement("div");
+    layer.className = "booth-layer camsetup-layer";
+    layer.innerHTML = `<div class="pad-back" data-cs="close"></div><div class="booth camsetup"><div class="pad-head"><b>Cameras</b><button class="ghost icon" data-cs="close" title="Close">✕</button></div><div class="camsetup-body">Looking for webcams…</div></div>`;
+    this._stage.appendChild(layer);
+    this._camSetup = layer;
+    let cams = [];
+    try {
+      // Webcam names only show once the page may use a camera.
+      const probe = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+      probe.getTracks().forEach((t) => t.stop());
+      cams = (await navigator.mediaDevices.enumerateDevices()).filter((d) => d.kind === "videoinput");
+    } catch (err) {
+      cams = [];
+    }
+    if (this._camSetup !== layer) return;
+    const s = this._camSet;
+    const opts = (cur, none) => `${none ? `<option value="">${none}</option>` : ""}${cams.map((c, i) => `<option value="${esc(c.deviceId)}" ${c.deviceId === cur ? "selected" : ""}>${esc(c.label || `Webcam ${i + 1}`)}</option>`).join("")}`;
+    const moments = [["180", "180"], ["game_shot", "Game shot"], ["bull", "Bullseye"], ["t20", "T20"], ["ton", "Ton plus"]];
+    layer.querySelector(".camsetup-body").innerHTML = `
+      ${cams.length ? "" : `<p class="note warn">No webcam found, or the browser does not allow it here (use http://localhost:8123 on the screen's PC).</p>`}
+      <label class="cs-row">Photos of players<select data-cs="photo">${opts(s.photo, "The default webcam")}</select></label>
+      <label class="cs-row">Thrower replays<select data-cs="replay">${opts(s.replay, "Off")}</select></label>
+      <div class="cs-row">Replay after<div class="toggles">${moments.map(([k, l]) => `<button class="toggle ${s.replayOn.includes(k) ? "on" : ""}" data-cs="on" data-value="${k}"><i></i>${l}</button>`).join("")}</div></div>
+      <div class="cs-row">Board camera<div class="toggles"><button class="toggle ${s.window ? "on" : ""}" data-cs="window"><i></i>Small live window on the game screen</button></div></div>
+      <p class="note">The thrower webcam records only while a game is on the screen and keeps the last seconds in memory; nothing is saved. Plug webcams into a different USB controller from the Autodarts cameras.</p>`;
+    layer.addEventListener("change", (ev) => {
+      const key = ev.target.dataset.cs;
+      if (key === "photo" || key === "replay") { s[key] = ev.target.value; this._saveCams(); this._syncReplay(); }
+    });
+    layer.addEventListener("click", (ev) => {
+      const b = ev.target.closest("[data-cs]");
+      if (!b || b.tagName === "SELECT") return;
+      if (b.dataset.cs === "close") return this._closeCamSetup();
+      if (b.dataset.cs === "on") {
+        const k = b.dataset.value;
+        s.replayOn = s.replayOn.includes(k) ? s.replayOn.filter((x) => x !== k) : [...s.replayOn, k];
+      } else if (b.dataset.cs === "window") s.window = !s.window;
+      else return;
+      b.classList.toggle("on");
+      this._saveCams();
+    });
+  }
+
+  _closeCamSetup() {
+    this._camSetup?.remove();
+    this._camSetup = null;
   }
 
   _pc(i) {
@@ -1961,6 +2290,7 @@ class AutodartsClassicCard extends HTMLElement {
           <button class="primary start" data-act="start">Start ${esc(GAME_NAME[g] || g)}</button>
           <h3>Screen</h3>
           <div class="opt"><label>Look</label>${seg("theme", THEMES, this._theme)}</div>
+          <div class="opt"><label>Cameras</label><div class="toggles"><button class="toggle-btn" data-act="cams">Set up webcams and replays…</button></div></div>
           <div class="opt"><label>Sound</label><div class="toggles">${toggle("sound", "Effects", this._soundOn)}${toggle("caller", "Caller", this._callerOn)}</div></div>
         </aside>
       </div>`;
@@ -2149,6 +2479,36 @@ const CSS = `
   .pav.sm { width: 34px; height: 34px; font-size: 0.8rem; margin: 0; border-width: 2px; box-shadow: none; }
   .cricket-mode .player .pav:not(.sm) { width: clamp(40px, 6vh, 70px); height: clamp(40px, 6vh, 70px); }
   .res-row .pav.sm { width: 44px; height: 44px; }
+
+  /* Board camera window, camera wall, thrower replay, camera setup. */
+  .camwin {
+    position: absolute; left: 0; top: 0; width: clamp(160px, 16vw, 300px); aspect-ratio: 16 / 9; border-radius: 12px; overflow: hidden; z-index: 2;
+    background: #000; border: 2px solid var(--line); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5); cursor: zoom-in;
+  }
+  .camwin[hidden] { display: none; }
+  .camwin img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .camwin span { position: absolute; left: 8px; top: 6px; padding: 1px 8px; border-radius: 6px; background: #dc2626; font-size: 0.7rem; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; }
+  .camwall-layer, .replay-layer { position: fixed; inset: 0; z-index: 9; display: grid; place-items: center; }
+  .camwall, .replay {
+    position: relative; width: min(1500px, 96vw); padding: 16px; border-radius: 18px; background: var(--panel);
+    border: 1px solid var(--line); box-shadow: 0 24px 70px rgba(0, 0, 0, 0.6); display: flex; flex-direction: column; gap: 12px;
+  }
+  .replay-head { display: flex; align-items: center; gap: 14px; font-size: clamp(1.2rem, 3vh, 2rem); }
+  .replay-head b { flex: 1; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; }
+  .replay-speed { color: #fcd34d; font-weight: 800; letter-spacing: 0.2em; text-transform: uppercase; font-size: 0.8em; }
+  .replay video { width: 100%; max-height: 74vh; border-radius: 12px; background: #000; }
+  .replay-layer.slow .replay { box-shadow: 0 0 0 3px #fcd34d, 0 24px 70px rgba(0, 0, 0, 0.6); }
+  .replay-actions { display: flex; gap: 10px; justify-content: center; }
+  .camwall-grid { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); }
+  .camwall-cam { position: relative; padding: 0; overflow: hidden; aspect-ratio: 16 / 9; border: 3px solid transparent; }
+  .camwall-cam.on { border-color: var(--pc, #fff); }
+  .camwall-cam img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .camwall-cam span { position: absolute; left: 10px; bottom: 8px; background: rgba(0, 0, 0, 0.6); padding: 2px 10px; border-radius: 6px; }
+  .camsetup { width: min(720px, 94vw); }
+  .camsetup-body { display: flex; flex-direction: column; gap: 14px; }
+  .cs-row { display: flex; flex-direction: column; gap: 6px; font-size: 0.9rem; opacity: 0.95; }
+  .cs-row select { font: inherit; color: #fff; background: rgba(0, 0, 0, 0.35); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; }
+  .toggle-btn { background: var(--glass); font-size: 0.95rem; }
 
   /* The photo booth. */
   .booth-layer { position: fixed; inset: 0; z-index: 9; display: grid; place-items: center; }
