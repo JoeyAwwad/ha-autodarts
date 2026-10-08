@@ -120,13 +120,14 @@ test("between games the scoreboard shows the visit and the session", () => {
     "3 days in a row",
     "60 / 120 darts today",
   ]);
-  assert.equal($(card, ".visit").getAttribute("class"), "visit plain");
+  assert.equal($(card, ".visit").getAttribute("class"), "visit");
   assert.deepEqual(slots(card), [
     ["dart", "T20", "60"],
     ["dart empty", "–", ""],
     ["dart empty", "–", ""],
   ]);
-  assert.equal($(card, ".visit .sum"), null);
+  // The big number is the visit; beside the darts is the last one, still unknown here.
+  assert.deepEqual(sum(card), ["Last", "–"]);
   assert.equal(text(card, ".pill"), "Ready – throw!");
   assert.equal(card.style.getPropertyValue("--ad-status"), "var(--success-color, #43a047)");
 });
@@ -216,7 +217,7 @@ test("Cricket, party games, the bull-off and training games get their own boards
   card.hass = update(hass, {
     "sensor.practice_target": { state: "D5", attributes: { drill: "doubles", progress: 4, targets: 21, darts: 9 } },
   });
-  assert.deepEqual(sum(card), ["Visit", "0"]);
+  assert.deepEqual(sum(card), ["Last", "–"]);
 });
 
 test("status, visit and full height follow the options", () => {
@@ -225,8 +226,15 @@ test("status, visit and full height follow the options", () => {
   assert.equal($(plain, ".visit"), null);
   assert.equal($(plain, ".scoreboard").getAttribute("class"), "scoreboard");
   assert.equal(text(plain, ".title"), "Dartboard");
+  // Only scores of a full-height scoreboard scroll; then a keyboard can scroll them too.
+  assert.equal($(plain, ".main").getAttribute("tabindex"), null);
   const full = setup({}, { full_height: true }).card;
   assert.equal($(full, ".scoreboard").getAttribute("class"), "scoreboard full");
+  const scores = $(full, ".main");
+  assert.deepEqual(
+    ["tabindex", "role", "aria-label"].map((name) => scores.getAttribute(name)),
+    ["0", "region", "Scoreboard"]
+  );
   assert.equal(full.getCardSize(), 8);
   assert.deepEqual(full.getGridOptions(), { columns: "full", min_columns: 6 });
   // A phone's browser bar must not cut off the bottom of a full-height scoreboard.
@@ -238,7 +246,7 @@ test("the scoreboard speaks German", () => {
   const { card } = setup({ ...STATS, ...game({ remaining: 81, legs_to_win: 3 }) }, {}, { language: "de" });
   assert.equal(text(card, ".title"), "Übungsspiel 501");
   assert.equal(text(card, ".meta"), "3 Legs pro Satz");
-  assert.deepEqual(sum(card), ["Aufnahme", "0"]);
+  assert.deepEqual(sum(card), ["Zuletzt", "–"]);
   assert.equal(text(card, ".pill"), "Bereit – wirf!");
 });
 
@@ -246,7 +254,11 @@ test("an X01 leg alone explains double in, and the visit reads a dash while unkn
   const alone = (attributes) => game({ scores: [], name: null, ...attributes });
   const { hass, card } = setup({ ...alone({ remaining: 501, opened: false }), "sensor.local_visit_score": "unknown" });
   assert.equal(text(card, ".main .route"), "Start with a double");
+  assert.deepEqual(sum(card), ["Last", "–"]);
+  // Darts on the board with a score not known yet.
+  card.hass = update(hass, { "sensor.local_visit_score": { state: "unknown", attributes: { throws: [T20] } } });
   assert.deepEqual(sum(card), ["Visit", "–"]);
+  card.hass = update(hass, { "sensor.local_visit_score": "unknown" });
   card.hass = update(hass, alone({ game: null, remaining: 170 }));
   assert.equal(text(card, ".title"), "Practice");
   assert.equal(text(card, ".main .route"), "No checkout possible");
@@ -632,9 +644,17 @@ test("the status and the banner are written only when they change, and the playe
 test("the full-height scoreboard fits the screen, lays out a portrait tablet and keeps its contrast", () => {
   const style = $(setup({}, { full_height: true }).card, "style").textContent;
   const has = (pattern) => assert.match(style, pattern);
-  // The screen below the header, not more; the new game screen scrolls with the page.
-  has(/\.scoreboard\.full \{\s*height: calc\(100vh - var\(--header-height, 56px\) - 16px\);\s*height: calc\(100dvh/);
+  // The screen below the header and above a phone's home indicator, not more; the new
+  // game screen scrolls with the page.
+  has(
+    /--ad-taken: calc\(\s*var\(--header-height, 56px\) \+ var\(--safe-area-inset-top, env\(safe-area-inset-top, 0px\)\) \+\s*var\(--safe-area-inset-bottom, env\(safe-area-inset-bottom, 0px\)\) \+ 16px\s*\);\s*height: calc\(100vh - var\(--ad-taken\)\);\s*height: calc\(100dvh - var\(--ad-taken\)\);/
+  );
   has(/\.scoreboard\.full\.choosing \{\s*height: auto;/);
+  // Little room for the scores: a line per player; a phone on its side keeps the pad
+  // beside them from the top to the bottom.
+  has(/@container \(max-height: 200px\) \{\s*\.scoreboard\.full \.players \{ gap: 6px; \}/);
+  has(/@media \(orientation: landscape\) and \(max-height: 440px\) \{\s*\.scoreboard\.full\.with-pad \{/);
+  has(/grid-template-areas: "header pad" "banner pad" "main pad" "visit pad";/);
   has(/\.scoreboard\.full:not\(\.choosing\) \.main \{\s*flex: 1 1 0; container-type: size; overflow-y: auto; justify-content: safe center;/);
   // The numbers take the width and the height left; the pad sits beside the scores in landscape.
   has(/\.scoreboard\.full \.n2 \.big \{ font-size: clamp\(40px, min\(15cqi, 100cqh - 19cqi\), 240px\); \}/);
@@ -642,13 +662,26 @@ test("the full-height scoreboard fits the screen, lays out a portrait tablet and
   has(/@media \(orientation: portrait\) \{\s*\.scoreboard\.full \.players\.n2 \{ grid-template-columns: minmax\(0, 1fr\); \}/);
   // Sticky needs a card without a scroll container of its own.
   has(/ha-card \{ overflow: hidden; overflow: clip;/);
-  has(/\.lobby-actions \{\s*grid-column: 1 \/ -1;\s*position: sticky;/);
+  has(/\.lobby-actions \{\s*--ad-card-fill: [^;]+;\s*grid-column: 1 \/ -1;\s*position: sticky;/);
+  // The start bar covers what scrolls beneath it, also with a see-through card, and stays
+  // above a phone's home indicator.
+  has(/background: linear-gradient\(var\(--ad-card-fill\), var\(--ad-card-fill\)\), var\(--primary-background-color, #111\);/);
+  has(/padding: 10px var\(--ad-pad\) calc\(10px \+ var\(--safe-area-inset-bottom, env\(safe-area-inset-bottom, 0px\)\)\);/);
   // Accent text and fills are darkened for contrast; pressed buttons show in High Contrast.
   has(/--ad-accent-text: color-mix\(in srgb, var\(--ad-accent\) 60%, var\(--primary-text-color, #212121\)\);/);
   has(/--ad-accent-fill: color-mix\(in srgb, var\(--ad-accent\) 70%, #000\);/);
-  has(/\.bed:first-child \{ color: #fff; background: var\(--ad-accent-fill\); \}/);
+  // A route's bed is a tag, framed and never filled like a button; the next one is tinted.
+  has(/\.bed:first-child \{ font-weight: 800; background: color-mix\(in srgb, var\(--ad-accent\) 16%, transparent\); \}/);
   has(/@media \(forced-colors: active\) \{\s*\[aria-pressed="true"\], \[aria-checked="true"\] \{ outline: 3px solid Highlight;/);
-  has(/@media \(pointer: coarse\) \{ \.lobby-toggle, \.caller-toggle \{ min-height: 40px; \} \}/);
+  // The title keeps its words whole; the header's buttons follow below it where they must.
+  has(/\.scoreboard > header \{ align-items: flex-start; flex-wrap: wrap; row-gap: 8px; \}/);
+  has(/\.scoreboard \.title \{[^}]*overflow-wrap: break-word;\s*\}/);
+  // Every touch screen, also a large one beside a mouse, gets controls for a finger.
+  has(/@media \(any-pointer: coarse\) \{ \.lobby-toggle, \.caller-toggle \{ min-height: 40px; \} \}/);
+  assert.doesNotMatch(style, /\(pointer: coarse\)/);
+  // The darts of the visit grow with their own tiles, also when narrow beside a pad.
+  has(/\.visit \.dart \{ container-type: inline-size; \}/);
+  has(/\.dart \.segment \{ font-size: clamp\(16px, 24cqi, 48px\);/);
   assert.doesNotMatch(style, /opacity: \.85/);
 });
 

@@ -390,10 +390,10 @@
         "name": "Neue Trainingssession"
       },
       "practice_new_leg": {
-        "name": "Neues Leg im Übungsspiel"
+        "name": "Übungsspiel neues Leg"
       },
       "practice_new_match": {
-        "name": "Neues Match im Übungsspiel"
+        "name": "Übungsspiel neues Match"
       },
       "tournament_start": {
         "name": "Turnier starten"
@@ -419,7 +419,7 @@
         "name": "Automatisch nachkalibrieren"
       },
       "auto_distortion": {
-        "name": "Automatische Verzerrungskorrektur"
+        "name": "Verzerrungskorrektur"
       },
       "training_session": {
         "name": "Trainingssession"
@@ -456,6 +456,9 @@
       },
       "practice_manual_entry": {
         "name": "Übungsspiel manuelle Eingabe"
+      },
+      "practice_three_in_a_bed": {
+        "name": "Übungsspiel Wild Mouse Three in a Bed"
       }
     },
     "select": {
@@ -489,6 +492,7 @@
           "killer": "Killer",
           "cut_throat": "Cut-Throat Cricket",
           "tactics": "Tactics",
+          "wild_mouse": "Wild Mouse",
           "golf": "Golf",
           "baseball": "Baseball",
           "count_up": "Count-Up",
@@ -531,7 +535,8 @@
           "1001": "1001",
           "cricket": "Cricket",
           "cut_throat": "Cut-Throat Cricket",
-          "tactics": "Tactics"
+          "tactics": "Tactics",
+          "wild_mouse": "Wild Mouse"
         }
       }
     },
@@ -561,7 +566,7 @@
         "name": "Turnierpause"
       },
       "tournament_summary": {
-        "name": "Anzeigedauer der Turnierzusammenfassung"
+        "name": "Turnier Dauer der Zusammenfassung"
       },
       "practice_bot_level": {
         "name": "Übungsspiel Bot-Stärke"
@@ -840,6 +845,21 @@
     },
     "export_limit": {
       "message": "In der letzten Stunde wurden {count} Exporte geschrieben, mehr schreibt die Integration nicht. Versuche es später erneut."
+    },
+    "unknown_game": {
+      "message": "Kein Spiel heißt „{game}“. Nenne eines der Übungsspiele, etwa 501, Cricket oder Around the Clock."
+    },
+    "voice_game_on": {
+      "message": "Game on: {game} mit {players}."
+    },
+    "voice_game_on_alone": {
+      "message": "Game on: {game}."
+    },
+    "voice_and": {
+      "message": "und"
+    },
+    "voice_bot": {
+      "message": "dem Bot"
     }
   },
   "issues": {
@@ -900,7 +920,7 @@
         },
         "game": {
           "name": "Spiel",
-          "description": "X01 von 101 bis 1001 Punkten, ein Cricket-Spiel, ein Partyspiel oder ein Trainingsspiel."
+          "description": "X01 von 101 bis 1001 Punkten, ein Cricket-Spiel, ein Partyspiel oder ein Trainingsspiel. Auch ein Name, wie ihn die Spielauswahl zeigt, in jeder Sprache der Integration, etwa „Around the Clock“ oder „Doppeltraining“."
         },
         "players": {
           "name": "Spieler",
@@ -933,6 +953,10 @@
         "teams": {
           "name": "Teams",
           "description": "Vier Spieler spielen X01 oder ein Cricket-Spiel als zwei Teams: Spieler 1 und 3 gegen Spieler 2 und 4."
+        },
+        "three_in_a_bed": {
+          "name": "Three in a Bed",
+          "description": "Wild Mouse: Drei Darts einer Aufnahme im selben Feld schließen ein eigenes Ziel, wie es die Regeln vorsehen. Aus lässt es weg."
         },
         "start_scores": {
           "name": "Startpunkte",
@@ -1198,6 +1222,7 @@
         "killer": "Killer",
         "cut_throat": "Cut-Throat Cricket",
         "tactics": "Tactics",
+        "wild_mouse": "Wild Mouse",
         "golf": "Golf",
         "baseball": "Baseball",
         "count_up": "Count-Up",

@@ -57,16 +57,29 @@ input_select:
       - "101"
       - "901"
       - "1001"
+      - Party X01
       - Cricket
       - Cut-Throat
       - Tactics
       - Wild Mouse
+      - Mickey Mouse
+      - Quick Cricket
+      - Party Cricket
+      - Party Cut-Throat
       - Killer
       - Shanghai
+      - Party Shanghai
       - Halve-It
       - Golf
       - Baseball
       - Count-Up
+      - Gotcha
+      - Scram
+      - Lives
+      - Hi-Lo
+      - Chase the Dragon
+      - Bull & Goal
+      - Snooker
       - Around the Clock
       - Doubles
       - Checkout
@@ -75,3 +88,20 @@ input_select:
       - Catch 40
       - JDC Challenge
       - Singles
+      - Random Checkout
+      - Clock Doubles
+      - Clock Trebles
+      - Clock Lite
+      - "Hare & Hounds"
+      - Doubles Ladder
+      - "Ladder Rush"
+      - Derby Dash
+      - Tower Takedown
+      - Under the Bar
+      - Chasing Bullseye
+      - Killer Night
+      - Nine Lives
+      - Board Grab
+      - Target Blast
+      - Touchdown 200
+      - Pour the Pint

@@ -1,0 +1,4 @@
+# Put your own logo.png, hero.jpg, moment pictures and player.jpg here, or point DARTS_ASSETS at a folder.
+# Nothing in this folder is committed.
+*
+!.gitignore

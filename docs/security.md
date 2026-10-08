@@ -1,8 +1,8 @@
 # Security design
 
-[← Documentation](README.md) · [Deutsch](de/sicherheit.md)
+[← Documentation](README.md) · [Deutsch](security.de.md)
 
-This page explains how the integration protects your data and your board, what it trusts, and which risks remain. Report vulnerabilities privately as described in [SECURITY.md](../SECURITY.md).
+This page explains how the integration protects your data and your board, what it trusts, and which risks remain. Report vulnerabilities privately as described in [SECURITY.md](https://github.com/Dennis-Otto/ha-autodarts/blob/main/SECURITY.md).
 
 ## What is protected
 
@@ -53,6 +53,22 @@ This page explains how the integration protects your data and your board, what i
 | An action runs twice, for example a restart or a reset | Actions are sent once and never retried automatically | `tests/test_local_api.py` |
 | A compromised dependency or build | Hash-pinned dependencies, pinned Actions and images, Dependabot, dependency review, CodeQL, Gitleaks, OpenSSF Scorecard | [Development](development.md#continuous-integration) |
 | A tampered release | Release packages carry Sigstore-signed SLSA provenance | [Releases](releases.md#signed-release-packages) |
+
+## Common weaknesses
+
+How the integration counters the weaknesses of the [CWE Top 25](https://cwe.mitre.org/top25/) that matter for it. CodeQL looks for them in the Python and the JavaScript on every pull request.
+
+| Weakness | Countermeasure |
+| --- | --- |
+| Cross-site scripting (CWE-79) | Every text from the board, the entity registry or a player is escaped before it becomes HTML, and numbers are checked before they become SVG geometry |
+| Path traversal (CWE-22) | Exports resolve their folder before writing, so neither `..` nor a symbolic link leads elsewhere; the highlight copies serve only plain file names of photos in the highlight folder |
+| Improper input validation (CWE-20) | Every answer of the Board Manager, every realtime notification and every call of the online bridge is checked against known types, ranges and lengths |
+| Exposure of sensitive information (CWE-200, CWE-532) | The board API key is dropped right after reading and never stored, logged or shown; OAuth tokens are never logged; the diagnostics redact board IDs, addresses and player names |
+| Missing authorization (CWE-862) | Actions, downloads, highlight copies and the WebSocket command need a login to Home Assistant; deleting, relinking and exporting the data of players need an administrator |
+| Server-side request forgery (CWE-918) | Discovery contacts only the addresses an announcement came from, never loopback, link-local or multicast addresses; IDs from the cloud are encoded as a single path segment |
+| Uncontrolled resource consumption (CWE-400) | At most two live streams per camera, 20 exports in an hour, and 20 calls a second and 120 a minute for the online bridge |
+| Formula injection in exports (CWE-1236) | CSV cells that start like a formula get a leading apostrophe |
+| Command and code injection (CWE-78, CWE-94) | The integration runs no commands and evaluates no code, and it has no Python dependencies at runtime |
 
 ## Design principles
 

@@ -9,20 +9,24 @@
 [![HACS custom repository](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://hacs.xyz)
 [![Latest release](https://img.shields.io/github/v/release/Dennis-Otto/ha-autodarts?label=release)](https://github.com/Dennis-Otto/ha-autodarts/releases)
 [![Home Assistant 2026.8 or newer](https://img.shields.io/badge/Home%20Assistant-2026.8%2B-41BDF5.svg?logo=homeassistant&logoColor=white)](https://www.home-assistant.io/)
-[![Tests](https://github.com/Dennis-Otto/ha-autodarts/actions/workflows/tests.yml/badge.svg)](https://github.com/Dennis-Otto/ha-autodarts/actions/workflows/tests.yml)
+[![Documentation](https://img.shields.io/badge/docs-website-526CFE.svg?logo=materialformkdocs&logoColor=white)](https://dennis-otto.github.io/ha-autodarts/)
+[![CI](https://github.com/Dennis-Otto/ha-autodarts/actions/workflows/ci.yml/badge.svg)](https://github.com/Dennis-Otto/ha-autodarts/actions/workflows/ci.yml)
 [![Coverage 100 %](https://img.shields.io/badge/coverage-100%25-brightgreen.svg)](https://github.com/Dennis-Otto/ha-autodarts/blob/main/docs/development.md#tests)
 [![Docker end-to-end test](https://github.com/Dennis-Otto/ha-autodarts/actions/workflows/e2e.yml/badge.svg)](https://github.com/Dennis-Otto/ha-autodarts/actions/workflows/e2e.yml)
+[![Sponsor](https://img.shields.io/badge/sponsor-%E2%99%A5-db61a2?logo=githubsponsors&logoColor=white)](https://github.com/sponsors/Dennis-Otto)
 
-[**Documentation**](https://github.com/Dennis-Otto/ha-autodarts/blob/main/docs/README.md) · [**Deutsche Anleitung**](https://github.com/Dennis-Otto/ha-autodarts/blob/main/docs/de/README.md) · [Quick start](#quick-start) · [Changelog](https://github.com/Dennis-Otto/ha-autodarts/blob/main/CHANGELOG.md)
+[**Documentation**](https://dennis-otto.github.io/ha-autodarts/) · [**Deutsche Anleitung**](https://dennis-otto.github.io/ha-autodarts/de/) · [Quick start](#quick-start) · [Changelog](https://github.com/Dennis-Otto/ha-autodarts/blob/main/CHANGELOG.md) · [💛 Sponsor](https://github.com/sponsors/Dennis-Otto)
 
 <img src="https://raw.githubusercontent.com/Dennis-Otto/ha-autodarts/main/docs/images/en/hero.webp" alt="Animation: a 301 match on the live card and the scoreboard side by side. Alex throws three triple 20s, the beds light up and the scoreboard counts down to 121; Sam scores 85; Alex checks out 121 with T20, outer bull and D18 for the game shot" width="880">
 
 </div>
 
+Every guide is on the [documentation website](https://dennis-otto.github.io/ha-autodarts/), in English and [German](https://dennis-otto.github.io/ha-autodarts/de/), with a search.
+
 ## Why
 
 - **Instant and local.** Darts appear in Home Assistant a fraction of a second after they land, straight from the Board Manager in your network. No account, no cloud, no client ID.
-- **A whole darts evening.** X01 from 101 to 1001, three Cricket games, six party games and eight training games, alone, as a match of up to four or as a tournament of up to eight, with a scoreboard for the tablet at the board.
+- **A whole darts evening.** X01 from 101 to 1001, four Cricket games, six party games and eight training games, alone, as a match of up to four or as a tournament of up to eight, with a scoreboard for the tablet at the board.
 - **Your progress in numbers.** Averages, heatmaps of the real dart positions, personal bests, badges, weekly trends, player profiles, a weekly report and a year of history, all kept in your home.
 - **Your home plays along.** Lights for a 180, a caller on your speakers, the board light for the takeout, a photo of your best checkout.
 
@@ -34,7 +38,7 @@
       <h3>Play</h3>
       <ul>
         <li>X01 from 101 to 1001 with double out, double in and the checkout route after every dart</li>
-        <li>Cricket, Cut-Throat Cricket and Tactics on a chalkboard</li>
+        <li>Cricket, Cut-Throat Cricket, Tactics and Wild Mouse on a chalkboard</li>
         <li>Party games: Shanghai, Halve-It, Killer, Golf, Baseball and Count-Up</li>
         <li>Matches of up to four players with legs and sets, two teams of two, handicap start scores and a bull-off, and a summary of every match</li>
         <li>Tournaments of three to eight players: a round robin with a table or a knockout with a bracket</li>
@@ -89,7 +93,7 @@
       <h3>Automate</h3>
       <ul>
         <li>Board events for every dart, visit, takeout, bust, won leg and match, personal best and more</li>
-        <li>Eleven blueprints: light show, dart and practice callers, highlight photos, reports, alerts and routines</li>
+        <li>Twelve blueprints: light show, dart and practice callers, highlight photos, reports, alerts, routines and a game started by voice</li>
         <li>Start any game with one action, also by voice</li>
         <li>Online matches on play.autodarts.io through an optional bridge <i>(experimental)</i></li>
       </ul>
@@ -150,6 +154,7 @@ Import a blueprint with one click, choose your board and you're done:
 | **Weekly report.** Your training week with the trend of your 3-dart average, as a notification. | [![Import the weekly report blueprint](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https%3A%2F%2Fgithub.com%2FDennis-Otto%2Fha-autodarts%2Fblob%2Fmain%2Fblueprints%2Fautomation%2Fautodarts%2Fweekly_report.yaml) |
 | **Training report.** Your daily summary with the 3-dart average. | [![Import the training report blueprint](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https%3A%2F%2Fgithub.com%2FDennis-Otto%2Fha-autodarts%2Fblob%2Fmain%2Fblueprints%2Fautomation%2Fautodarts%2Ftraining_report.yaml) |
 | **Board problem alert** when the board goes offline or a camera fails, with an optional all-clear. | [![Import the board problem alert blueprint](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https%3A%2F%2Fgithub.com%2FDennis-Otto%2Fha-autodarts%2Fblob%2Fmain%2Fblueprints%2Fautomation%2Fautodarts%2Fboard_alert.yaml) |
+| **Start a game by voice.** Say "Start 501 for Alex and Sam" to Assist, in English or German. | [![Import the start a game by voice blueprint](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https%3A%2F%2Fgithub.com%2FDennis-Otto%2Fha-autodarts%2Fblob%2Fmain%2Fblueprints%2Fautomation%2Fautodarts%2Fstart_game_by_voice.yaml) |
 
 ## Documentation
 
@@ -161,7 +166,7 @@ Import a blueprint with one click, choose your board and you're done:
 | [Scoreboard at the board](https://github.com/Dennis-Otto/ha-autodarts/blob/main/docs/scoreboard.md) | A tablet or TV at the board, the new game screen, tournaments, the caller and idle mode |
 | [Statistics and players](https://github.com/Dennis-Otto/ha-autodarts/blob/main/docs/statistics.md) | Sessions, personal bests, heatmaps and dart positions, doubles, player profiles, achievements, trends, the leaderboard, reports, calendar and export |
 | [Dashboard cards](https://github.com/Dennis-Otto/ha-autodarts/blob/main/docs/cards.md) | All seven cards, the automatic dashboard, every option and accessibility |
-| [Automations](https://github.com/Dennis-Otto/ha-autodarts/blob/main/docs/automations.md) | Eleven blueprints, board events and ready-to-use examples |
+| [Automations](https://github.com/Dennis-Otto/ha-autodarts/blob/main/docs/automations.md) | Twelve blueprints, board events and ready-to-use examples |
 | [Online matches](https://github.com/Dennis-Otto/ha-autodarts/blob/main/docs/online-matches.md) | Moments of online matches on play.autodarts.io in Home Assistant *(experimental)* |
 | [Entities and events](https://github.com/Dennis-Otto/ha-autodarts/blob/main/docs/entities.md) | Every entity, event, attribute and action |
 | [How it works](https://github.com/Dennis-Otto/ha-autodarts/blob/main/docs/how-it-works.md) | Data flow, update intervals, connection behavior, stored data and privacy |
@@ -169,7 +174,7 @@ Import a blueprint with one click, choose your board and you're done:
 | [Security design](https://github.com/Dennis-Otto/ha-autodarts/blob/main/docs/security.md) | What is protected, trust boundaries, threats and countermeasures |
 | [Glossary](https://github.com/Dennis-Otto/ha-autodarts/blob/main/docs/glossary.md) | The words of darts and of this integration, in English and German |
 | [Changelog](https://github.com/Dennis-Otto/ha-autodarts/blob/main/CHANGELOG.md) and [releases](https://github.com/Dennis-Otto/ha-autodarts/releases) | What every version brought; the [roadmap](https://github.com/Dennis-Otto/ha-autodarts/blob/main/docs/roadmap.md) shows what comes next |
-| [Deutsche Dokumentation](https://github.com/Dennis-Otto/ha-autodarts/blob/main/docs/de/README.md) | Die komplette Anleitung auf Deutsch |
+| [Deutsche Dokumentation](https://dennis-otto.github.io/ha-autodarts/de/) | Die komplette Anleitung auf Deutsch |
 
 ## Known limitations
 
@@ -183,6 +188,7 @@ Import a blueprint with one click, choose your board and you're done:
 
 - **Questions and ideas:** [GitHub Discussions](https://github.com/Dennis-Otto/ha-autodarts/discussions). **Bugs:** [issues](https://github.com/Dennis-Otto/ha-autodarts/issues/new/choose), with the diagnostics of your board. [SUPPORT.md](https://github.com/Dennis-Otto/ha-autodarts/blob/main/SUPPORT.md) explains where to ask what.
 - **Tried it?** A [tester report](https://github.com/Dennis-Otto/ha-autodarts/issues/new?template=tester_report.yml) tells us what worked, what didn't and what you miss; short answers are fine.
+- **Speak German, Dutch, French or Spanish?** The [translation issues](https://github.com/Dennis-Otto/ha-autodarts/issues?q=is%3Aissue%20is%3Aopen%20label%3Atranslations) name the texts that are missing or outdated in your language, and how to fix them in the browser, no programming needed.
 - **Security:** report vulnerabilities privately as described in [SECURITY.md](https://github.com/Dennis-Otto/ha-autodarts/blob/main/SECURITY.md).
 - **Show it:** for videos and articles, the [creator kit](https://github.com/Dennis-Otto/ha-autodarts/blob/main/docs/creator-kit.md) has facts, videos and pictures, free to use.
 - **Contributing:** contributions are welcome; [CONTRIBUTING.md](https://github.com/Dennis-Otto/ha-autodarts/blob/main/CONTRIBUTING.md) explains the checks. Participation follows the [code of conduct](https://github.com/Dennis-Otto/ha-autodarts/blob/main/CODE_OF_CONDUCT.md) and the project's [governance](https://github.com/Dennis-Otto/ha-autodarts/blob/main/GOVERNANCE.md).

@@ -2,7 +2,7 @@
 // Run: node --test "contrib/classic-game-screen/*.test.mjs"
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { P, states, mount } from "./dom-helpers.mjs";
+import { states, mount } from "./dom-helpers.mjs";
 
 const lobby = () => mount(states([], { game: "off" }));
 

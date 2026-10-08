@@ -1,8 +1,8 @@
 # Games and rules
 
-[← Documentation](README.md) · [Deutsch](de/spiele.md)
+[← Documentation](README.md) · [Deutsch](games.de.md)
 
-Your Autodarts board plays games in Home Assistant itself: X01 from 101 to 1001, three Cricket games, six party games and eight training games, alone, as a match of up to four players or as a tournament of up to eight. Home Assistant counts every dart the board detects, recognizes busts, shows the checkout route and keeps the game through restarts. No Autodarts account, no cloud and no browser tab are needed.
+Your Autodarts board plays games in Home Assistant itself: X01 from 101 to 1001, four Cricket games, six party games and eight training games, alone, as a match of up to four players or as a tournament of up to eight. Home Assistant counts every dart the board detects, recognizes busts, shows the checkout route and keeps the game through restarts. No Autodarts account, no cloud and no browser tab are needed.
 
 <img src="images/en/lobby.webp" alt="Animation: on the tablet at the board, New game opens the game screen, Cricket is chosen, Sam joins Alex, the legs per set go up to three and the game starts on the scoreboard" width="760">
 
@@ -16,6 +16,7 @@ Your Autodarts board plays games in Home Assistant itself: X01 from 101 to 1001,
 | [**Cricket**](#cricket) | 1–4, or two teams of two | Close 20 to 15 and the bull, and score on the numbers the others still have open |
 | [**Cut-Throat Cricket**](#cut-throat-cricket) | 1–4, or two teams of two | Close everything with the fewest points: your points go to the others |
 | [**Tactics**](#tactics) | 1–4, or two teams of two | Cricket on 20 to 10 and the bull |
+| [**Wild Mouse**](#wild-mouse) | 1–4, or two teams of two | Cricket plus three doubles, three triples and three darts in one bed |
 | [**Shanghai**](#shanghai) | 1–4 | Score on the numbers 1 to 7; single, double and triple in one visit win at once |
 | [**Halve-It**](#halve-it) | 1–4 | Hit the target of the round, or your points are halved |
 | [**Killer**](#killer) | 2–4 | Win your number, become a killer and take the others' lives |
@@ -73,7 +74,7 @@ A dart the board read wrong, a dart it missed, or the visits of a player without
 - **Correct a dart:** tap the dart on the [scoreboard](scoreboard.md#correct-and-enter-darts) and choose the right bed, or use [`autodarts.correct_dart`](entities.md#correct-a-dart-autodartscorrect_dart). The remaining score, a bust or a win, the Cricket marks and the statistics follow at once. The board keeps its own reading; when it corrects the dart itself later, its reading counts again. Tap the spot on the pad's board, and the dart also counts where it really is for the dart positions.
 - **Enter a dart:** with *Practice manual entry* on, the scoreboard's keypad or [`autodarts.throw_dart`](entities.md#enter-a-dart-autodartsthrow_dart) adds a dart as if the board had detected it. This works with the detection stopped too, so a player without cameras can play along.
 - **Next player:** ends the visit without pulling the darts; the darts in the board count for nobody until they are pulled. Without darts, the player at the board passes in X01, the Cricket and the party games; in a party game the pass counts as a visit of three misses, so Halve-It halves the points and Golf scores 5 strokes. A training game, a bull-off and Killer while the numbers are chosen do not pass.
-- **Undo the last visit:** when a wrong reading is noticed after the takeout, *Undo last visit* on the scoreboard or [`autodarts.undo_visit`](entities.md#undo-a-visit-autodartsundo_visit) takes the visit back, also after a won leg: its darts become the current visit again, to correct them, and *Next player* ends it. This works while no dart is in the board and the game has not changed since, but not after a visit that decided a tournament match. The statistics, the players' progress with their achievements, the weekly report and the training calendar go back with the visit, so it counts once when it is booked again.
+- **Undo the last visit:** when a wrong reading is noticed after the takeout, a tap on the last visit beside the darts of the scoreboard or [`autodarts.undo_visit`](entities.md#undo-a-visit-autodartsundo_visit) takes the visit back, also after a won leg: its darts become the current visit again, to correct them, and *Next player* ends it. This works while no dart is in the board and the game has not changed since, but not after a visit that decided a tournament match. The statistics, the players' progress with their achievements, the weekly report and the training calendar go back with the visit, so it counts once when it is booked again.
 - **Marked:** darts entered or corrected in Home Assistant carry `manual`, so automations can tell them apart. [The exact rules](how-it-works.md#corrections-and-darts-entered-by-hand).
 
 ## Matches, legs and sets
@@ -237,6 +238,17 @@ The live card and the scoreboard show a chalkboard with the marks of every playe
 - Cricket on the numbers 20 to 10 and the bull, twelve numbers in all. Marks, points and the win follow the rules of Cricket.
 
 <img src="images/en/scoreboard-tactics.png" alt="Scoreboard in Tactics between Alex and Sam: the chalkboard from 20 down to 10 and the bull, Alex with 94 points, Sam at the board with T15 as the next target" width="760">
+
+### Wild Mouse
+
+Also known as Minnesota Cricket. Besides 20 to 15 and the bull, every player closes three more targets: **Doubles**, **Triples** and **3 in a bed**. The chalkboard has a row for each.
+
+- **Every dart counts once:** a dart marks its number while you still have it open, as in Cricket: a T20 is three marks on the 20. Otherwise a double is one mark on Doubles and a triple one mark on Triples, on any number and with the bullseye as a double. Three marks close Doubles and Triples.
+- **3 in a bed:** three darts of a visit in the same bed, such as three single 18s or three T20s, close it at once; the darts count for their targets as well. To play without it, as casual players often do, switch off *Three in a bed* on the new game screen or *Practice Wild Mouse three in a bed*; a change starts the game anew.
+- **Points:** a target you have closed scores while another player still has it open: a number its value per mark, as in Cricket, Doubles and Triples the dart's whole score (32 points for a D16), and 3 in a bed the three darts together (180 for three T20s).
+- **Win:** close every target with at least as many points as everybody else, as in Cricket.
+- **Target:** the board outlines the next open target: 20 down to 15, then any double, any triple, for 3 in a bed the single 20 and after the first dart its bed, and the bull last.
+- **Marks per round:** every mark that closed or scored counts, on the numbers as on Doubles and Triples; 3 in a bed counts one.
 
 ## Party games
 

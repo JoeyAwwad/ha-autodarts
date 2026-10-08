@@ -1,6 +1,6 @@
 # Creator kit
 
-[← Documentation](README.md) · [Deutsch](de/creator-kit.md)
+[← Documentation](README.md) · [Deutsch](creator-kit.de.md)
 
 For YouTubers, streamers, bloggers and everyone who wants to show the Autodarts integration for Home Assistant. Everything on this page is free to use in videos, articles and posts about the integration; no need to ask.
 
@@ -29,11 +29,11 @@ Autodarts for Home Assistant is a free, open-source integration that connects an
 | Name | Autodarts for Home Assistant (`ha-autodarts`) |
 | Price | Free, open source under the MIT license |
 | Connection | Local and in real time with the Board Manager on the board PC; no Autodarts account, no cloud |
-| Games | X01 from 101 to 1001, three Cricket games, six party games and eight training games |
+| Games | X01 from 101 to 1001, four Cricket games, six party games and eight training games |
 | Play | Up to four players or two teams of two, handicap start scores, a bot from level 20 to 120, tournaments of three to eight players |
 | Scoreboard | A full-screen view for a tablet or TV, with the new game screen, dart corrections, a caller and idle mode |
 | Statistics | Personal bests, heatmaps of the real dart positions, trends, achievements, a leaderboard, a weekly report and exports |
-| Home | Seven dashboard cards, an automatic dashboard and eleven blueprints, for example a light show on a 180 |
+| Home | Seven dashboard cards, an automatic dashboard and twelve blueprints, for example a light show on a 180 |
 | Languages | English, German, Dutch, French and Spanish |
 | Quality | 100 % test coverage, tested against both Board Manager generations in Docker; every rule of the Home Assistant quality scale up to Platinum (self-assessed) |
 | Requirements | Home Assistant 2026.8 or newer with HACS; the tested setups are under [supported devices](README.md#supported-devices) |
@@ -71,7 +71,7 @@ Recorded in the demo with a simulated board. MP4 works in video editors, on Redd
 
 ## Pictures
 
-Every screenshot of the documentation is in [`docs/images/en`](images/en) and [`docs/images/de`](images/de), all taken in the demo. A few that show the integration at a glance:
+Every screenshot of the documentation is in [`docs/images/en`](https://github.com/Dennis-Otto/ha-autodarts/tree/main/docs/images/en) and [`docs/images/de`](https://github.com/Dennis-Otto/ha-autodarts/tree/main/docs/images/de), all taken in the demo. A few that show the integration at a glance:
 
 | | |
 | --- | --- |

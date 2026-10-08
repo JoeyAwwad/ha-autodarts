@@ -20,7 +20,8 @@ jobs:
   e2e:
     name: e2e (${{ matrix.name }})
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    # The browser test checks every view on eight screen sizes.
+    timeout-minutes: 45
     strategy:
       fail-fast: false
       matrix:
@@ -42,11 +43,23 @@ jobs:
       HOME_ASSISTANT_IMAGE: ${{ matrix.image }}
       E2E_ARTIFACTS: ${{ github.workspace }}/e2e-artifacts
     steps:
+      - name: Record the network traffic of the job
+        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
+        with:
+          egress-policy: audit
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       - name: Run Home Assistant end-to-end tests
         run: bash tests/e2e/run.sh
+      # axe-core of package-lock.json checks the accessibility of the cards.
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        if: matrix.browser
+        with:
+          node-version: 24
+      - name: Install the locked packages of the frontend
+        if: matrix.browser
+        run: npm ci --ignore-scripts
       - name: Check the dashboard cards in a real browser
         if: matrix.browser
         run: bash tests/e2e/browser.sh
@@ -64,18 +77,27 @@ jobs:
     name: e2e (Home Assistant beta)
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     env:
       BOARD_MANAGER: 2
       # The moving beta tag on purpose: this job tests what users get next.
       HOME_ASSISTANT_IMAGE: ghcr.io/home-assistant/home-assistant:beta
       E2E_ARTIFACTS: ${{ github.workspace }}/e2e-artifacts
     steps:
+      - name: Record the network traffic of the job
+        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
+        with:
+          egress-policy: audit
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       - name: Run Home Assistant end-to-end tests
         run: bash tests/e2e/run.sh
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+      - name: Install the locked packages of the frontend
+        run: npm ci --ignore-scripts
       - name: Check the dashboard cards in a real browser
         run: bash tests/e2e/browser.sh
       - name: Keep logs and screenshots of a failed run

@@ -1,0 +1,73 @@
+# A local Home Assistant to try the classic game screen without a board: the integration,
+# a simulated Autodarts board, the game screen dashboard and a dart simulator page.
+# Start it with demo.sh (or demo.ps1); everything is bound to 127.0.0.1.
+x-image: &image ${HOME_ASSISTANT_IMAGE:-ghcr.io/home-assistant/home-assistant:2026.9.4@sha256:3e6710a7ab2a61311d9d899b719f6c3657791c63e8f4942cec4ebc42401d6b76}
+
+services:
+  board-mock:
+    # The repository's Board Manager double, the same one its end-to-end tests use.
+    image: *image
+    entrypoint: ["python3", "/e2e/board_mock.py"]
+    environment:
+      BOARD_MANAGER: "2"
+    user: "65534:65534"
+    read_only: true
+    tmpfs:
+      - /tmp
+    volumes:
+      - ../../../tests/e2e:/e2e:ro
+    ports:
+      # The game screen in the browser talks to the board directly, like with a real board.
+      - "127.0.0.1:${DEMO_BOARD_PORT:-13180}:3180"
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:3180/health')"]
+      interval: 2s
+      timeout: 2s
+      retries: 30
+
+  simulator:
+    # A clickable dartboard that throws darts at the simulated board.
+    image: *image
+    entrypoint: ["python3", "/demo/simulator.py"]
+    environment:
+      BOARD: http://board-mock:3180
+    user: "65534:65534"
+    read_only: true
+    depends_on:
+      board-mock:
+        condition: service_healthy
+    volumes:
+      - ./:/demo:ro
+    ports:
+      - "127.0.0.1:${DEMO_SIMULATOR_PORT:-18126}:8080"
+
+  homeassistant:
+    image: *image
+    depends_on:
+      board-mock:
+        condition: service_healthy
+    environment:
+      TZ: ${TZ:-Europe/London}
+      BOARD_MANAGER: "2"
+      DEMO_BOARD_URL: http://127.0.0.1:${DEMO_BOARD_PORT:-13180}
+    ports:
+      - "127.0.0.1:${DEMO_PORT:-18125}:8123"
+    volumes:
+      - homeassistant_config:/config
+      - ./configuration.yaml:/config/configuration.yaml:ro
+      - ../../../custom_components/autodarts:/config/custom_components/autodarts:ro
+      - ../../../tests/e2e:/e2e:ro
+      - ./:/demo:ro
+      - ../autodarts-classic-card.js:/config/www/autodarts-classic-card.js:ro
+      - ../extras/darts-screen-package.yaml:/config/packages/darts_screen.yaml:ro
+      # Your own logo, banner, moment pictures and photos, if any: DARTS_ASSETS=path.
+      - ${DARTS_ASSETS:-./assets}:/config/www/darts:ro
+    healthcheck:
+      # /api/onboarding goes away once onboarding is done and Home Assistant restarts.
+      test: ["CMD-SHELL", "curl --fail --silent http://127.0.0.1:8123/manifest.json >/dev/null || exit 1"]
+      interval: 3s
+      timeout: 3s
+      retries: 100
+
+volumes:
+  homeassistant_config:

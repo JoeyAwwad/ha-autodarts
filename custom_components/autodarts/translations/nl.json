@@ -419,7 +419,7 @@
         "name": "Automatisch herkalibreren"
       },
       "auto_distortion": {
-        "name": "Automatische vervormingscorrectie"
+        "name": "Vervormingscorrectie"
       },
       "training_session": {
         "name": "Trainingssessie"
@@ -456,6 +456,9 @@
       },
       "practice_manual_entry": {
         "name": "Oefenspel handmatige invoer"
+      },
+      "practice_three_in_a_bed": {
+        "name": "Oefenspel Wild Mouse three in a bed"
       }
     },
     "select": {
@@ -489,6 +492,7 @@
           "killer": "Killer",
           "cut_throat": "Cut-Throat Cricket",
           "tactics": "Tactics",
+          "wild_mouse": "Wild Mouse",
           "golf": "Golf",
           "baseball": "Baseball",
           "count_up": "Count-Up",
@@ -531,7 +535,8 @@
           "1001": "1001",
           "cricket": "Cricket",
           "cut_throat": "Cut-Throat Cricket",
-          "tactics": "Tactics"
+          "tactics": "Tactics",
+          "wild_mouse": "Wild Mouse"
         }
       }
     },
@@ -561,7 +566,7 @@
         "name": "Toernooipauze"
       },
       "tournament_summary": {
-        "name": "Weergaveduur toernooisamenvatting"
+        "name": "Toernooi weergaveduur samenvatting"
       },
       "practice_bot_level": {
         "name": "Oefenspel botniveau"
@@ -840,6 +845,21 @@
     },
     "export_limit": {
       "message": "In het afgelopen uur zijn {count} exports geschreven, meer schrijft de integratie niet. Probeer het later opnieuw."
+    },
+    "unknown_game": {
+      "message": "Geen spel heet ‘{game}’. Noem een van de oefenspellen, zoals 501, Cricket of Around the Clock."
+    },
+    "voice_game_on": {
+      "message": "Game on: {game} met {players}."
+    },
+    "voice_game_on_alone": {
+      "message": "Game on: {game}."
+    },
+    "voice_and": {
+      "message": "en"
+    },
+    "voice_bot": {
+      "message": "de bot"
     }
   },
   "issues": {
@@ -900,7 +920,7 @@
         },
         "game": {
           "name": "Spel",
-          "description": "X01 van 101 tot 1001 punten, een Cricket-spel, een partyspel of een trainingsspel."
+          "description": "X01 van 101 tot 1001 punten, een Cricket-spel, een partyspel of een trainingsspel. Ook een naam zoals de spellijst hem toont, in elke taal van de integratie, werkt, zoals ‘Around the Clock’."
         },
         "players": {
           "name": "Spelers",
@@ -933,6 +953,10 @@
         "teams": {
           "name": "Teams",
           "description": "Vier spelers spelen X01 of een Cricket-spel als twee teams: spelers 1 en 3 tegen spelers 2 en 4."
+        },
+        "three_in_a_bed": {
+          "name": "Three in a bed",
+          "description": "Wild Mouse: drie darts van een beurt in hetzelfde vak sluiten een eigen doel, zoals de regels het willen. Uit laat het weg."
         },
         "start_scores": {
           "name": "Startscores",
@@ -1198,6 +1222,7 @@
         "killer": "Killer",
         "cut_throat": "Cut-Throat Cricket",
         "tactics": "Tactics",
+        "wild_mouse": "Wild Mouse",
         "golf": "Golf",
         "baseball": "Baseball",
         "count_up": "Count-Up",

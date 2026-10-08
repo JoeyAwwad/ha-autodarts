@@ -68,11 +68,11 @@ test("a team match shows two teams with the partner at the board", () => {
   assert.match(html.main, /<div class="players n2 teams">/);
   assert.match(
     html.main,
-    /<div class="player active" aria-current="true"><div class="name">Alex &#38; Kim<\/div><div class="big">141<\/div><div class="route"><span class="bed">T20<\/span>/
+    /<div class="player active" aria-current="true"><div class="name">Alex &#38; Kim<\/div><div class="big">141<\/div><div class="route"><div class="route-line"><span class="bed">T20<\/span>/
   );
   assert.match(html.main, /<div class="members"><span>Alex Ø 60\.5<\/span> · <b>Kim Ø 45\.0<\/b><\/div>/);
   assert.match(html.main, /<div class="name">Sam &#38; score_player 4<\/div><div class="big">201<\/div>/);
-  assert.match(html.main, /<div class="details">score_legs 1<\/div>/);
+  assert.match(html.main, /<div class="details"><span class="details-line">score_legs 1<\/span><\/div>/);
   // Everybody starts from 301: no start scores to show.
   assert.doesNotMatch(html.main, /badge/);
   // The live card lists the teams and says who throws.
@@ -149,6 +149,58 @@ test("Tactics and Cut-Throat Cricket play their own numbers and rules", () => {
   assert.equal(cutHtml.meta, "cut_throat_hint");
   assert.match(cricketTable(cricketView(cut), ui), /<table class="cricket">/);
   assert.equal(livePanel(gameView((name) => ({ practice: cut })[name]), ui).title, "cricket_cut_throat");
+});
+
+test("Wild Mouse closes doubles, triples and three in a bed besides the numbers", () => {
+  const open = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+  const wild = {
+    state: "unknown",
+    attributes: {
+      game: "wild_mouse",
+      target: "D",
+      target_row: "doubles",
+      numbers: [20, 19, 18, 17, 16, 15, 25],
+      targets: ["doubles", "triples", "bed", "eggs"],
+      counted: ["20", "triples", null],
+      bed: true,
+      visit: ["T20", "T20", "T20"],
+      scores: [
+        { player: 1, marks: [3, 3, 3, 3, 3, 3, 0, 1, 2, 3], points: 0 },
+        { player: 2, marks: open, points: 0 },
+        { player: 3, marks: [0, 0, 0, 0, 0, 0, 0], points: 0 },
+      ],
+    },
+  };
+  const view = cricketView(wild);
+  assert.deepEqual(view.targets, ["doubles", "triples", "bed"]);
+  assert.deepEqual([view.targetRow, view.target, view.bed], ["doubles", "D", true]);
+  assert.deepEqual(view.counted, ["20", "triples", null]);
+  // Marks of another length are no player of this game.
+  assert.equal(view.scores.length, 2);
+  const html = board({ practice: wild });
+  assert.equal(html.title, "cricket_wild_mouse");
+  assert.equal(html.meta, "wild_mouse_hint");
+  assert.match(html.main, /<table class="cricket many">/);
+  assert.equal((html.main.match(/<tr/g) ?? []).length, 1 + 10 + 2);
+  assert.match(html.main, /<tr class="target"><th>wild_doubles<\/th>/);
+  assert.match(html.main, /<tr class=""><th>wild_triples<\/th>/);
+  assert.match(html.main, /<tr class=""><th>wild_bed<\/th>/);
+  // Any double, any triple, or the bed of the visit.
+  const beds = (target, row) =>
+    aimBeds(gameView((name) => ({ practice: { ...wild, attributes: { ...wild.attributes, target, target_row: row } } })[name]));
+  assert.equal(beds("D", "doubles").length, 21);
+  assert.equal(beds("T", "triples").length, 20);
+  assert.deepEqual(beds("S20", "bed"), ["SI20", "SO20"]);
+  assert.deepEqual(beds("BULL", "25"), ["Bull", "25"]);
+  assert.equal(cricketView({ ...wild, attributes: { ...wild.attributes, target: "X", target_row: 7 } }).target, null);
+  // A T20 marked the 20 three times, a second one triples once, and the bed once more.
+  const count = visitCount({ mode: "cricket", cricket: view }, ["T20", "T20", "T20"], null);
+  assert.deepEqual(count, { kind: "marks", marks: 5 });
+  // Other Cricket games know nothing of these targets.
+  const cricket = cricketView({ ...wild, attributes: { ...wild.attributes, game: "cricket", scores: [] } });
+  assert.deepEqual([cricket.targets, cricket.targetRow, cricket.counted, cricket.bed, cricket.target], [[], null, [], false, null]);
+  const plain = cricketView({ ...wild, attributes: { game: "wild_mouse", scores: [] } });
+  assert.deepEqual([plain.targets, plain.counted], [[], []]);
 });
 
 test("team Cricket shows a column per team, the partner at the board in bold", () => {
@@ -280,7 +332,7 @@ test("the new training games show their target, points and beds", () => {
     /drill_round <b>3 \/ 40<\/b><\/span><span>drill_visit <b>1 \/ 2<\/b><\/span><span><b>5<\/b> drill_points/
   );
   const caught = drill("unknown", { drill: "catch_40", finished: true, score: 88, progress: 40, targets: 40 });
-  assert.match(board(caught).main, /<div class="big">✓<\/div><div class="route"><span class="note won">drill_bobs_done<\/span>/);
+  assert.match(board(caught).main, /<div class="big">✓<\/div><div class="route"><div class="route-line"><span class="note won">drill_bobs_done<\/span>/);
   assert.match(board(caught).main, /<b>88<\/b> drill_points/);
   const empty = drill("unknown", { drill: "catch_40", finished: true });
   assert.match(board(empty).main, /<b>0<\/b> drill_points/);
@@ -369,7 +421,7 @@ test("the history names the new games and both winners of a team match", () => {
   assert.match(html, /cricket_cut_throat<\/span><span><span>A 0<\/span>/);
 });
 
-test("the live view offers the team switch, the Golf and Count-Up options and the start scores", () => {
+test("the game settings offer the team switch, the Golf and Count-Up options and the start scores", () => {
   const entity = (entity_id, translation_key) => ({ entity_id, translation_key, device_id: "dev", platform: "autodarts" });
   const entities = [
     entity("select.board_practice_game", "practice_game"),
@@ -385,8 +437,8 @@ test("the live view offers the team switch, the Golf and Count-Up options and th
     devices: { dev: { id: "dev" } },
     states: {},
   };
-  const [live] = dashboardStrategy(hass).views;
-  assert.deepEqual(live.sections[1].cards.slice(1), [
+  const games = dashboardStrategy(hass).views.find((view) => view.path === "games");
+  assert.deepEqual(games.sections[0].cards.slice(1), [
     {
       type: "entities",
       entities: [
@@ -429,13 +481,13 @@ test("a checkout training without a route shows the setup, aims at it and calls 
   assert.deepEqual(view.setup, { route: ["T20", "T19", "S10"], leave: 32 });
   assert.match(
     board(ladder).main,
-    /<div class="big">159<\/div><div class="route"><span class="setup" title="setup_hint"><span class="bed">T20<\/span><span class="bed">T19<\/span><span class="bed">S10<\/span><span class="leave">setup_leave<\/span><\/span><\/div>/
+    /<div class="big">159<\/div><div class="route"><div class="route-line"><span class="setup" title="setup_hint"><span class="bed">T20<\/span><span class="bed">T19<\/span><span class="bed">S10<\/span><span class="leave">setup_leave<\/span><\/span><\/div>/
   );
   // The board outlines the setup's first dart, as in X01.
   assert.deepEqual(drillBeds(view), ["T20"]);
   // A route wins over a setup, a bust over both; an unusable setup is none.
   const routed = drill("81", { drill: "checkout", remaining: 81, checkout: "T15 D18", setup: { route: "S1", leave: 80 } });
-  assert.match(board(routed).main, /<div class="route"><span class="bed">T15<\/span><span class="bed">D18<\/span><\/div>/);
+  assert.match(board(routed).main, /<div class="route"><div class="route-line"><span class="bed">T15<\/span><span class="bed">D18<\/span><\/div><\/div>/);
   const bust = drill("159", { drill: "checkout", remaining: 159, bust: true, setup: { route: "T20", leave: 99 } });
   assert.match(board(bust).main, /<span class="note bust">bust<\/span>/);
   assert.equal(drillView(drill("159", { drill: "checkout", setup: { route: "Z9", leave: 1 } }).drill).setup, null);

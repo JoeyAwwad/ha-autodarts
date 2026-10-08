@@ -75,7 +75,14 @@ test("game shot: confetti, fanfare and the call with the winner's name", () => {
   m.update(x01(["T20", "D20"], { winner: 1, legs_to_win: 3 }));
   assert.ok(m.$(".confetti i"));
   assert.ok(m.sounds.includes("win"));
-  assert.deepEqual(m.lines, ["game_shot_match", "name_a"]);
+  // A finish of 100 or more is called after the game shot.
+  assert.deepEqual(m.lines, ["game_shot_match", "name_a", "checkout", "score_100"]);
+});
+
+test("a finish under 100 is only the game shot", () => {
+  const m = spied(x01(["S20"]));
+  m.update(x01(["S20", "D20"], { winner: 1 }));
+  assert.deepEqual(m.lines, ["game_shot", "name_a"]);
 });
 
 test("a new thrower on a finish hears what they require", () => {
