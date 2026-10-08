@@ -29,7 +29,8 @@ const LEADERBOARD_TYPE = "autodarts-leaderboard-card";
 const STRATEGY_TYPE = "autodarts";
 const STRATEGY_ELEMENT = `ll-strategy-dashboard-${STRATEGY_TYPE}`;
 const STRATEGY_EDITOR_TYPE = "autodarts-strategy-editor";
-const REPOSITORY = "https://github.com/Dennis-Otto/ha-autodarts/blob/main/docs";
+// The documentation website, in English and in German under de/.
+const DOCUMENTATION = "https://dennis-otto.github.io/ha-autodarts";
 // Files of the action autodarts.export, downloaded with the user's login.
 const EXPORT_DOWNLOADS = "/api/autodarts/export/";
 
@@ -157,6 +158,8 @@ const TEXT = {
     stop: "Stop detection",
     reset: "Reset detection",
     calibrate: "Calibrate",
+    calibrate_all: "Calibrate all",
+    details: "Details",
     confirm: "Confirm?",
     status_offline: "Board unreachable",
     status_calibrating: "Calibrating",
@@ -251,7 +254,12 @@ const TEXT = {
     cricket: "Cricket",
     cricket_cut_throat: "Cut-Throat Cricket",
     cricket_tactics: "Tactics",
+    cricket_wild_mouse: "Wild Mouse",
     cut_throat_hint: "Fewest points win",
+    wild_mouse_hint: "Doubles and triples close too",
+    wild_doubles: "Doubles",
+    wild_triples: "Triples",
+    wild_bed: "3 in a bed",
     cricket_mpr: "MPR",
     cricket_points: "Points",
     mark_0: "No marks",
@@ -308,7 +316,14 @@ const TEXT = {
     export_failed: "Export failed",
     doubles_title: "Doubles",
     doubles_darts: "darts at a double",
-    doubles_empty: "Throw at doubles in X01, the doubles training or Bob's 27 to see your hit rate on every double.",
+    doubles_empty:
+      "Every double you hit shows up here. Its hit rate needs darts aimed at it: X01 with double out, the doubles training, Bob's 27 and the checkout games.",
+    doubles_hit: "doubles hit",
+    doubles_landed: "hit {count}×",
+    doubles_landed_short: "{count}×",
+    doubles_aimed: "aimed",
+    doubles_legend:
+      "× counts every dart in the double; 3/5 and the rate count the darts aimed at it: X01 with double out, the doubles training, Bob's 27 and the checkout games.",
     doubles_unknown_player:
       "No doubles of {player} yet. Check the name in the card settings, or throw at doubles in a practice game as {player}.",
     doubles_routes: "Personal checkout routes use doubles with at least 10 darts.",
@@ -320,6 +335,8 @@ const TEXT = {
     legs_per_set: "legs per set",
     sets_to_win: "sets to win",
     visit_short: "Visit",
+    last_short: "Last",
+    undo_short: "Undo?",
     caller: "Caller",
     caller_on: "Caller on",
     caller_hint: "Tap to switch the caller on or off",
@@ -350,6 +367,12 @@ const TEXT = {
     pad_cancel: "Cancel",
     pad_board: "Board",
     pad_spot: "Tap where the dart is",
+    pad_spot_hint: "Tap where the dart is. Hold and slide for a magnifier; two fingers zoom.",
+    pad_zoom: "Zoom",
+    pad_whole: "Whole board",
+    pad_keys: "Keys",
+    pad_view: "Enter with",
+    pad_bot_wait: "The bot is throwing; the pad waits for your turn.",
     pad_seen: "Where the board saw it",
     next_player: "Next player",
     undo_visit: "Undo last visit",
@@ -387,6 +410,8 @@ const TEXT = {
     lobby_increase: "More: {name}",
     lobby_options: "Options",
     lobby_one_player: "Training games are for one player: {name} plays.",
+    lobby_resting: "{game} is for {count}: the others sit out.",
+    lobby_full: "{count} players at most.",
     lobby_nobody: "Nobody chosen: one player throws without a name.",
     lobby_detection: "Detection is stopped: the start switches it on.",
     lobby_tournament_running: "A tournament is being played: the start stops it first, after a second tap.",
@@ -396,6 +421,7 @@ const TEXT = {
     lobby_start_lower: "Lower start score: {name}",
     lobby_start_raise: "Higher start score: {name}",
     teams: "Teams (1 + 3 against 2 + 4)",
+    three_in_a_bed: "Three in a bed",
     double_out: "Double out",
     double_in: "Double in",
     bull_off_distance: "Bull-off by distance",
@@ -529,13 +555,15 @@ const TEXT = {
     unit_points: "{value} points",
     unit_day: "{value} day",
     unit_days: "{value} days",
-    unit_minutes: "{value} min",
-    under_a_minute: "<1 min",
+    unit_minutes: "{value} min",
+    under_a_minute: "<1 min",
     // Progress: badges, trends, grouping, dart positions and the leaderboard
     badges: "Badges",
     badge_count: "{count} badges",
     badge_count_one: "1 badge",
     badge_locked: "Locked",
+    badges_all: "All {count} badges",
+    badges_fewer: "Show fewer",
     badge_earned: "Earned {date}",
     badge_progress: "{value} of {goal}",
     badge_best: "Best so far: {value}",
@@ -597,7 +625,7 @@ const TEXT = {
     spread_tighter: "{value} tighter",
     spread_wider: "{value} wider",
     spread_hint: "Half of the darts land within the grouping around their mean point, 80 % within the second radius.",
-    unit_mm: "{value} mm",
+    unit_mm: "{value} mm",
     mode_positions: "Positions",
     heatmap_source: "Whose darts",
     heatmap_session: "Session",
@@ -647,6 +675,7 @@ const TEXT = {
     view_live: "Live",
     view_training: "Training",
     view_board: "Board",
+    view_games: "Game settings",
     darts_per_day: "Darts per day",
     average_trend: "3-dart average, last 7 days",
     board_settings: "Board settings",
@@ -702,6 +731,8 @@ const TEXT = {
     stop: "Erkennung stoppen",
     reset: "Erkennung zurücksetzen",
     calibrate: "Kalibrieren",
+    calibrate_all: "Alle kalibrieren",
+    details: "Details",
     confirm: "Bestätigen?",
     status_offline: "Board nicht erreichbar",
     status_calibrating: "Kalibrierung läuft",
@@ -794,7 +825,12 @@ const TEXT = {
     cricket: "Cricket",
     cricket_cut_throat: "Cut-Throat Cricket",
     cricket_tactics: "Tactics",
+    cricket_wild_mouse: "Wild Mouse",
     cut_throat_hint: "Die wenigsten Punkte gewinnen",
+    wild_mouse_hint: "Auch Doubles und Triples schließen",
+    wild_doubles: "Doubles",
+    wild_triples: "Triples",
+    wild_bed: "3 in a Bed",
     cricket_mpr: "MPR",
     cricket_points: "Punkte",
     mark_0: "Keine Marks",
@@ -820,7 +856,7 @@ const TEXT = {
     any_double: "Beliebiges Double",
     any_treble: "Beliebiges Triple",
     killer_choose: "Wirf um deine Zahl",
-    killer_hunt: "Killer – triff die Doubles der anderen",
+    killer_hunt: "Killer – triff fremde Doubles",
     killer_life: "1 Leben",
     killer_lives: "{count} Leben",
     needs_players: "Killer braucht mindestens zwei Spieler",
@@ -850,7 +886,14 @@ const TEXT = {
     export_failed: "Export fehlgeschlagen",
     doubles_title: "Doubles",
     doubles_darts: "Darts aufs Double",
-    doubles_empty: "Wirf im X01, im Doppeltraining oder bei Bob's 27 auf Doubles, dann siehst du hier die Quote jedes Doubles.",
+    doubles_empty:
+      "Jedes Double, das du triffst, erscheint hier. Seine Quote braucht Darts, die aufs Double zielen: X01 mit Double-Out, Doppeltraining, Bob's 27 und die Checkout-Spiele.",
+    doubles_hit: "Doubles getroffen",
+    doubles_landed: "{count}× getroffen",
+    doubles_landed_short: "{count}×",
+    doubles_aimed: "gezielt",
+    doubles_legend:
+      "× zählt jeden Dart im Double; 3/5 und die Quote zählen die Darts, die aufs Double zielten: X01 mit Double-Out, Doppeltraining, Bob's 27 und die Checkout-Spiele.",
     doubles_unknown_player:
       "Noch keine Doubles von {player}. Prüfe den Namen in den Karteneinstellungen oder wirf in einem Übungsspiel als {player} auf Doubles.",
     doubles_routes: "Persönliche Checkout-Wege nutzen Doubles mit mindestens 10 Darts.",
@@ -862,6 +905,8 @@ const TEXT = {
     legs_per_set: "Legs pro Satz",
     sets_to_win: "Sätze zum Sieg",
     visit_short: "Aufnahme",
+    last_short: "Zuletzt",
+    undo_short: "Zurück?",
     caller: "Caller",
     caller_on: "Caller an",
     caller_hint: "Tippen schaltet den Caller ein oder aus",
@@ -892,6 +937,12 @@ const TEXT = {
     pad_cancel: "Abbrechen",
     pad_board: "Scheibe",
     pad_spot: "Tippe an, wo der Dart steckt",
+    pad_spot_hint: "Tippe an, wo der Dart steckt. Halten und schieben zeigt eine Lupe, zwei Finger zoomen.",
+    pad_zoom: "Zoom",
+    pad_whole: "Ganze Scheibe",
+    pad_keys: "Tasten",
+    pad_view: "Eingabe mit",
+    pad_bot_wait: "Der Bot wirft; das Tastenfeld wartet, bis du dran bist.",
     pad_seen: "Wo das Board ihn erkannt hat",
     next_player: "Nächster Spieler",
     undo_visit: "Letzte Aufnahme zurück",
@@ -928,6 +979,8 @@ const TEXT = {
     lobby_increase: "Mehr: {name}",
     lobby_options: "Optionen",
     lobby_one_player: "Trainingsspiele sind für einen Spieler: {name} spielt.",
+    lobby_resting: "{game} ist für {count}: Die übrigen setzen aus.",
+    lobby_full: "Höchstens {count} Spieler.",
     lobby_nobody: "Niemand gewählt: Ein Spieler wirft ohne Namen.",
     lobby_detection: "Die Erkennung ist gestoppt: Der Start schaltet sie ein.",
     lobby_tournament_running: "Es läuft ein Turnier: Der Start beendet es zuerst, nach einem zweiten Tippen.",
@@ -937,6 +990,7 @@ const TEXT = {
     lobby_start_lower: "Weniger Startpunkte: {name}",
     lobby_start_raise: "Mehr Startpunkte: {name}",
     teams: "Teams (1 + 3 gegen 2 + 4)",
+    three_in_a_bed: "Three in a Bed",
     double_out: "Double-Out",
     double_in: "Double-In",
     bull_off_distance: "Ausbullen nach Abstand",
@@ -1064,13 +1118,15 @@ const TEXT = {
     unit_points: "{value} Punkte",
     unit_day: "{value} Tag",
     unit_days: "{value} Tage",
-    unit_minutes: "{value} Min.",
-    under_a_minute: "<1 Min.",
+    unit_minutes: "{value} Min.",
+    under_a_minute: "<1 Min.",
     // Fortschritt: Abzeichen, Trends, Streuung, Dart-Positionen und die Bestenliste
     badges: "Abzeichen",
     badge_count: "{count} Abzeichen",
     badge_count_one: "1 Abzeichen",
     badge_locked: "Noch nicht erreicht",
+    badges_all: "Alle {count} Abzeichen",
+    badges_fewer: "Weniger anzeigen",
     badge_earned: "Erreicht am {date}",
     badge_progress: "{value} von {goal}",
     badge_best: "Bestwert bisher: {value}",
@@ -1132,7 +1188,7 @@ const TEXT = {
     spread_tighter: "{value} enger",
     spread_wider: "{value} weiter",
     spread_hint: "Die Hälfte der Darts landet innerhalb der Streuung um ihren Mittelpunkt, 80 % innerhalb des zweiten Radius.",
-    unit_mm: "{value} mm",
+    unit_mm: "{value} mm",
     mode_positions: "Positionen",
     heatmap_source: "Wessen Darts",
     heatmap_session: "Session",
@@ -1180,6 +1236,7 @@ const TEXT = {
     view_live: "Live",
     view_training: "Training",
     view_board: "Board",
+    view_games: "Spieleinstellungen",
     darts_per_day: "Darts pro Tag",
     average_trend: "3-Dart-Average, letzte 7 Tage",
     board_settings: "Board-Einstellungen",
@@ -1234,6 +1291,8 @@ const TEXT = {
     stop: "Detener detección",
     reset: "Restablecer detección",
     calibrate: "Calibrar",
+    calibrate_all: "Calibrar todas",
+    details: "Detalles",
     confirm: "¿Confirmar?",
     status_offline: "Diana inaccesible",
     status_calibrating: "Calibrando",
@@ -1326,7 +1385,12 @@ const TEXT = {
     cricket: "Cricket",
     cricket_cut_throat: "Cut-Throat Cricket",
     cricket_tactics: "Tactics",
+    cricket_wild_mouse: "Wild Mouse",
     cut_throat_hint: "Gana quien tenga menos puntos",
+    wild_mouse_hint: "Dobles y triples también se cierran",
+    wild_doubles: "Dobles",
+    wild_triples: "Triples",
+    wild_bed: "3 in a bed",
     cricket_mpr: "MPR",
     cricket_points: "Puntos",
     mark_0: "Sin marcas",
@@ -1352,7 +1416,7 @@ const TEXT = {
     any_double: "Cualquier doble",
     any_treble: "Cualquier triple",
     killer_choose: "Lanza para conseguir tu número",
-    killer_hunt: "Killer – acierta los dobles de los demás",
+    killer_hunt: "Killer – a por los dobles ajenos",
     killer_life: "1 vida",
     killer_lives: "{count} vidas",
     needs_players: "Killer necesita al menos dos jugadores",
@@ -1382,7 +1446,14 @@ const TEXT = {
     export_failed: "Error al exportar",
     doubles_title: "Dobles",
     doubles_darts: "dardos a doble",
-    doubles_empty: "Lanza a dobles en X01, en el entrenamiento de dobles o en Bob's 27 para ver tu porcentaje de aciertos en cada doble.",
+    doubles_empty:
+      "Aquí aparece cada doble que aciertas. Su porcentaje de aciertos necesita dardos apuntados al doble: X01 con Double out, el entrenamiento de dobles, Bob's 27 y los juegos de checkout.",
+    doubles_hit: "dobles acertados",
+    doubles_landed: "acertado {count}×",
+    doubles_landed_short: "{count}×",
+    doubles_aimed: "apuntados",
+    doubles_legend:
+      "× cuenta cada dardo en el doble; 3/5 y el porcentaje cuentan los dardos apuntados al doble: X01 con Double out, el entrenamiento de dobles, Bob's 27 y los juegos de checkout.",
     doubles_unknown_player:
       "Aún no hay dobles de {player}. Comprueba el nombre en la configuración de la tarjeta o lanza a dobles en una partida como {player}.",
     doubles_routes: "Las rutas de cierre personales usan dobles con al menos 10 dardos.",
@@ -1394,6 +1465,8 @@ const TEXT = {
     legs_per_set: "legs por set",
     sets_to_win: "sets para ganar",
     visit_short: "Tirada",
+    last_short: "Última",
+    undo_short: "¿Deshacer?",
     caller: "Locutor",
     caller_on: "Locutor activado",
     caller_hint: "Toca para activar o desactivar el locutor",
@@ -1423,6 +1496,12 @@ const TEXT = {
     pad_cancel: "Cancelar",
     pad_board: "Diana",
     pad_spot: "Toca donde está el dardo",
+    pad_spot_hint: "Toca donde está el dardo. Mantén y desliza para ver una lupa; con dos dedos haces zoom.",
+    pad_zoom: "Zoom",
+    pad_whole: "Diana entera",
+    pad_keys: "Teclas",
+    pad_view: "Introducir con",
+    pad_bot_wait: "El bot está lanzando; el teclado espera tu turno.",
     pad_seen: "Donde lo vio la diana",
     next_player: "Siguiente jugador",
     undo_visit: "Deshacer la última tirada",
@@ -1459,6 +1538,8 @@ const TEXT = {
     lobby_increase: "Más: {name}",
     lobby_options: "Opciones",
     lobby_one_player: "Los juegos de entrenamiento son para un jugador: juega {name}.",
+    lobby_resting: "{game} es para {count}: los demás descansan.",
+    lobby_full: "{count} jugadores como máximo.",
     lobby_nobody: "No has elegido a nadie: lanza un jugador sin nombre.",
     lobby_detection: "La detección está detenida: al empezar se activa.",
     lobby_tournament_running: "Se está jugando un torneo: al empezar se detiene primero, tras un segundo toque.",
@@ -1468,6 +1549,7 @@ const TEXT = {
     lobby_start_lower: "Bajar puntuación inicial: {name}",
     lobby_start_raise: "Subir puntuación inicial: {name}",
     teams: "Equipos (1 + 3 contra 2 + 4)",
+    three_in_a_bed: "Three in a bed",
     double_out: "Double out",
     double_in: "Double in",
     bull_off_distance: "Bull-off por distancia",
@@ -1595,12 +1677,14 @@ const TEXT = {
     unit_points: "{value} puntos",
     unit_day: "{value} día",
     unit_days: "{value} días",
-    unit_minutes: "{value} min",
-    under_a_minute: "<1 min",
+    unit_minutes: "{value} min",
+    under_a_minute: "<1 min",
     badges: "Insignias",
     badge_count: "{count} insignias",
     badge_count_one: "1 insignia",
     badge_locked: "Bloqueada",
+    badges_all: "Las {count} insignias",
+    badges_fewer: "Mostrar menos",
     badge_earned: "Conseguida el {date}",
     badge_progress: "{value} de {goal}",
     badge_best: "Mejor hasta ahora: {value}",
@@ -1662,7 +1746,7 @@ const TEXT = {
     spread_tighter: "{value} más cerrada",
     spread_wider: "{value} más abierta",
     spread_hint: "La mitad de los dardos cae dentro de la agrupación, alrededor de su punto medio, y el 80 % dentro del segundo radio.",
-    unit_mm: "{value} mm",
+    unit_mm: "{value} mm",
     mode_positions: "Posiciones",
     heatmap_source: "Dardos mostrados",
     heatmap_session: "Sesión",
@@ -1710,6 +1794,7 @@ const TEXT = {
     view_live: "En directo",
     view_training: "Entrenamiento",
     view_board: "Diana",
+    view_games: "Ajustes de juego",
     darts_per_day: "Dardos por día",
     average_trend: "Media de 3 dardos, últimos 7 días",
     board_settings: "Configuración de la diana",
@@ -1764,6 +1849,8 @@ const TEXT = {
     stop: "Arrêter la détection",
     reset: "Réinitialiser la détection",
     calibrate: "Calibrer",
+    calibrate_all: "Tout calibrer",
+    details: "Détails",
     confirm: "Confirmer\u00a0?",
     status_offline: "Cible injoignable",
     status_calibrating: "Calibrage en cours",
@@ -1856,7 +1943,12 @@ const TEXT = {
     cricket: "Cricket",
     cricket_cut_throat: "Cut-Throat Cricket",
     cricket_tactics: "Tactics",
+    cricket_wild_mouse: "Wild Mouse",
     cut_throat_hint: "Le moins de points gagne",
+    wild_mouse_hint: "Doubles et triples se ferment aussi",
+    wild_doubles: "Doubles",
+    wild_triples: "Triples",
+    wild_bed: "3 in a bed",
     cricket_mpr: "MPR",
     cricket_points: "Points",
     mark_0: "Aucune marque",
@@ -1881,8 +1973,8 @@ const TEXT = {
     start_score: "Score de départ",
     any_double: "N'importe quel double",
     any_treble: "N'importe quel triple",
-    killer_choose: "Lancez pour obtenir votre numéro",
-    killer_hunt: "Killer – touchez les doubles des autres",
+    killer_choose: "Lancez pour votre numéro",
+    killer_hunt: "Killer – touchez leurs doubles",
     killer_life: "1 vie",
     killer_lives: "{count} vies",
     needs_players: "Il faut au moins deux joueurs pour Killer",
@@ -1912,7 +2004,14 @@ const TEXT = {
     export_failed: "Échec de l'export",
     doubles_title: "Doubles",
     doubles_darts: "fléchettes sur double",
-    doubles_empty: "Lancez sur les doubles en X01, à l'entraînement aux doubles ou au Bob's 27 pour voir ici votre taux de réussite sur chaque double.",
+    doubles_empty:
+      "Chaque double que vous touchez apparaît ici. Son taux de réussite demande des fléchettes qui le visent\u00a0: X01 en Double out, l'entraînement aux doubles, le Bob's 27 et les jeux de checkout.",
+    doubles_hit: "doubles touchés",
+    doubles_landed: "touché {count}×",
+    doubles_landed_short: "{count}×",
+    doubles_aimed: "visées",
+    doubles_legend:
+      "× compte chaque fléchette dans le double\u00a0; 3/5 et le taux comptent les fléchettes qui le visaient\u00a0: X01 en Double out, l'entraînement aux doubles, le Bob's 27 et les jeux de checkout.",
     doubles_unknown_player:
       "Aucun double de {player} pour l'instant. Vérifiez le nom dans les paramètres de la carte, ou lancez sur les doubles dans une partie en tant que {player}.",
     doubles_routes: "Les combinaisons de finish personnelles utilisent les doubles visés par au moins 10 fléchettes.",
@@ -1924,6 +2023,8 @@ const TEXT = {
     legs_per_set: "manches par set",
     sets_to_win: "sets pour gagner",
     visit_short: "Volée",
+    last_short: "Dernière",
+    undo_short: "Annuler\u00a0?",
     caller: "Annonceur",
     caller_on: "Annonceur activé",
     caller_hint: "Touchez pour activer ou désactiver l'annonceur",
@@ -1953,6 +2054,12 @@ const TEXT = {
     pad_cancel: "Annuler",
     pad_board: "Cible",
     pad_spot: "Touchez l'endroit où se trouve la fléchette",
+    pad_spot_hint: "Touchez l'endroit où se trouve la fléchette. Maintenez et glissez pour une loupe\u00a0; deux doigts zooment.",
+    pad_zoom: "Zoom",
+    pad_whole: "Cible entière",
+    pad_keys: "Touches",
+    pad_view: "Saisir avec",
+    pad_bot_wait: "Le bot lance\u00a0; le pavé attend votre tour.",
     pad_seen: "Là où la cible l'a vue",
     next_player: "Joueur suivant",
     undo_visit: "Annuler la dernière volée",
@@ -1989,6 +2096,8 @@ const TEXT = {
     lobby_increase: "Plus\u00a0: {name}",
     lobby_options: "Options",
     lobby_one_player: "Les jeux d'entraînement se jouent seul\u00a0: c'est {name} qui joue.",
+    lobby_resting: "{game} se joue à {count}\u00a0: les autres attendent.",
+    lobby_full: "{count} joueurs au maximum.",
     lobby_nobody: "Aucun joueur choisi\u00a0: un joueur lance sans nom.",
     lobby_detection: "La détection est arrêtée\u00a0: le lancement l'active.",
     lobby_tournament_running: "Un tournoi est en cours\u00a0: le lancement l'arrête d'abord, après un second appui.",
@@ -1998,6 +2107,7 @@ const TEXT = {
     lobby_start_lower: "Baisser le score de départ\u00a0: {name}",
     lobby_start_raise: "Augmenter le score de départ\u00a0: {name}",
     teams: "Équipes (1 + 3 contre 2 + 4)",
+    three_in_a_bed: "Three in a bed",
     double_out: "Double out",
     double_in: "Double in",
     bull_off_distance: "Bull-off départagé à la distance",
@@ -2125,12 +2235,14 @@ const TEXT = {
     unit_points: "{value} points",
     unit_day: "{value} jour",
     unit_days: "{value} jours",
-    unit_minutes: "{value} min",
-    under_a_minute: "<1 min",
+    unit_minutes: "{value} min",
+    under_a_minute: "<1 min",
     badges: "Badges",
     badge_count: "{count} badges",
     badge_count_one: "1 badge",
     badge_locked: "Verrouillé",
+    badges_all: "Les {count} badges",
+    badges_fewer: "Afficher moins",
     badge_earned: "Obtenu le {date}",
     badge_progress: "{value} sur {goal}",
     badge_best: "Meilleur résultat\u00a0: {value}",
@@ -2192,7 +2304,7 @@ const TEXT = {
     spread_tighter: "{value} plus serré",
     spread_wider: "{value} plus large",
     spread_hint: "La moitié des fléchettes atterrissent dans le rayon de groupement autour de leur point moyen, 80 % dans le second rayon.",
-    unit_mm: "{value} mm",
+    unit_mm: "{value} mm",
     mode_positions: "Positions",
     heatmap_source: "Fléchettes affichées",
     heatmap_session: "Session",
@@ -2240,6 +2352,7 @@ const TEXT = {
     view_live: "En direct",
     view_training: "Entraînement",
     view_board: "Cible",
+    view_games: "Réglages des parties",
     darts_per_day: "Fléchettes par jour",
     average_trend: "Moyenne 3 fléchettes, 7 derniers jours",
     board_settings: "Paramètres de la cible",
@@ -2294,6 +2407,8 @@ const TEXT = {
     stop: "Detectie stoppen",
     reset: "Detectie resetten",
     calibrate: "Kalibreren",
+    calibrate_all: "Alles kalibreren",
+    details: "Details",
     confirm: "Bevestigen?",
     status_offline: "Bord onbereikbaar",
     status_calibrating: "Bezig met kalibreren",
@@ -2386,7 +2501,12 @@ const TEXT = {
     cricket: "Cricket",
     cricket_cut_throat: "Cut-Throat Cricket",
     cricket_tactics: "Tactics",
+    cricket_wild_mouse: "Wild Mouse",
     cut_throat_hint: "Laagste score wint",
+    wild_mouse_hint: "Ook doubles en triples sluiten",
+    wild_doubles: "Doubles",
+    wild_triples: "Triples",
+    wild_bed: "3 in a bed",
     cricket_mpr: "MPR",
     cricket_points: "Punten",
     mark_0: "Geen marks",
@@ -2412,7 +2532,7 @@ const TEXT = {
     any_double: "Willekeurige dubbel",
     any_treble: "Willekeurige triple",
     killer_choose: "Gooi voor je nummer",
-    killer_hunt: "Killer – raak de dubbels van de anderen",
+    killer_hunt: "Killer – raak andermans dubbels",
     killer_life: "1 leven",
     killer_lives: "{count} levens",
     needs_players: "Killer heeft minstens twee spelers nodig",
@@ -2442,7 +2562,14 @@ const TEXT = {
     export_failed: "Exporteren mislukt",
     doubles_title: "Dubbels",
     doubles_darts: "darts op een dubbel",
-    doubles_empty: "Gooi op dubbels in X01, de dubbeltraining of Bob's 27 om je trefferpercentage op elke dubbel te zien.",
+    doubles_empty:
+      "Elke dubbel die je raakt, verschijnt hier. Het trefferpercentage vraagt pijlen die op de dubbel mikken: X01 met Double out, de dubbeltraining, Bob's 27 en de checkoutspellen.",
+    doubles_hit: "dubbels geraakt",
+    doubles_landed: "{count}× geraakt",
+    doubles_landed_short: "{count}×",
+    doubles_aimed: "gemikt",
+    doubles_legend:
+      "× telt elke pijl in de dubbel; 3/5 en het percentage tellen de pijlen die op de dubbel mikten: X01 met Double out, de dubbeltraining, Bob's 27 en de checkoutspellen.",
     doubles_unknown_player:
       "Nog geen dubbels van {player}. Controleer de naam in de kaartinstellingen, of gooi in een oefenspel als {player} op dubbels.",
     doubles_routes: "Persoonlijke uitgooiroutes gebruiken dubbels waarop minstens 10 darts zijn gegooid.",
@@ -2454,6 +2581,8 @@ const TEXT = {
     legs_per_set: "legs per set",
     sets_to_win: "sets om te winnen",
     visit_short: "Beurt",
+    last_short: "Vorige",
+    undo_short: "Terug?",
     caller: "Caller",
     caller_on: "Caller aan",
     caller_hint: "Tik om de caller aan of uit te zetten",
@@ -2483,6 +2612,12 @@ const TEXT = {
     pad_cancel: "Annuleren",
     pad_board: "Bord",
     pad_spot: "Tik aan waar de dart zit",
+    pad_spot_hint: "Tik aan waar de dart zit. Houd vast en schuif voor een vergrootglas; met twee vingers zoom je.",
+    pad_zoom: "Zoom",
+    pad_whole: "Heel bord",
+    pad_keys: "Toetsen",
+    pad_view: "Invoeren met",
+    pad_bot_wait: "De bot gooit; het toetsenbord wacht op jouw beurt.",
     pad_seen: "Waar het bord hem zag",
     next_player: "Volgende speler",
     undo_visit: "Laatste beurt ongedaan maken",
@@ -2519,6 +2654,8 @@ const TEXT = {
     lobby_increase: "Meer: {name}",
     lobby_options: "Opties",
     lobby_one_player: "Trainingsspellen zijn voor één speler: {name} speelt.",
+    lobby_resting: "{game} is voor {count}: de rest wacht.",
+    lobby_full: "Maximaal {count} spelers.",
     lobby_nobody: "Niemand gekozen: één speler gooit zonder naam.",
     lobby_detection: "De detectie staat uit: bij het starten gaat ze aan.",
     lobby_tournament_running: "Er wordt een toernooi gespeeld: starten stopt het eerst, na een tweede tik.",
@@ -2528,6 +2665,7 @@ const TEXT = {
     lobby_start_lower: "Lagere startscore: {name}",
     lobby_start_raise: "Hogere startscore: {name}",
     teams: "Teams (1 + 3 tegen 2 + 4)",
+    three_in_a_bed: "Three in a bed",
     double_out: "Double out",
     double_in: "Double in",
     bull_off_distance: "Bullen: gemeten afstand beslist",
@@ -2655,12 +2793,14 @@ const TEXT = {
     unit_points: "{value} punten",
     unit_day: "{value} dag",
     unit_days: "{value} dagen",
-    unit_minutes: "{value} min",
-    under_a_minute: "<1 min",
+    unit_minutes: "{value} min",
+    under_a_minute: "<1 min",
     badges: "Badges",
     badge_count: "{count} badges",
     badge_count_one: "1 badge",
     badge_locked: "Vergrendeld",
+    badges_all: "Alle {count} badges",
+    badges_fewer: "Minder tonen",
     badge_earned: "Behaald op {date}",
     badge_progress: "{value} van {goal}",
     badge_best: "Beste tot nu toe: {value}",
@@ -2722,7 +2862,7 @@ const TEXT = {
     spread_tighter: "{value} strakker",
     spread_wider: "{value} ruimer",
     spread_hint: "De helft van de darts komt binnen de spreiding rond hun gemiddelde trefpunt terecht, 80 % binnen de tweede straal.",
-    unit_mm: "{value} mm",
+    unit_mm: "{value} mm",
     mode_positions: "Posities",
     heatmap_source: "Wiens darts",
     heatmap_session: "Sessie",
@@ -2770,6 +2910,7 @@ const TEXT = {
     view_live: "Live",
     view_training: "Training",
     view_board: "Bord",
+    view_games: "Spelinstellingen",
     darts_per_day: "Darts per dag",
     average_trend: "3-dart-gemiddelde, laatste 7 dagen",
     board_settings: "Bordinstellingen",
@@ -2817,6 +2958,8 @@ const DEFAULTS = {
   show_controls: true,
   show_recent: true,
   show_practice: true,
+  // A tap on a dart of the visit corrects it.
+  corrections: true,
   // The summary of a finished match stays until the next game, or this many seconds.
   show_summary: true,
   summary_seconds: 0,
@@ -3001,6 +3144,7 @@ const SCOREBOARD_KEYS = {
   bullOff: "switch.practice_bull_off",
   bullOffDistance: "switch.practice_bull_off_distance",
   teams: "switch.practice_teams",
+  threeInABed: "switch.practice_three_in_a_bed",
   // The bot for the new game screen, and whether darts can be entered by hand.
   botLevel: "number.practice_bot_level",
   manualEntry: "switch.practice_manual_entry",
@@ -3469,6 +3613,8 @@ function pastSessions(sessions, limit = 5) {
 // Board events that change the visits of the training card, and the most visits it shows.
 const VISIT_EVENTS = ["visit_completed", "visit_undone", "session_started"];
 const HISTORY_LIMIT = 60;
+// The slots a narrow chart of the last visits shows.
+const HISTORY_NARROW = 10;
 
 // The visits of the session after rows of the board events entity, as the recorder
 // or the history stream deliver them, on top of the visits known so far: a session
@@ -3690,7 +3836,9 @@ function drillBeds(drill) {
 }
 
 const CRICKET_NUMBERS = [20, 19, 18, 17, 16, 15, 25];
-const CRICKET_GAMES = ["cricket", "cut_throat", "tactics"];
+const CRICKET_GAMES = ["cricket", "cut_throat", "tactics", "wild_mouse"];
+// What Wild Mouse closes besides the numbers, in the order of its rows.
+const WILD_TARGETS = ["doubles", "triples", "bed"];
 // No mark, one, two, and a closed number, as on a Cricket chalkboard.
 const CRICKET_MARKS = ["", "/", "X", "Ⓧ"];
 
@@ -3698,15 +3846,18 @@ const CRICKET_MARKS = ["", "/", "X", "Ⓧ"];
 function cricketView(state) {
   const attributes = state?.attributes || {};
   if (!state || state.state === "unavailable" || !CRICKET_GAMES.includes(attributes.game)) return null;
-  // Tactics adds the numbers 14 to 10.
+  // Tactics adds the numbers 14 to 10, Wild Mouse doubles, triples and three in a bed.
   const numbers =
     Array.isArray(attributes.numbers) && attributes.numbers.length && attributes.numbers.every(Number.isInteger)
       ? attributes.numbers
       : CRICKET_NUMBERS;
+  const wild = attributes.game === "wild_mouse";
+  const targets =
+    wild && Array.isArray(attributes.targets) ? attributes.targets.filter((key) => WILD_TARGETS.includes(key)) : [];
+  const slots = numbers.length + targets.length;
   const scores = (Array.isArray(attributes.scores) ? attributes.scores : [])
     .filter(
-      (score) =>
-        score && Number.isInteger(score.player) && Array.isArray(score.marks) && score.marks.length === numbers.length
+      (score) => score && Number.isInteger(score.player) && Array.isArray(score.marks) && score.marks.length === slots
     )
     .map((score) => ({
       player: score.player,
@@ -3719,11 +3870,19 @@ function cricketView(state) {
       sets: finite(score.sets) ?? 0,
       mpr: finite(score.mpr),
     }));
+  // Wild Mouse aims at any double or triple, too.
+  const aim = (target) => hitBeds(target).length || (wild && ["D", "T"].includes(target));
   return {
     kind: attributes.game,
     numbers,
+    targets,
+    // The row to aim at, as a triple can also count for triples in Wild Mouse.
+    targetRow: wild && typeof attributes.target_row === "string" ? attributes.target_row : null,
+    // What every dart of the visit counted for in Wild Mouse.
+    counted: wild && Array.isArray(attributes.counted) ? attributes.counted : [],
+    bed: wild && attributes.bed === true,
     teams: teamsView(attributes.teams),
-    target: typeof attributes.target === "string" && hitBeds(attributes.target).length ? attributes.target : null,
+    target: typeof attributes.target === "string" && aim(attributes.target) ? attributes.target : null,
     won: attributes.won === true,
     darts: finite(attributes.darts) ?? 0,
     points: finite(attributes.points) ?? 0,
@@ -3739,10 +3898,12 @@ function cricketView(state) {
 }
 
 // Beds to aim at in Cricket: the treble of the next open number, or the whole
-// bull, whose beds both mark.
+// bull, whose beds both mark; in Wild Mouse also every double or triple.
 function cricketBeds(cricket) {
   if (!cricket || cricket.won || cricket.winner !== null || !cricket.target) return [];
-  return cricket.target === "BULL" ? targetBeds("25") : hitBeds(cricket.target);
+  return ["BULL", "D", "T"].includes(cricket.target)
+    ? targetBeds(cricket.target === "BULL" ? "25" : cricket.target)
+    : hitBeds(cricket.target);
 }
 
 const PARTY_GAMES = ["shanghai", "halve_it", "killer", "golf", "baseball", "count_up"];
@@ -4092,7 +4253,7 @@ function bullOffPlayers(bullOff, ui) {
     state: item.player === bullOff.player ? "active" : item.player === leader ? "winner" : "",
     note: "",
     details: [
-      item.distance === null ? "" : `${ui.format(item.distance, 1)} mm`,
+      item.distance === null ? "" : `${ui.format(item.distance, 1)}\u00a0mm`,
       item.player === leader ? ui.t("bull_off_leads") : "",
     ],
   }));
@@ -4127,9 +4288,9 @@ function playerTiles(players, ui = {}) {
       `<div class="player${player.state ? ` ${player.state}` : ""}"${turnMark(player)}><div class="name">` +
       `${avatarHtml(ui.avatar?.(player.name))}${escapeHtml(player.name)}${badge(player)}${winnerMark(player, ui)}</div>` +
       valueHtml("div", "big", player) +
-      `<div class="route">${player.note}</div>` +
+      `<div class="route"><div class="route-line">${player.note}</div></div>` +
       (player.members ? `<div class="members">${membersHtml(player.members)}</div>` : "") +
-      `<div class="details">${escapeHtml(player.details.filter(Boolean).join(" · "))}</div></div>`
+      `<div class="details"><span class="details-line">${escapeHtml(player.details.filter(Boolean).join(" · "))}</span></div></div>`
   );
   const teams = players.some((player) => player.members) ? " teams" : "";
   return `<div class="players n${Math.max(players.length, 1)}${teams}">${tiles.join("")}</div>`;
@@ -4192,14 +4353,14 @@ function cricketTable(cricket, ui, { aim = true } = {}) {
       .join("")}</tr>`;
   const marks = (count) =>
     `<span role="img" aria-label="${escapeHtml(t(`mark_${count}`))}">${CRICKET_MARKS[count]}</span>`;
-  const rows = cricket.numbers.map((number, slot) => {
-    const bed = number === 25 ? "BULL" : `T${number}`;
-    const style = columns.every((column) => column.marks[slot] >= 3)
-      ? "closed"
-      : bed === cricket.target
-        ? "target"
-        : "";
-    return row(style, number === 25 ? "Bull" : String(number), (column) => marks(column.marks[slot]));
+  // The numbers, then what Wild Mouse closes besides them.
+  const keys = [...cricket.numbers.map(String), ...cricket.targets];
+  const rows = keys.map((key, slot) => {
+    const bed = key === "25" ? "BULL" : `T${key}`;
+    const aimed = cricket.targetRow === null ? bed === cricket.target : key === cricket.targetRow;
+    const style = columns.every((column) => column.marks[slot] >= 3) ? "closed" : aimed ? "target" : "";
+    const heading = key === "25" ? "Bull" : WILD_TARGETS.includes(key) ? t(`wild_${key}`) : key;
+    return row(style, heading, (column) => marks(column.marks[slot]));
   });
   const text = (value) => (column) => escapeHtml(value(column));
   if (match) rows.push(row("total", t("cricket_points"), text((column) => String(column.points))));
@@ -4213,8 +4374,8 @@ function cricketTable(cricket, ui, { aim = true } = {}) {
   const next = aim && cricket.target && !cricket.won && cricket.winner === null ? bedChips(ui, [cricket.target]) : "";
   const shot = aim && cricket.won && cricket.winner === null ? note(t("game_shot"), "won") : "";
   const corner = shot || next;
-  // Tactics has twelve numbers; they fit the screen in smaller type.
-  const size = cricket.numbers.length > CRICKET_NUMBERS.length ? " many" : "";
+  // Tactics has twelve numbers and Wild Mouse ten rows; they fit the screen in smaller type.
+  const size = keys.length > CRICKET_NUMBERS.length ? " many" : "";
   // The next number sits above the numbers, so the chalkboard fits a landscape screen.
   return (
     `<table class="cricket${size}">${
@@ -4296,8 +4457,10 @@ function drillParts(drill, ui) {
         : [
             visit,
             fact(`${drill.successes} / ${drill.attempts}`, t("drill_checked")),
-            ...(drill.rate === null ? [] : [fact(percent(drill.rate))]),
-            ...(drill.best === null ? [] : [fact(String(drill.best), t("drill_best"), true)]),
+            // The rate and the best show a dash until they are known, so the facts
+            // keep their lines from the first visit.
+            fact(drill.rate === null ? "– %" : percent(drill.rate)),
+            fact(drill.best === null ? "–" : String(drill.best), t("drill_best"), true),
           ];
     return {
       big: String(drill.remaining ?? drill.target ?? "–"),
@@ -4322,7 +4485,7 @@ function drillParts(drill, ui) {
       facts: [
         step,
         fact(String(drill.score ?? 0), t("drill_points")),
-        ...(drill.best === null ? [] : [fact(String(drill.best), t("drill_best"), true)]),
+        fact(drill.best === null ? "–" : String(drill.best), t("drill_best"), true),
       ],
     };
   }
@@ -4346,6 +4509,9 @@ const factsHtml = (facts) =>
     })
     .join("");
 
+// Facts in their box, which lays them out by its width.
+const factsBlock = (html) => `<div class="facts-box"><div class="facts">${html}</div></div>`;
+
 // Facts in a line of text.
 const factsText = (facts) =>
   facts.map(({ value, name, lead }) => (lead ? `${name} ${value}` : `${value} ${name}`).trim()).join(" · ");
@@ -4355,8 +4521,8 @@ function drillBoard(drill, ui) {
   // "Bull (25/50)" fits the screen in smaller type than a number.
   const long = parts.big.length > 4 ? " long" : "";
   return (
-    `<div class="single"><div class="big${long}">${escapeHtml(parts.big)}</div><div class="route">${parts.note}</div>` +
-    `<div class="facts">${factsHtml(parts.facts)}</div></div>`
+    `<div class="single"><div class="big${long}">${escapeHtml(parts.big)}</div><div class="route"><div class="route-line">${parts.note}</div></div>` +
+    `${factsBlock(factsHtml(parts.facts))}</div>`
   );
 }
 
@@ -4377,7 +4543,7 @@ function idleBoard(stats, ui) {
   }
   return (
     `<div class="single"><div class="label">${escapeHtml(t("visit"))}</div>` +
-    `<div class="big">${escapeHtml(stats.visit ?? "–")}</div><div class="facts">${factsHtml(facts)}</div></div>`
+    `<div class="big">${escapeHtml(stats.visit ?? "–")}</div>${factsBlock(factsHtml(facts))}</div>`
   );
 }
 
@@ -4526,7 +4692,7 @@ function scoreboardHtml(view, ui) {
   const game = { cricket: view.cricket, party: view.party }[view.mode] ?? view.practice;
   const round = view.mode === "party" ? partyRound(game, t) : "";
   // Cut-Throat turns the points round, and Golf's players stop by pulling their darts.
-  const hint = { cut_throat: "cut_throat_hint", golf: "golf_hint" }[game.kind];
+  const hint = { cut_throat: "cut_throat_hint", wild_mouse: "wild_mouse_hint", golf: "golf_hint" }[game.kind];
   const scorecard = view.mode === "party" && SCORECARD_GAMES.includes(game.kind);
   // The summary of a won match takes the place of the players.
   const main = view.summary
@@ -4716,7 +4882,7 @@ const LOBBY_LIMITS = { players: 4, name: 20, legs: 11, sets: 7 };
 const KNOWN_GAMES = ["101", "301", "501", "701", "901", "1001", ...CRICKET_GAMES, ...PARTY_GAMES, ...DRILLS];
 // A game that ended opens the new game screen after this pause, so the result shows first.
 const LOBBY_DELAY = 8000;
-const LOBBY_OPTIONS = ["double_out", "double_in", "bull_off", "bull_off_distance", "teams"];
+const LOBBY_OPTIONS = ["double_out", "double_in", "bull_off", "bull_off_distance", "teams", "three_in_a_bed"];
 // Teams are two pairs of players; start scores of their own go in steps of 100.
 const TEAM_SIZE = 4;
 // The bot's level: its 3-dart average, set in steps of 10.
@@ -4790,6 +4956,7 @@ function lobbyChoice(board, games) {
     double_in: board.double_in === true,
     bull_off: board.bull_off === true,
     bull_off_distance: board.bull_off_distance === true,
+    three_in_a_bed: board.three_in_a_bed !== false,
     // The bot's level, where the board has a bot.
     ...(Number.isInteger(board.bot) && board.bot >= BOT_LEVELS[0] ? { bot: Math.min(board.bot, BOT_LEVELS[1]) } : {}),
     // A tournament instead of a match, with the settings of the next tournament.
@@ -4884,7 +5051,7 @@ function lobbySuggestions(profiles, names, links, chosen) {
 }
 
 // The start_game action for a choice; rules the game or the board does not have stay out.
-function startGameData(choice, { entry = null, distance = false } = {}) {
+function startGameData(choice, { entry = null, distance = false, bed = false } = {}) {
   const rules = gameRules(choice.game);
   const players = choice.players.slice(0, rules.maxPlayers - Number(botSeat(choice)));
   const data = { game: choice.game, players: players.length ? players : [""] };
@@ -4902,6 +5069,7 @@ function startGameData(choice, { entry = null, distance = false } = {}) {
   const bot = botSeat(choice);
   if (rules.bot && "bot" in choice) data.bot_level = bot ? choice.bot : 0;
   if (rules.teams && players.length + Number(bot) === TEAM_SIZE) data.teams = choice.teams === true;
+  if (bed && choice.game === "wild_mouse") data.three_in_a_bed = choice.three_in_a_bed !== false;
   return data;
 }
 
@@ -5021,6 +5189,7 @@ function lobbyHtml(choice, ui) {
     ...(!choice.tournament && rules.teams && ui.teams && choice.players.length + Number(bot) === TEAM_SIZE
       ? ["teams"]
       : []),
+    ...(!choice.tournament && ui.bed && choice.game === "wild_mouse" ? ["three_in_a_bed"] : []),
     ...(choice.tournament && choice.format === "knockout" && choice.players.length >= THIRD_PLACE_PLAYERS
       ? ["third_place"]
       : []),
@@ -5043,7 +5212,7 @@ function lobbyHtml(choice, ui) {
           "end",
           undefined,
           text(ui.confirmEnd ? "confirm" : ui.tournamentRunning ? "tournament_stop" : "lobby_end"),
-          ' class="secondary"'
+          ` class="secondary${ui.confirmEnd ? " confirm" : ""}"`
         )
       : "") +
     button("close", undefined, text("lobby_close"), ' class="secondary"') +
@@ -5055,7 +5224,7 @@ function lobbyHtml(choice, ui) {
         : choice.tournament
           ? text("tournament_start")
           : text("lobby_start", { game: ui.name(choice.game) }),
-      ` class="start"${blocked ? " disabled" : ""}`
+      ` class="start${ui.confirmStart ? " confirm" : ""}"${blocked ? " disabled" : ""}`
     ) +
     `</div>`;
   return (
@@ -5102,9 +5271,18 @@ const lobbyBlocked = (choice) =>
 function lobbyHints(choice, ui) {
   const { t } = ui;
   const hints = [];
+  const rules = gameRules(choice.game);
+  // The seats of a match: the bot takes one; players beyond them sit out.
+  const seats = rules.maxPlayers - Number(botSeat(choice));
+  const limit = playerLimit(choice);
   if (lobbyBlocked(choice)) hints.push(t(choice.tournament ? "tournament_needs_players" : "needs_players"));
-  else if (!choice.tournament && gameRules(choice.game).drill && choice.players.length > 1) {
+  else if (!choice.tournament && rules.drill && choice.players.length > 1) {
     hints.push(fill(t("lobby_one_player"), { name: choice.players[0] || `${t("score_player")} 1` }));
+  } else if (!choice.tournament && choice.players.length > seats) {
+    hints.push(fill(t("lobby_resting"), { game: ui.name(choice.game), count: seats }));
+  } else if (choice.players.length >= limit && ui.suggestions.length) {
+    // A full game takes no more of the suggestions, which fade.
+    hints.push(fill(t("lobby_full"), { count: limit }));
   }
   if (choice.tournament && ui.tournamentRunning) hints.push(t("lobby_tournament_running"));
   if (ui.detectionOff) hints.push(t("lobby_detection"));
@@ -5118,17 +5296,63 @@ const padBed = (multiplier, number) => `${"SDT"[multiplier - 1]}${number}`;
 // The pad's board: the dartboard with its surround, in millimetres.
 const PAD_VIEW = 2 * (R.board + 5);
 
-// Where a tap on the pad's board lands, as the board reports positions: 1 is the
-// outer edge of the double ring and y points to the 20. The board is drawn square
-// in the middle of its element; a board that is not laid out has no spot.
-function boardSpot(svg, event) {
+// On a small screen the board to tap opens this much larger around where the board
+// saw the dart being corrected; two fingers zoom up to the most. The loupe under a
+// finger shows the board that much larger again.
+const PAD_ZOOM = 2.5;
+const PAD_ZOOM_MOST = 5;
+const LOUPE_ZOOM = 2.5;
+// A card narrower than this, or a screen lower, as a phone on its side, is a small screen.
+const PAD_SMALL = 600;
+// Building blocks: the icons of the cards, lines in the colour of their text.
+const ICON_PATHS = {
+  edit: "M4 20l1.2-4.8L15.6 4.8a2 2 0 0 1 2.8 0l.8.8a2 2 0 0 1 0 2.8L8.8 18.8z M13.8 6.6l3.6 3.6",
+  details: "M9 5l7 7-7 7",
+  expand: "M6 9l6 6 6-6",
+  undo: "M9 14L4 9l5-5 M4 9h10.5a5.5 5.5 0 0 1 0 11H11",
+};
+// A cue says what a tap does: a pencil edits, an arrow opens the details, a curved arrow
+// undoes. At the top right of a tile, or inline after the words of a control that looks
+// like text.
+const cueHtml = (kind, inline = false) =>
+  `<svg class="cue ${kind}${inline ? " inline" : ""}" viewBox="0 0 24 24" aria-hidden="true"><path d="${ICON_PATHS[kind]}"/></svg>`;
+const EDIT_ICON = cueHtml("edit");
+const UNDO_CUE = cueHtml("undo");
+// The arrow of the undo, apart from its words, which screen readers say alone.
+const UNDO_ICON = `<span class="undo-icon" aria-hidden="true">↶</span>`;
+
+// The part of the pad's board in sight: all of it, or, zoomed in with `zoom` as
+// { scale, x, y }, the square of that scale around x and y in millimetres of the
+// drawing (y points down), kept on the board.
+function padViewBox(zoom) {
+  const half = PAD_VIEW / 2;
+  if (!(zoom?.scale > 1)) return { x: -half, y: -half, size: PAD_VIEW };
+  const size = PAD_VIEW / Math.min(zoom.scale, PAD_ZOOM_MOST);
+  const middle = (value) => Math.min(Math.max(Number.isFinite(value) ? value : 0, size / 2 - half), half - size / 2);
+  return { x: middle(zoom.x) - size / 2, y: middle(zoom.y) - size / 2, size };
+}
+const viewBoxText = (view) => [view.x, view.y, view.size, view.size].map(fmt).join(" ");
+
+// Where a point of the screen lies on the drawing of the pad's board, in millimetres.
+// The board is drawn square in the middle of its element; a board that is not laid
+// out has no point.
+function boardPoint(svg, event, view) {
   const rect = svg.getBoundingClientRect();
-  const scale = Math.min(rect.width, rect.height) / PAD_VIEW;
+  const scale = Math.min(rect.width, rect.height) / view.size;
   if (!(scale > 0)) return null;
+  return [
+    view.x + view.size / 2 + (event.clientX - rect.left - rect.width / 2) / scale,
+    view.y + view.size / 2 + (event.clientY - rect.top - rect.height / 2) / scale,
+  ];
+}
+
+// Where a tap on the pad's board lands, as the board reports positions: 1 is the
+// outer edge of the double ring and y points to the 20.
+function boardSpot(svg, event, view = padViewBox(null)) {
+  const point = boardPoint(svg, event, view);
+  if (!point) return null;
   const round = (value) => Math.round(value * 1000) / 1000 || 0;
-  const x = (event.clientX - rect.left - rect.width / 2) / scale;
-  const y = (event.clientY - rect.top - rect.height / 2) / scale;
-  return [round(x / NORM), round(-y / NORM)];
+  return [round(point[0] / NORM), round(-point[1] / NORM)];
 }
 
 // The pad's board: a tap says where the dart is, and the bed follows from it. The
@@ -5136,20 +5360,22 @@ function boardSpot(svg, event) {
 // saw it.
 function padBoardHtml(pad, ui) {
   const { t } = ui;
+  const view = padViewBox(pad.zoom);
+  // Pins keep their size on the screen when the board is zoomed in.
+  const size = view.size / PAD_VIEW;
   const pins = pad.pins
     .map(({ x, y, seen }) => {
       const at = `cx="${fmt(x * NORM)}" cy="${fmt(-y * NORM)}"`;
       return seen
-        ? `<circle class="spot seen" ${at} r="13"><title>${escapeHtml(t("pad_seen"))}</title></circle>`
-        : `<circle class="spot" ${at} r="8"/>`;
+        ? `<circle class="spot seen" ${at} r="${fmt(13 * size)}"><title>${escapeHtml(t("pad_seen"))}</title></circle>`
+        : `<circle class="spot" ${at} r="${fmt(8 * size)}"/>`;
     })
     .join("");
-  const half = PAD_VIEW / 2;
   return (
     `<svg class="pad-board${pad.disabled ? " disabled" : ""}"${pad.disabled ? "" : ` data-pad="spot"`}` +
-    ` viewBox="${-half} ${-half} ${PAD_VIEW} ${PAD_VIEW}" role="img" aria-label="${escapeHtml(t("pad_spot"))}">` +
+    ` viewBox="${viewBoxText(view)}" role="img" aria-label="${escapeHtml(t("pad_spot"))}">` +
     `<g class="face">${boardSvg("classic")}</g><g class="numbers">${numbersSvg("classic")}</g>${pins}</svg>` +
-    `<div class="pad-hint" aria-hidden="true">${escapeHtml(t("pad_spot"))}</div>`
+    `<div class="pad-hint" aria-hidden="true">${escapeHtml(t("pad_spot_hint"))}</div>`
   );
 }
 
@@ -5186,20 +5412,51 @@ function padHtml(pad, ui) {
     button("bed", "MISS", escapeHtml(t("miss")), ` class="miss"`),
   ].join("");
   const confirm = (action, key) => escapeHtml(t(pad.confirm === action ? "confirm" : key));
+  const confirming = (action) => (pad.confirm === action ? " confirm" : "");
   const actions = pad.dart
     ? button("cancel", undefined, escapeHtml(t("pad_cancel")), ` class="secondary"`)
-    : button("next", undefined, confirm("next", "next_player"), ` class="secondary"`) +
-      (pad.undo ? button("undo", undefined, `↶ ${confirm("undo", "undo_visit")}`, ` class="secondary"`) : "");
+    : button("next", undefined, confirm("next", "next_player"), ` class="secondary${confirming("next")}"`) +
+      (pad.undo
+        ? button("undo", undefined, `${UNDO_ICON} ${confirm("undo", "undo_visit")}`, ` class="secondary${confirming("undo")}"`)
+        : "");
   // The board instead of the keys, for the spot where the dart is.
-  const view = button("board", undefined, `🎯 ${escapeHtml(t("pad_board"))}`, ` class="view" aria-pressed="${pad.board === true}"`);
+  // The keys or the board, one of the two, as the segmented control of every card.
+  const view =
+    `<div class="segmented view" role="group" aria-label="${escapeHtml(t("pad_view"))}">` +
+    button("keys", undefined, escapeHtml(t("pad_keys")), ` aria-pressed="${pad.board !== true}"`) +
+    button("board", undefined, escapeHtml(t("pad_board")), ` aria-pressed="${pad.board === true}"`) +
+    `</div>`;
+  // On the board, a switch between the whole board and its part around the dart: a
+  // magnifier with a plus zooms in, one with a minus shows all of it.
+  const zoomed = padViewBox(pad.zoom).size < PAD_VIEW;
+  const magnifier =
+    `<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10" cy="10" r="6"/>` +
+    `<path d="M14.5 14.5 20 20M7 10h6${zoomed ? "" : "M10 7v6"}"/></svg>`;
+  const zoom = pad.board
+    ? button(
+        "zoom",
+        undefined,
+        magnifier,
+        ` class="zoom" aria-pressed="${zoomed}" aria-label="${escapeHtml(t("pad_zoom"))}"` +
+          ` title="${escapeHtml(t(zoomed ? "pad_whole" : "pad_zoom"))}"`
+      )
+    : "";
   const body = pad.board
     ? padBoardHtml(pad, ui)
     : `<div class="pad-numbers">${numbers}</div>`;
   return (
     `<section class="pad${pad.dart ? " correcting" : ""}${pad.board ? " on-board" : ""}" aria-label="${escapeHtml(title)}">` +
-    `<div class="pad-head"><span class="section-label">${escapeHtml(title)}</span>${pad.board ? "" : multipliers}${view}</div>` +
+    `<div class="pad-head"><span class="section-label">${escapeHtml(title)}</span>${pad.board ? "" : multipliers}${zoom}${view}</div>` +
+    (pad.disabled ? `<p class="pad-hint pad-wait">${escapeHtml(t("pad_bot_wait"))}</p>` : "") +
     `${body}<div class="pad-extra">${pad.board ? "" : bulls}${actions}</div></section>`
   );
+}
+
+// While the bot is at the board, its darts count; nobody enters or corrects any.
+function botAtBoard(view) {
+  const game = view.practice ?? view.cricket ?? view.party ?? null;
+  const thrower = view.bullOff?.throws.find((item) => item.player === view.bullOff.player);
+  return Boolean((game ? upScore(game) : thrower)?.bot);
 }
 
 // Idle mode ----------------------------------------------------------------------
@@ -5261,7 +5518,7 @@ function todayHtml(data, ui) {
     `<div class="single"><div class="big">${escapeHtml(format(stats.today, 0))}</div>` +
     `<div class="label">${escapeHtml(goal ? fill(t("idle_goal"), { goal: format(stats.goal, 0) }) : t("darts_today"))}</div>` +
     (goal ? `<div class="goal${share >= 100 ? " reached" : ""}"><i style="width:${share}%"></i></div>` : "") +
-    `<div class="facts">${factsHtml(facts)}</div></div>`
+    `${factsBlock(factsHtml(facts))}</div>`
   );
 }
 
@@ -5298,7 +5555,7 @@ function clockHtml(data, ui) {
   const shown = ui.clock(data.now);
   return (
     `<div class="single clock"><div class="big">${escapeHtml(shown.time)}</div>` +
-    `<div class="facts"><span>${escapeHtml(shown.day)}</span></div></div>`
+    `${factsBlock(`<span>${escapeHtml(shown.day)}</span>`)}</div>`
   );
 }
 
@@ -5644,27 +5901,42 @@ function tournamentStartData(choice, { entry = null, distance = false } = {}) {
 
 const DOUBLE_ORDER = [...BOARD_NUMBERS.map((number) => `D${number}`), "BULL"];
 
-function doubleCounts(source) {
-  const doubles = (Array.isArray(source?.doubles) ? source.doubles : [])
-    .filter(
-      (item) =>
-        item &&
-        DOUBLE_ORDER.includes(item.double) &&
-        Number.isInteger(item.attempts) &&
-        Number.isInteger(item.hits) &&
-        item.attempts > 0
-    )
-    .map((item) => ({
-      double: item.double,
-      attempts: item.attempts,
-      hits: item.hits,
-      rate: finite(item.rate) ?? Math.round((item.hits * 1000) / item.attempts) / 10,
-    }));
+// Every double hit by any dart, with its attempts and hit rate where darts were aimed
+// at it; `landed` counts the darts in each double by name, such as { D16: 3 }.
+function doubleCounts(source, landed) {
+  const aimed = new Map(
+    (Array.isArray(source?.doubles) ? source.doubles : [])
+      .filter(
+        (item) =>
+          item &&
+          DOUBLE_ORDER.includes(item.double) &&
+          Number.isInteger(item.attempts) &&
+          Number.isInteger(item.hits) &&
+          item.attempts > 0
+      )
+      .map((item) => [item.double, item])
+  );
+  const counted = landed && typeof landed === "object" ? landed : {};
+  const doubles = DOUBLE_ORDER.map((double) => {
+    const item = aimed.get(double);
+    // A hit of a dart aimed at the double is a hit of the double, also where older
+    // data counted no hits.
+    const count = Math.max(Number.isInteger(counted[double]) && counted[double] > 0 ? counted[double] : 0, item?.hits ?? 0);
+    if (!item && !count) return null;
+    return {
+      double,
+      landed: count,
+      attempts: item?.attempts ?? 0,
+      hits: item?.hits ?? 0,
+      rate: item ? (finite(item.rate) ?? Math.round((item.hits * 1000) / item.attempts) / 10) : null,
+    };
+  }).filter(Boolean);
   return {
     attempts: finite(source?.attempts) ?? 0,
     hits: finite(source?.hits) ?? 0,
     rate: finite(source?.rate),
     favourite: typeof source?.favourite === "string" ? source.favourite : null,
+    landed: doubles.reduce((sum, item) => sum + item.landed, 0),
     doubles,
   };
 }
@@ -5687,11 +5959,12 @@ function doublesView(doubles, profiles, player = "") {
     const profile = (Array.isArray(profiles?.attributes?.players) ? profiles.attributes.players : []).find(
       (item) => typeof item?.name === "string" && item.name.trim().toLowerCase() === wanted
     );
-    return { player: profile?.name ?? player, known: Boolean(profile), ...doubleCounts(profile?.doubles) };
+    // A profile counts every dart by the bed it hit.
+    return { player: profile?.name ?? player, known: Boolean(profile), ...doubleCounts(profile?.doubles, profile?.hits) };
   }
   const attributes = doubles?.attributes || {};
   const favourite = usable(doubles) ? doubles.state : null;
-  return { player: null, known: true, ...doubleCounts({ ...attributes, favourite }) };
+  return { player: null, known: true, ...doubleCounts({ ...attributes, favourite }, attributes.landed) };
 }
 
 // Red for rarely hit doubles, green from about one hit in two.
@@ -5700,26 +5973,44 @@ function doubleColor(rate) {
   return `hsl(${hue} 70% 46%)`;
 }
 
+// The colour of a double: its hit rate where darts were aimed at it, else the accent,
+// the stronger the more often it was hit.
+const doubleTint = (item, most) =>
+  item.rate === null
+    ? `color-mix(in srgb, var(--ad-accent) ${Math.round(35 + (55 * item.landed) / most)}%, transparent)`
+    : doubleColor(item.rate);
+
 function doublesHtml(view, ui) {
-  const { format, percent, label } = ui;
+  const { t, format, percent, label } = ui;
+  const most = Math.max(1, ...view.doubles.map((item) => item.landed));
+  const told = (item) =>
+    [
+      fill(t("doubles_landed"), { count: format(item.landed, 0) }),
+      item.attempts ? `${format(item.hits, 0)}/${format(item.attempts, 0)} ${t("doubles_aimed")}` : null,
+    ]
+      .filter(Boolean)
+      .join(" · ");
   // Every double of the list is a bed of the board.
   const ring = view.doubles
     .map(
       (item) =>
-        `<path d="${bedPath(hitBeds(item.double)[0])}" style="fill:${doubleColor(item.rate)}"><title>${escapeHtml(
-          `${label(item.double)}: ${item.hits}/${item.attempts}`
+        `<path d="${bedPath(hitBeds(item.double)[0])}" style="fill:${doubleTint(item, most)}"><title>${escapeHtml(
+          `${label(item.double)}: ${told(item)}`
         )}</title></path>`
     )
     .join("");
+  // The bar tells how often a double was hit, its colour the rate; the doubles aimed at
+  // come first, the best rate first.
   const list = [...view.doubles]
-    .sort((a, b) => b.rate - a.rate || b.attempts - a.attempts)
+    .sort((a, b) => (b.rate ?? -1) - (a.rate ?? -1) || b.attempts - a.attempts || b.landed - a.landed)
     .map(
       (item) =>
-        `<div class="double${item.double === view.favourite ? " favourite" : ""}">` +
-        `<span class="bed" style="--c:${doubleColor(item.rate)}">${escapeHtml(label(item.double))}</span>` +
-        `<span class="bar"><i style="width:${Math.min(item.rate, 100)}%;background:${doubleColor(item.rate)}"></i></span>` +
-        `<span class="count">${escapeHtml(`${format(item.hits, 0)}/${format(item.attempts, 0)}`)}</span>` +
-        `<span class="rate">${escapeHtml(percent(item.rate, 0))}</span></div>`
+        `<div class="double${item.double === view.favourite ? " favourite" : ""}" title="${escapeHtml(told(item))}">` +
+        `<span class="bed" style="--c:${doubleTint(item, most)}">${escapeHtml(label(item.double))}</span>` +
+        `<span class="bar"><i style="width:${Math.round((100 * item.landed) / most)}%;background:${doubleTint(item, most)}"></i></span>` +
+        `<span class="landed">${escapeHtml(fill(t("doubles_landed_short"), { count: format(item.landed, 0) }))}</span>` +
+        `<span class="count">${item.attempts ? escapeHtml(`${format(item.hits, 0)}/${format(item.attempts, 0)}`) : ""}</span>` +
+        `<span class="rate">${escapeHtml(item.rate === null ? "–" : percent(item.rate, 0))}</span></div>`
     )
     .join("");
   return { ring, list };
@@ -5795,10 +6086,23 @@ function badgesView(achievements) {
   return { players };
 }
 
-function badgesHtml(player, ui, locked = true) {
+// The badges a closed gallery shows: those earned, and the next goals, the locked badges
+// closest to being earned.
+const BADGE_GOALS = 3;
+function shownBadges(player, locked, open) {
+  if (!locked) return player.badges.filter((badge) => badge.tier);
+  if (open) return player.badges;
+  const goals = player.badges
+    .filter((badge) => !badge.tier)
+    .sort((a, b) => (b.share ?? -1) - (a.share ?? -1))
+    .slice(0, BADGE_GOALS);
+  return player.badges.filter((badge) => badge.tier || goals.includes(badge));
+}
+
+function badgesHtml(player, ui, locked = true, open = true) {
   const { t, format, date } = ui;
-  return player.badges
-    .filter((badge) => locked || badge.tier)
+  const before = open && locked ? shownBadges(player, true, false) : null;
+  return shownBadges(player, locked, open)
     .map((badge) => {
       const tier = badge.tier && badge.tiers > 1 ? t(`tier_${Math.min(badge.tier, 4)}`) : "";
       const title = `${t(`achievement_${badge.id}`)}${tier ? ` · ${tier}` : ""}`;
@@ -5810,7 +6114,8 @@ function badgesHtml(player, ui, locked = true) {
       const bar = badge.share === null ? "" : `<span class="badge-bar"><i style="width:${fmt(badge.share * 100)}%"></i></span>`;
       const color = tierColor(badge.tier, badge.tiers);
       return (
-        `<div class="badge${badge.tier ? "" : " locked"}" data-badge="${escapeHtml(badge.id)}"` +
+        `<div class="badge${badge.tier ? "" : " locked"}${before && !before.includes(badge) ? " appear" : ""}"` +
+        ` data-badge="${escapeHtml(badge.id)}"` +
         `${color ? ` style="--tier:${color}"` : ""}>` +
         `<span class="badge-icon"><ha-icon icon="${ACHIEVEMENT_ICONS[badge.id] ?? "mdi:medal-outline"}"></ha-icon></span>` +
         `<span class="badge-text"><b>${escapeHtml(title)}</b><span>${escapeHtml(goal)}</span>` +
@@ -5887,8 +6192,10 @@ function trendView(trend, size = 12) {
   return TREND_METRICS.map((metric) => {
     const before = metric.of(addWeeks(weeks.slice(0, half)));
     const after = metric.of(addWeeks(weeks.slice(half)));
-    let direction = "steady";
+    // Without both halves there is nothing to compare, and no arrow.
+    let direction = null;
     if (before !== null && after !== null) {
+      direction = "steady";
       const change = after - before;
       if (Math.abs(change) >= Math.max(0.5, Math.abs(before) * 0.02)) direction = change > 0 ? "up" : "down";
     }
@@ -5904,25 +6211,31 @@ function trendView(trend, size = 12) {
   });
 }
 
-// A small line of the weekly values; weeks without a value interrupt it.
+// A small line of the weekly values. It runs on through the weeks without a value, whose
+// stretch is dashed, so that it never breaks into pieces; a single value is a dot.
 function sparkline(values) {
-  const known = values.filter((value) => value !== null);
+  const known = values.map((value, index) => [index, value]).filter(([, value]) => value !== null);
   if (!known.length) return "";
-  const low = Math.min(...known);
-  const high = Math.max(...known);
+  const low = Math.min(...known.map(([, value]) => value));
+  const high = Math.max(...known.map(([, value]) => value));
   const x = (index) => fmt(values.length > 1 ? (index * 100) / (values.length - 1) : 50);
   const y = (value) => fmt(high === low ? 12 : 21 - ((value - low) / (high - low)) * 18);
-  const runs = [[]];
-  values.forEach((value, index) => {
-    if (value === null) runs.push([]);
-    else runs.at(-1).push(`${x(index)},${y(value)}`);
+  const point = ([index, value]) => `${x(index)},${y(value)}`;
+  const runs = [[known[0]]];
+  const gaps = [];
+  known.slice(1).forEach((item, at) => {
+    const before = known[at];
+    if (item[0] === before[0] + 1) runs.at(-1).push(item);
+    else {
+      gaps.push([before, item]);
+      runs.push([item]);
+    }
   });
-  const lines = runs
-    .filter((points) => points.length)
-    .map((points) =>
-      points.length > 1 ? `<polyline points="${points.join(" ")}"/>` : `<polyline class="dot" points="${points[0]} ${points[0]}"/>`
-    )
-    .join("");
+  const line = (points, style = "") => `<polyline${style ? ` class="${style}"` : ""} points="${points.map(point).join(" ")}"/>`;
+  const lines =
+    known.length === 1
+      ? line([known[0], known[0]], "dot")
+      : [...gaps.map((pair) => line(pair, "gap")), ...runs.filter((run) => run.length > 1).map((run) => line(run))].join("");
   const last = values.findLastIndex((value) => value !== null);
   const end = `${x(last)},${y(values[last])}`;
   return (
@@ -5941,17 +6254,22 @@ function trendsHtml(players, ui) {
         .map((metric) => {
           const shown =
             metric.value === null ? "–" : metric.percent ? percent(metric.value, metric.digits) : format(metric.value, metric.digits);
-          const trend = t(`trend_${metric.direction}`);
+          const trend = metric.direction ? t(`trend_${metric.direction}`) : "";
+          const arrow = metric.direction
+            ? ` <span class="arrow ${metric.direction}" role="img" title="${escapeHtml(trend)}" aria-label="${escapeHtml(trend)}">` +
+              `${TREND_ARROWS[metric.direction]}</span>`
+            : "";
           return (
             `<div class="trend" data-metric="${metric.key}"><span class="trend-label">${escapeHtml(t(metric.label))}</span>` +
-            `<span class="trend-value">${escapeHtml(shown)} <span class="arrow ${metric.direction}" role="img" title="${escapeHtml(
-              trend
-            )}" aria-label="${escapeHtml(trend)}">${TREND_ARROWS[metric.direction]}</span></span>` +
+            `<span class="trend-value">${escapeHtml(shown)}${arrow}</span>` +
             `${sparkline(metric.values)}</div>`
           );
         })
         .join("");
-      return `<div class="trend-player"><div class="trend-name">${escapeHtml(player.name)}</div><div class="trends">${metrics}</div></div>`;
+      return (
+        `<div class="trend-player"><div class="trend-name">${escapeHtml(player.name)}</div>` +
+        `<div class="trends balanced n${player.metrics.length}">${metrics}</div></div>`
+      );
     })
     .join("");
 }
@@ -6025,21 +6343,23 @@ const DENSITY_CELL = 8;
 const DENSITY_SIGMA = 8;
 // The newest darts are also drawn as dots, up to this many.
 const POSITION_DOTS = 300;
-// Positions further out than this are no darts on the board, as the integration logs them.
-const MAX_POSITION = 3;
+// The edge of the board with its number ring, as positions count: a dart beyond it
+// missed the board, and the board is all the drawing shows.
+const BOARD_EDGE = R.board / NORM;
 
+const onBoard = (x, y) => Number.isFinite(x) && Number.isFinite(y) && Math.hypot(x, y) <= BOARD_EDGE;
 const validPositions = (positions) =>
   (Array.isArray(positions) ? positions : []).filter(
-    (position) => Array.isArray(position) && Number.isFinite(position[0]) && Number.isFinite(position[1])
+    (position) => Array.isArray(position) && onBoard(position[0], position[1])
   );
 
 // The darts of the current visit that the session logs once the visit is booked: every
-// dart of the visit the board saw, not the bot's.
+// dart of the visit the board saw on it, not the bot's.
 const visitPositions = (throws) =>
   (Array.isArray(throws) ? throws : [])
     .filter((dart) => Number.isInteger(dart?.dart) && dart.bot !== true)
     .map((dart) => [dart.x, dart.y])
-    .filter(([x, y]) => Number.isFinite(x) && Number.isFinite(y) && Math.hypot(x, y) <= MAX_POSITION);
+    .filter(([x, y]) => onBoard(x, y));
 // When the newest visit was booked; the visit sensor lists the recent visits newest first.
 const newestVisit = (state) => state?.attributes?.recent_visits?.[0]?.time;
 
@@ -6218,7 +6538,16 @@ function visitCount(view, keys, start) {
     return { kind: "score", score: start - practice.remaining };
   }
   if (view.mode === "cricket" && !view.cricket.won) {
-    return { kind: "marks", marks: keys.reduce((sum, key) => sum + cricketMarks(key, view.cricket.numbers), 0) };
+    const { cricket } = view;
+    // In Wild Mouse a dart marks its number, or doubles or triples once, and a bed once more.
+    const marks =
+      cricket.kind === "wild_mouse"
+        ? keys.reduce((sum, key, index) => {
+            const counted = cricket.counted[index];
+            return sum + (WILD_TARGETS.includes(counted) ? 1 : cricketMarks(key, counted ? [Number(counted)] : []));
+          }, Number(cricket.bed))
+        : keys.reduce((sum, key) => sum + cricketMarks(key, cricket.numbers), 0);
+    return { kind: "marks", marks };
   }
   // Killer counts lives, and in Golf the last dart counts, whenever the darts are pulled.
   const { party } = view;
@@ -6364,6 +6693,12 @@ function playFanfare() {
 }
 
 // Board status shared by the live and status cards.
+// How long a hint shows after a tap.
+const HINT_SECONDS = 5;
+
+// What the status says while a game goes on; it keeps the width of the longest.
+const PLAY_STATUSES = ["status_ready", "status_full", "status_takeout", "status_hand"];
+
 function boardStatus(stateOf) {
   const on = (name) => stateOf(name)?.state === "on";
   const connected = stateOf("connected");
@@ -6406,6 +6741,7 @@ const PRACTICE_KEYS = [
   "switch.practice_bull_off",
   "switch.practice_bull_off_distance",
   "switch.practice_teams",
+  "switch.practice_three_in_a_bed",
   "switch.practice_personal_routes",
   "select.practice_golf_holes",
   "number.practice_count_up_rounds",
@@ -6481,9 +6817,25 @@ function boardContext(hass, t, deviceId, number, count) {
 }
 
 const FULL = { grid_options: { columns: "full" } };
-const tile = (row) => ({ type: "tile", ...(typeof row === "string" ? { entity: row } : row) });
+// A tile as wide as its section, so that long names such as the detection's correction
+// rate stay whole on every screen.
+const tile = (row) => ({ type: "tile", ...FULL, ...(typeof row === "string" ? { entity: row } : row) });
 
+// The live card alone, so the board and the game stay in sight on every screen.
 function liveDashboardView(board) {
+  return {
+    title: `${board.t("view_live")}${board.suffix}`,
+    path: `live${board.slug}`,
+    icon: "mdi:bullseye-arrow",
+    type: "sections",
+    max_columns: 2,
+    sections: [{ type: "grid", column_span: 2, cards: [board.card(CARD_TYPE, FULL)] }],
+  };
+}
+
+// The rules, players and start scores of the practice game and the settings of a
+// tournament, in a view of their own beside the live view.
+function gamesDashboardView(board) {
   const { t } = board;
   const practice = board.rows(PRACTICE_KEYS, "practice");
   const names = (board.index["text.practice_player"] ?? []).map((entity) => board.row(entity, "practice"));
@@ -6501,17 +6853,18 @@ function liveDashboardView(board) {
     ...(stage ? [tile(stage)] : []),
     { type: "entities", entities: tournament },
   ];
+  const sections = [
+    ...(practice.length ? [{ type: "grid", column_span: 2, cards: controls }] : []),
+    ...(tournament.length ? [{ type: "grid", column_span: 2, cards: tournamentCards }] : []),
+  ];
+  if (!sections.length) return null;
   return {
-    title: `${t("view_live")}${board.suffix}`,
-    path: `live${board.slug}`,
-    icon: "mdi:bullseye-arrow",
+    title: `${t("view_games")}${board.suffix}`,
+    path: `games${board.slug}`,
+    icon: "mdi:tune-variant",
     type: "sections",
     max_columns: 2,
-    sections: [
-      { type: "grid", column_span: 2, cards: [board.card(CARD_TYPE, FULL)] },
-      ...(practice.length ? [{ type: "grid", column_span: 2, cards: controls }] : []),
-      ...(tournament.length ? [{ type: "grid", column_span: 2, cards: tournamentCards }] : []),
-    ],
+    sections,
   };
 }
 
@@ -6641,6 +6994,7 @@ function dashboardStrategy(hass, config = {}) {
       scoreboardDashboardView(board, options),
       trainingDashboardView(board),
       playersDashboardView(board),
+      gamesDashboardView(board),
       boardDashboardView(board),
     ].filter(Boolean);
   });
@@ -6781,6 +7135,7 @@ const FORMS = {
         "show_connection",
         "show_controls",
         "show_summary",
+        "corrections",
       ],
       DEFAULTS
     ),
@@ -6941,6 +7296,22 @@ const STRATEGY_HELPERS = {
 
 // Coloured text is mixed with the theme's text colour: darker on light themes,
 // lighter on dark ones, so it stays readable on both.
+// Building block, segmented control: buttons that switch the view of a card, one at a
+// time, such as the heatmap's mode, whose darts, the period or the pad's keys and board.
+const SEGMENTED_CSS = `
+  .segmented {
+    display: inline-flex; flex-wrap: wrap; gap: 2px; padding: 3px; border-radius: 999px;
+    background: color-mix(in srgb, var(--primary-text-color) 6%, transparent);
+  }
+  .segmented button {
+    font: inherit; font-size: 12px; font-weight: 600; padding: 4px 10px; border: 0; border-radius: 999px;
+    cursor: pointer; color: var(--ad-muted-text); background: none; white-space: nowrap;
+  }
+  .segmented button[aria-pressed="true"] { color: #fff; background: var(--ad-accent-fill); }
+  /* Finger-sized at a touch screen. */
+  @media (any-pointer: coarse) { .segmented button { min-height: 40px; } }
+`;
+
 const BASE_CSS = `
   :host {
     display: block;
@@ -6954,6 +7325,13 @@ const BASE_CSS = `
     --ad-accent-fill: color-mix(in srgb, var(--ad-accent) 70%, #000);
     /* Secondary text that stays readable on tinted tiles. */
     --ad-muted-text: color-mix(in srgb, var(--secondary-text-color) 80%, var(--primary-text-color, #212121));
+    /* The tint a control takes under a pointer, and when it is pressed. */
+    --ad-hover: color-mix(in srgb, var(--primary-text-color, #212121) 7%, transparent);
+    --ad-press: color-mix(in srgb, var(--primary-text-color, #212121) 14%, transparent);
+    /* How long a change of state takes, and how it moves: quick, and calm at its end. */
+    --ad-fast: 150ms;
+    --ad-slow: 240ms;
+    --ad-ease: cubic-bezier(.2, .7, .2, 1);
   }
   [hidden] { display: none !important; }
   /* Read by assistive technology, not shown. */
@@ -6976,22 +7354,58 @@ const BASE_CSS = `
     font-size: 16px; font-weight: 600; color: var(--primary-text-color);
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
+  /* Building block, status: a glowing dot and its words, never the shape of a button. It
+     is as wide as the longest words it takes during a game, its dot and words at its end,
+     so nothing beside it moves while they change. */
   .pill {
-    display: inline-flex; align-items: center; gap: 8px; flex-shrink: 0;
-    padding: 6px 12px; border-radius: 999px; font-size: 12px; font-weight: 600;
+    display: inline-grid; justify-items: end; align-items: center; flex-shrink: 0; min-height: 28px;
+    font-size: 12px; font-weight: 600;
     color: color-mix(in srgb, var(--ad-status) 45%, var(--primary-text-color, #212121));
-    background: color-mix(in srgb, var(--ad-status) 14%, transparent);
-    transition: color .4s, background .4s;
+    transition: color .4s;
   }
-  .pill::before {
+  .pill > span { grid-area: 1 / 1; display: inline-flex; align-items: center; gap: 8px; }
+  .pill > span::before {
     content: ""; width: 8px; height: 8px; border-radius: 50%;
     background: var(--ad-status); box-shadow: 0 0 8px var(--ad-status);
   }
+  .pill::after { content: attr(data-widest); grid-area: 1 / 1; padding-inline-start: 16px; visibility: hidden; }
+  /* Building block, hint: the words of a tooltip in a bubble over the card, after a tap. */
+  .hint-bubble {
+    position: absolute; z-index: 5; max-width: min(260px, calc(100% - 16px)); padding: 6px 10px; border-radius: 8px;
+    font-size: 12px; font-weight: 600; line-height: 1.35; text-align: center; pointer-events: none;
+    color: var(--card-background-color, #fff); background: color-mix(in srgb, var(--primary-text-color, #212121) 90%, transparent);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, .3); transition: opacity var(--ad-fast) var(--ad-ease);
+  }
+  @starting-style { .hint-bubble { opacity: 0; } }
   .section-label {
     font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase;
     color: var(--ad-accent-text);
   }
   .muted { font-size: 11px; color: var(--ad-muted-text); }
+  /* No word alone on a line: titles and labels balance their lines, text avoids orphans. */
+  .title, .section-label, th { text-wrap: balance; }
+  .muted, .pad-hint, .lobby-hint, .hint, .empty-hint { text-wrap: pretty; }
+  /* Building block, cue: what a tap on a tile does, at its top right: a pencil edits, an
+     arrow opens the details; inline after the words of a control that looks like text.
+     The pencil turns to the accent while its tile is being edited. */
+  .cue {
+    position: absolute; top: 6px; right: 6px; width: 14px; height: 14px; overflow: visible; pointer-events: none;
+    fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
+    color: var(--ad-muted-text);
+  }
+  .cue.inline { position: static; display: inline-block; width: .9em; height: .9em; margin-left: .3em; vertical-align: -.1em; }
+  .picked .cue { color: var(--ad-accent-text); }
+  /* A link that opens more below it turns its arrow up once open. */
+  .cue.expand { transition: transform .2s; }
+  [aria-expanded="true"] > .cue.expand { transform: rotate(180deg); }
+  /* Building block, tile: a static one is a tinted area without a frame; one a tap edits
+     or opens has a frame, which the pointer lights up, and a cue. */
+  .tappable { position: relative; border: 1px solid var(--divider-color, rgba(127,127,127,.3)); }
+  @media (hover: hover) { .tappable:not(:disabled):hover { border-color: var(--ad-accent); } }
+  /* Building block, tag: a label such as a bed of a route, framed but never filled like a
+     button; the one that comes next is tinted and bold. */
+  .bed { border-radius: 8px; font-weight: 700; color: var(--ad-accent-text); border: 1px solid var(--ad-accent); }
+  .bed:first-child { font-weight: 800; background: color-mix(in srgb, var(--ad-accent) 16%, transparent); }
   .chips { display: flex; flex-wrap: wrap; gap: 6px; }
   .chip {
     display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; border-radius: 999px;
@@ -7002,6 +7416,8 @@ const BASE_CSS = `
   .chip.on { --chip: ${STATUS_COLORS.ready}; }
   .chip.off { --chip: #9e9e9e; }
   .chip.alert { --chip: ${STATUS_COLORS.problem}; color: var(--ad-error-text); }
+  /* A finger needs about 36 px, more than a mouse pointer. */
+  @media (any-pointer: coarse) { .chip { min-height: 40px; } }
   .controls { display: flex; flex-wrap: wrap; gap: 8px; }
   .controls button, button.action {
     flex: 1 1 auto; min-height: 40px; padding: 0 14px; border-radius: 12px; cursor: pointer;
@@ -7009,16 +7425,39 @@ const BASE_CSS = `
     border: 1px solid var(--divider-color, rgba(127,127,127,.3)); background: none;
     transition: background .2s, border-color .2s, color .2s;
   }
-  :is(.controls button, button.action):hover { background: color-mix(in srgb, var(--primary-text-color) 6%, transparent); }
   :is(.controls button, button.action).primary {
     color: #fff; background: var(--ad-accent-fill); border-color: var(--ad-accent-fill);
   }
   :is(.controls button, button.action).primary.stop { background: none; color: var(--ad-accent-text); }
-  :is(.controls button, button.action).confirm {
-    color: #fff; background: ${STATUS_COLORS.problem}; border-color: ${STATUS_COLORS.problem};
+  /* Building block, control: every button answers. A mouse sees what it can click, a
+     finger feels its press, a keyboard sees where it is; a disabled one fades, and the
+     second tap a button asks for, to confirm, is red wherever it is. */
+  button:not(:disabled) { cursor: pointer; }
+  @media (hover: hover) {
+    button:not(:disabled):hover { background-image: linear-gradient(var(--ad-hover), var(--ad-hover)); }
   }
-  :is(.controls button, button.action):disabled { opacity: .45; cursor: default; }
+  button:not(:disabled):active {
+    background-image: linear-gradient(var(--ad-press), var(--ad-press)); transform: scale(.97);
+  }
+  button:disabled { opacity: .45; cursor: default; }
+  :host button.confirm { color: #fff; background: ${STATUS_COLORS.problem}; border-color: ${STATUS_COLORS.problem}; }
   :is(button, [tabindex]):focus-visible { outline: 2px solid var(--ad-accent); outline-offset: 2px; }
+  /* Building block, motion: a change of state glides, what appears as a whole fades in from
+     a little below, and a device that asks for less motion gets none. Parts drawn anew
+     with every tap do not fade in, or they would flicker. */
+  button, .tappable {
+    transition: background-color var(--ad-fast) var(--ad-ease), border-color var(--ad-fast) var(--ad-ease),
+      color var(--ad-fast) var(--ad-ease), box-shadow var(--ad-fast) var(--ad-ease),
+      opacity var(--ad-fast) var(--ad-ease), transform var(--ad-fast) var(--ad-ease);
+  }
+  .appear { transition: opacity var(--ad-slow) var(--ad-ease), transform var(--ad-slow) var(--ad-ease); }
+  @starting-style { .appear { opacity: 0; transform: translateY(6px); } }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      transition-duration: 0s !important; animation-duration: 0s !important; animation-iteration-count: 1 !important;
+    }
+    button:not(:disabled):active { transform: none; }
+  }
   svg { display: block; width: 100%; height: 100%; overflow: visible; }
   .number {
     font-size: 22px; font-weight: 700; line-height: 1; text-anchor: middle; dominant-baseline: central;
@@ -7035,10 +7474,133 @@ const BASE_CSS = `
     border-radius: 50%; object-fit: cover; vertical-align: -.2em;
     background: color-mix(in srgb, var(--primary-text-color) 10%, transparent);
   }
+  ${SEGMENTED_CSS}
+  /* Building block, link: a control that looks like text, with an arrow after it, which
+     opens the details of what it names. */
+  .link {
+    display: inline-flex; align-items: center; padding: 0; border: 0; background: none;
+    font: inherit; font-size: 13px; font-weight: 600; color: var(--ad-accent-text); text-align: start;
+  }
+  @media (hover: hover) { .link:not(:disabled):hover { text-decoration: underline; background-image: none; } }
+  .link:not(:disabled):active { background-image: none; opacity: .7; }
+  @media (any-pointer: coarse) { .link { min-height: 40px; } }
+  /* What opens its details with a tap underlines its words under a mouse. */
+  @media (hover: hover) { :is(.metric, .system-info, .camera-name):hover .opens { text-decoration: underline; } }
 `;
 
-const CSS = `${BASE_CSS}
+// Building block, balanced grid: tiles in as many columns as fit, in rows as even as they
+// can be, four tiles as two by two rather than three and one; a shorter last row stands
+// in the middle, or its last tile fills it. A grid says how many tiles it has with a
+// class such as "balanced n4"; beyond eight tiles it fills its rows as they come. The
+// widths are those of the card, whose padding the tiles do not get.
+function balancedCss(selector, min, gap, padding, most = 8) {
+  const rules = [];
+  for (let count = 2; count <= most; count += 1) {
+    for (let fit = 1; fit <= count; fit += 1) {
+      const rows = Math.ceil(count / fit);
+      const columns = Math.ceil(count / rows);
+      const from = fit === 1 ? 0 : fit * min + (fit - 1) * gap + padding;
+      const to = fit === count ? 0 : (fit + 1) * min + fit * gap + padding - 0.02;
+      const query = [from && `(min-width: ${from}px)`, to && `(max-width: ${to}px)`].filter(Boolean).join(" and ");
+      const grid = `${selector}.balanced.n${count}`;
+      const last = count - (rows - 1) * columns;
+      const free = columns - last;
+      let place = "";
+      if (free > 0 && free % 2 === 0) place = ` ${grid} > :nth-child(${count - last + 1}) { grid-column-start: ${free / 2 + 1}; }`;
+      else if (free > 0) place = ` ${grid} > :last-child { grid-column-end: -1; }`;
+      rules.push(`  @container ${query} { ${grid} { grid-template-columns: repeat(${columns}, minmax(0, 1fr)); }${place} }`);
+    }
+  }
+  return rules.join("\n");
+}
+
+// Each player on one line, the name beside the score, where the scores have little room.
+const compactPlayers = (players, height) => `  @container (max-height: ${height}px) {
+    ${players} { gap: 6px; }
+    ${players} .player {
+      flex-direction: row; justify-content: space-between; gap: 8px; padding: 4px 10px; border-radius: 14px;
+    }
+    ${players} .player .name { font-size: clamp(13px, 8cqh, 18px); text-align: left; min-height: 0; }
+    ${players} .big { font-size: clamp(20px, 16cqh, 36px); }
+    ${players} .player :is(.route, .members, .details) { display: none; }
+  }`;
+
+// The pad that corrects a dart of the visit, on the live card and the scoreboard: the
+// keys, or the board to tap with its loupe.
+const PAD_CSS = `
+  .pad { font-size: clamp(14px, 1.8cqi, 22px); }
+  .pad { display: grid; gap: clamp(6px, 1cqi, 12px); }
+  .pad-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .pad-head .section-label { flex: 1; min-width: 8em; }
+  .pad button {
+    min-height: 48px; padding: 0 10px; border-radius: 12px; font: inherit; font-weight: 700; cursor: pointer;
+    touch-action: manipulation; color: var(--primary-text-color);
+    border: 2px solid var(--divider-color, rgba(127,127,127,.3));
+    background: color-mix(in srgb, var(--primary-text-color) 5%, transparent);
+  }
+  .pad button:disabled { opacity: .4; cursor: default; }
+  .pad button[aria-pressed="true"] {
+    color: #fff; background: var(--ad-accent-fill); border-color: var(--ad-accent-fill);
+  }
+  .pad .multiplier { min-width: 56px; }
+  .pad .zoom {
+    display: grid; place-items: center; width: 44px; height: 44px; min-height: 0; padding: 0; border-radius: 50%;
+    background: var(--ha-card-background, var(--card-background-color, #fff));
+  }
+  .pad .zoom[aria-pressed="true"] {
+    color: var(--ad-accent-text); border-color: var(--ad-accent); background: var(--ha-card-background, var(--card-background-color, #fff));
+  }
+  .pad .zoom svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; }
+  .pad-numbers { display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); gap: 6px; }
+  /* A narrow pad keeps S, D, T and its keys or board in one row. */
+  @container (max-width: 560px) {
+    .pad-numbers { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+    .pad .multiplier { min-width: 44px; }
+    .pad .segmented.view { padding: 2px; }
+    .pad .segmented.view button { padding: 0 10px; }
+  }
+  .pad-extra { display: flex; flex-wrap: wrap; gap: 6px; }
+  .pad-extra button { flex: 1 1 5.5em; }
+  .pad .secondary { color: var(--ad-accent-text); border-color: var(--ad-accent); background: none; }
+  /* The board instead of the keys: a tap says where the dart is. Zoomed in, it draws
+     only within its own box, never over the keys and the edge of the card. */
+  .pad .view { margin-left: auto; }
+  .pad .segmented button { min-height: 40px; padding: 0 14px; border: 0; border-radius: 999px; font-size: inherit; color: var(--ad-muted-text); background: none; }
+  .pad .segmented button[aria-pressed="true"] { color: #fff; background: var(--ad-accent-fill); }
+  .pad-wait { margin: 0; font-weight: 700; color: var(--ad-warn-text); }
+  .pad-board {
+    width: min(100%, 420px, 52vh); height: auto; aspect-ratio: 1; margin-inline: auto; overflow: hidden;
+    cursor: crosshair; touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+  }
+  .pad-board.disabled { opacity: .4; cursor: default; }
+  /* Fingers on the board aim and zoom; the page does not scroll or zoom under them. */
+  .pad-board[data-pad="spot"] { touch-action: none; }
+  :is(.pad-board, .loupe) .spot { vector-effect: non-scaling-stroke; }
+  /* The loupe above the finger that aims: the board magnified, a cross on the spot. */
+  .loupe {
+    position: absolute; z-index: 3; width: 132px; height: 132px; border-radius: 50%; overflow: hidden; pointer-events: none;
+    border: 3px solid var(--ad-accent); box-shadow: 0 6px 18px rgba(0, 0, 0, .45);
+    background: var(--primary-background-color, #111);
+  }
+  .loupe svg { display: block; width: 100%; height: 100%; }
+  .loupe { transition: opacity var(--ad-fast) var(--ad-ease), transform var(--ad-fast) var(--ad-ease); }
+  @starting-style { .loupe { opacity: 0; transform: scale(.8); } }
+  .loupe::after {
+    content: ""; position: absolute; inset: 0;
+    background:
+      linear-gradient(var(--ad-accent), var(--ad-accent)) center / 2px 34px no-repeat,
+      linear-gradient(var(--ad-accent), var(--ad-accent)) center / 34px 2px no-repeat;
+  }
+  :is(.pad-board, .loupe) .spot { fill: #3182ce; stroke: #fff; stroke-width: 3; pointer-events: none; }
+  :is(.pad-board, .loupe) .spot.seen { fill: none; stroke: var(--ad-accent); stroke-width: 4; stroke-dasharray: 7 5; pointer-events: auto; }
+  .pad-hint { text-align: center; font-size: .8em; color: var(--ad-muted-text); }
+  .undo-icon { margin-inline-end: .2em; }
+  .pad button:focus-visible { outline: 3px solid var(--ad-accent); outline-offset: 2px; }
+`;
+
+const CSS = `${BASE_CSS}${PAD_CSS}
   .layout {
+    position: relative;
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
     grid-template-areas: "header board" "visit board" "session board" "footer board";
@@ -7083,18 +7645,17 @@ const CSS = `${BASE_CSS}
     border: 1px solid color-mix(in srgb, var(--ad-accent) 45%, transparent);
     background: color-mix(in srgb, var(--ad-accent) 8%, transparent);
   }
-  .practice-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+  /* The game and what it says of the game take a line each from the start, so a longer
+     line after the first visit moves nothing. */
+  .practice-head { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; }
+  .practice-meta { line-height: 1.4; min-height: 1.4em; }
   .practice-row { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }
   .practice-remaining {
     font-size: 34px; font-weight: 800; line-height: 1; letter-spacing: -0.03em;
     color: var(--primary-text-color); font-variant-numeric: tabular-nums;
   }
   .practice-route { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 13px; }
-  .practice-route .bed {
-    padding: 3px 9px; border-radius: 8px; font-weight: 700;
-    color: var(--ad-accent-text); border: 1px solid var(--ad-accent);
-  }
-  .practice-route .bed:first-child { color: #fff; background: var(--ad-accent-fill); }
+  .practice-route .bed { padding: 3px 9px; }
   .practice-route .note { font-weight: 700; }
   .practice-route .note:not(.won, .bust) { font-size: 11px; font-weight: 400; }
   .scoreboard { display: grid; gap: 4px; }
@@ -7134,7 +7695,7 @@ const CSS = `${BASE_CSS}
   .summary th, .summary td { padding: 2px 6px; text-align: center; }
   .summary tr > :first-child { width: 36%; text-align: left; }
   .summary thead th { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .summary thead th.caption { font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--ad-accent-text); }
+  .summary thead th.caption { font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--ad-accent-text); }
   .summary tbody th { font-weight: 400; color: var(--secondary-text-color); }
   .summary td { font-weight: 700; color: var(--primary-text-color); }
   .summary tr.result td { font-size: 17px; font-weight: 800; color: var(--ad-accent-text); }
@@ -7145,18 +7706,19 @@ const CSS = `${BASE_CSS}
   }
   .recent { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
   .recent-list { display: flex; flex-wrap: wrap; gap: 6px; }
+  /* A visit gone by: its score after a dot in its colour, plain text and nothing to tap. */
   .recent-visit {
-    min-width: 2.4em; padding: 3px 8px; border-radius: 999px; text-align: center;
+    display: inline-flex; align-items: center; gap: 5px;
     font-size: 12px; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--primary-text-color);
-    border: 1px solid var(--bucket); background: color-mix(in srgb, var(--bucket) 16%, transparent);
   }
+  .recent-visit::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--bucket); }
   .slot {
     position: relative; padding: 10px 8px 9px; border-radius: 14px; text-align: center;
-    border: 1px solid var(--divider-color, rgba(127,127,127,.25));
+    border: 1px solid transparent;
     background: color-mix(in srgb, var(--primary-text-color) 4%, transparent);
     transition: border-color .3s, box-shadow .3s, background .3s;
   }
-  .slot.empty { border-style: dashed; background: none; }
+  .slot.empty { background: color-mix(in srgb, var(--primary-text-color) 2%, transparent); }
   .slot.latest {
     border-color: var(--ad-highlight);
     box-shadow: 0 0 0 1px var(--ad-highlight), 0 0 18px color-mix(in srgb, var(--ad-highlight) 35%, transparent);
@@ -7168,16 +7730,20 @@ const CSS = `${BASE_CSS}
   .slot.double .segment { color: color-mix(in srgb, #43b581 70%, var(--primary-text-color)); }
   .slot.bull .segment, .slot.outer-bull .segment { color: color-mix(in srgb, #e5484d 80%, var(--primary-text-color)); }
   .slot.miss .segment { color: var(--secondary-text-color); }
+  .slot > span { display: block; }
+  button.slot { width: 100%; font: inherit; color: inherit; cursor: pointer; touch-action: manipulation; }
+  button.slot:focus-visible { outline: 3px solid var(--ad-accent); outline-offset: 2px; }
+  .slot.picked { border-color: var(--ad-accent); box-shadow: inset 0 0 0 2px var(--ad-accent); }
+  /* The pad below the darts fits their column, however wide the card is. */
+  .visit > .pad-area { margin-top: 2px; container-type: inline-size; }
   .stats { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; margin-top: 8px; }
   .stat { min-width: 0; }
   .stat .value {
     font-size: 18px; font-weight: 700; color: var(--primary-text-color);
     font-variant-numeric: tabular-nums; white-space: nowrap;
   }
-  .stat .name {
-    font-size: 11px; color: var(--secondary-text-color);
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  }
+  /* A long name takes a second line in a narrow column instead of losing its end. */
+  .stat .name { font-size: 11px; line-height: 1.25; color: var(--secondary-text-color); overflow-wrap: break-word; hyphens: auto; }
   .section-head { display: flex; justify-content: space-between; gap: 8px; }
   .since { font-size: 11px; color: var(--secondary-text-color); }
   .board { display: flex; justify-content: center; }
@@ -7186,7 +7752,7 @@ const CSS = `${BASE_CSS}
     box-shadow: 0 0 42px 4px color-mix(in srgb, var(--ad-status) 55%, transparent);
     transition: box-shadow .5s;
   }
-  .board-frame svg { cursor: pointer; border-radius: 50%; }
+  .board-frame svg { border-radius: 50%; }
   .layout.vertical .board-frame, .layout.board-only .board-frame { width: min(100%, 420px); }
   @container (max-width: 520px) {
     .layout.auto .board-frame { width: min(100%, 360px); }
@@ -7202,21 +7768,6 @@ const CSS = `${BASE_CSS}
   @media (prefers-reduced-motion: reduce) {
     .blink .hit, .dart.latest .halo { animation: none; }
   }
-`;
-
-// Buttons that switch the view of a card: the heatmap mode, whose darts, the period.
-const SEGMENTED_CSS = `
-  .segmented {
-    display: inline-flex; flex-wrap: wrap; gap: 2px; padding: 3px; border-radius: 999px;
-    background: color-mix(in srgb, var(--primary-text-color) 6%, transparent);
-  }
-  .segmented button {
-    font: inherit; font-size: 12px; font-weight: 600; padding: 4px 10px; border: 0; border-radius: 999px;
-    cursor: pointer; color: var(--ad-muted-text); background: none; white-space: nowrap;
-  }
-  .segmented button[aria-pressed="true"] { color: #fff; background: var(--ad-accent-fill); }
-  /* Finger-sized at a touch screen. */
-  @media (pointer: coarse) { .segmented button { min-height: 40px; } }
 `;
 
 const TRAINING_CSS = `${BASE_CSS}
@@ -7260,31 +7811,35 @@ const TRAINING_CSS = `${BASE_CSS}
   .legend { width: min(100%, 320px); display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 8px; }
   .legend-bar { height: 8px; border-radius: 999px; }
   .side { display: flex; flex-direction: column; gap: 18px; min-width: 0; }
-  .tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; cursor: pointer; border-radius: 14px; }
+  .tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; border-radius: 14px; }
   .tile {
     min-width: 0; padding: 10px 8px; border-radius: 14px; text-align: center;
     background: color-mix(in srgb, var(--primary-text-color) 5%, transparent);
   }
   .tile .value { font-size: 20px; font-weight: 800; color: var(--primary-text-color); font-variant-numeric: tabular-nums; white-space: nowrap; }
-  .tile .name { font-size: 11px; color: var(--ad-muted-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  /* A long name takes a second line on a phone instead of losing its end. */
+  .tile .name { font-size: 11px; line-height: 1.25; color: var(--ad-muted-text); overflow-wrap: break-word; hyphens: auto; }
   .tile.hot .value { color: var(--ad-gold-text); }
   @container (max-width: 380px) { .tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-  /* The details of the statistics for a keyboard: shown when it reaches the button. */
-  .details.reveal { align-self: flex-end; flex: 0 0 auto; }
-  .details.reveal:not(:focus) {
-    position: absolute; width: 1px; height: 1px; min-height: 0; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap;
-  }
+  .side > .details { align-self: flex-end; margin-top: -10px; }
   .bests dl { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 6px 18px; margin: 8px 0 0; }
   .bests dl > div { display: flex; justify-content: space-between; gap: 10px; min-width: 0; }
   .bests dt { font-size: 12px; color: var(--secondary-text-color); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .bests dd { margin: 0; font-size: 13px; font-weight: 700; color: var(--primary-text-color); font-variant-numeric: tabular-nums; white-space: nowrap; }
-  .top { display: flex; flex-direction: column; gap: 6px; }
-  .top-row { display: grid; grid-template-columns: 3.2em 1fr auto; align-items: center; gap: 10px; font-size: 13px; }
+  /* The rows share their columns, so that every bar ends where the others do. */
+  .top { display: grid; grid-template-columns: 3.2em minmax(0, 1fr) auto; gap: 6px 10px; }
+  .top > .empty-hint { grid-column: 1 / -1; }
+  .top-row { display: grid; grid-column: 1 / -1; grid-template-columns: subgrid; align-items: center; font-size: 13px; }
+  .top-row .count { text-align: right; }
   .top-row .key { font-weight: 800; color: var(--primary-text-color); }
   .top-row .bar { height: 8px; border-radius: 999px; background: color-mix(in srgb, var(--primary-text-color) 8%, transparent); overflow: hidden; }
   .top-row .fill { height: 100%; border-radius: inherit; }
   .top-row .count { color: var(--secondary-text-color); font-variant-numeric: tabular-nums; white-space: nowrap; }
-  .history-chart { position: relative; height: 104px; display: flex; align-items: stretch; gap: 4px; margin-top: 8px; }
+  .history-chart {
+    position: relative; height: 104px; display: flex; align-items: stretch; gap: 4px; margin-top: 8px;
+    container-type: inline-size;
+  }
+  @container (max-width: 560px) { .visit-bar.far { display: none; } }
   .visit-bar {
     flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; justify-content: flex-end; align-items: center;
   }
@@ -7293,7 +7848,7 @@ const TRAINING_CSS = `${BASE_CSS}
     height: calc((100% - 16px) * var(--height));
   }
   .visit-bar .label {
-    font-size: 10px; font-weight: 700; line-height: 14px; margin-bottom: 2px;
+    font-size: 11px; font-weight: 700; line-height: 14px; margin-bottom: 2px;
     color: var(--secondary-text-color); font-variant-numeric: tabular-nums; white-space: nowrap;
   }
   .visit-bar.empty .fill { background: color-mix(in srgb, var(--primary-text-color) 7%, transparent); height: 3px; }
@@ -7328,7 +7883,6 @@ const TRAINING_CSS = `${BASE_CSS}
   .group-change { font-size: 12px; font-weight: 700; white-space: nowrap; }
   .group-change.better { color: var(--ad-ok-text); }
   .group-change.worse { color: var(--ad-error-text); }
-  ${SEGMENTED_CSS}
 `;
 
 const STATUS_CSS = `${BASE_CSS}
@@ -7352,6 +7906,7 @@ const STATUS_CSS = `${BASE_CSS}
   .toggle[aria-checked="true"]::after { transform: translateX(22px); }
   .toggle:disabled { opacity: .45; cursor: default; }
   .info { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; }
+${balancedCss(".info", 150, 8, 36)}
   .info-tile {
     display: flex; flex-direction: column; gap: 6px; min-width: 0; padding: 12px; border-radius: 14px;
     background: color-mix(in srgb, var(--primary-text-color) 5%, transparent);
@@ -7372,7 +7927,8 @@ const STATUS_CSS = `${BASE_CSS}
   }
   .metric .value { display: block; font-size: 15px; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--primary-text-color); }
   .metric .name { display: block; font-size: 11px; color: var(--secondary-text-color); }
-  .camera-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px; }
+  .camera-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 8px; }
+${balancedCss(".camera-grid", 130, 8, 36)}
   .camera {
     display: flex; flex-direction: column; gap: 8px; padding: 12px; border-radius: 14px;
     border: 1px solid var(--divider-color, rgba(127,127,127,.25));
@@ -7384,29 +7940,51 @@ const STATUS_CSS = `${BASE_CSS}
   .camera.problem .dot { background: ${STATUS_COLORS.problem}; box-shadow: 0 0 6px ${STATUS_COLORS.problem}; }
   .camera .fps { font-size: 12px; color: var(--secondary-text-color); font-variant-numeric: tabular-nums; }
   .camera button.action { min-height: 32px; font-size: 12px; }
+  /* On a touch screen the small controls grow to a finger's size; the switch by a
+     transparent border, which keeps its look. */
+  @media (any-pointer: coarse) {
+    .toggle { box-sizing: content-box; border: 4px solid transparent; background-clip: padding-box; }
+    .info-tile .badge, .camera-name, .camera button.action { min-height: 40px; }
+    .system-info { display: flex; align-items: center; min-height: 40px; }
+  }
 `;
 
-const SCOREBOARD_CSS = `${BASE_CSS}
+const SCOREBOARD_CSS = `${BASE_CSS}${PAD_CSS}
   /* Secondary text sits on tinted tiles here: its darker mix stays readable on them. */
   .scoreboard {
-    display: flex; flex-direction: column; gap: clamp(12px, 2cqi, 24px);
-    padding: clamp(14px, 2.4cqi, 32px); box-sizing: border-box;
+    --ad-pad: clamp(14px, 2.4cqi, 32px);
+    position: relative; display: flex; flex-direction: column; gap: clamp(12px, 2cqi, 24px);
+    padding: var(--ad-pad); box-sizing: border-box;
   }
   /* Full height is the screen below Home Assistant's header: a banner, the visit or the
      keypad make the numbers smaller instead of pushing the page past the screen. The
-     dynamic viewport leaves room for a phone's browser bar; older browsers use vh. */
+     dynamic viewport leaves room for a phone's browser bar; older browsers use vh. On a
+     phone the header also covers the status bar and the home indicator takes the bottom:
+     their safe areas count as Home Assistant counts them for its own views. */
   .scoreboard.full {
-    height: calc(100vh - var(--header-height, 56px) - 16px);
-    height: calc(100dvh - var(--header-height, 56px) - 16px);
+    --ad-taken: calc(
+      var(--header-height, 56px) + var(--safe-area-inset-top, env(safe-area-inset-top, 0px)) +
+        var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px)) + 16px
+    );
+    height: calc(100vh - var(--ad-taken));
+    height: calc(100dvh - var(--ad-taken));
   }
   /* The new game screen scrolls with the page, its start button stays at the bottom. */
   .scoreboard.full.choosing {
     height: auto;
-    min-height: calc(100vh - var(--header-height, 56px) - 16px);
-    min-height: calc(100dvh - var(--header-height, 56px) - 16px);
+    min-height: calc(100vh - var(--ad-taken));
+    min-height: calc(100dvh - var(--ad-taken));
   }
   .heading { display: grid; gap: 2px; min-width: 0; }
-  .scoreboard .title { font-size: clamp(18px, 3cqi, 36px); font-weight: 700; }
+  /* The title keeps its words whole: where the buttons beside it leave too little room,
+     as on a phone, they follow in a row below it. */
+  .scoreboard .title {
+    font-size: clamp(18px, 3cqi, 36px); font-weight: 700; line-height: 1.15;
+    white-space: normal; overflow: visible; text-overflow: clip; overflow-wrap: break-word;
+  }
+  .scoreboard > header { align-items: flex-start; flex-wrap: wrap; row-gap: 8px; }
+  .scoreboard > header > .heading { flex: 0 1 auto; max-width: 100%; }
+  .scoreboard > header > .header-actions { flex: 1 0 auto; }
   .scoreboard .meta { font-size: clamp(12px, 1.7cqi, 20px); }
   .scoreboard .pill { font-size: clamp(12px, 1.5cqi, 18px); }
   .banner {
@@ -7422,6 +8000,8 @@ const SCOREBOARD_CSS = `${BASE_CSS}
   .scoreboard.full:not(.choosing) .main {
     flex: 1 1 0; container-type: size; overflow-y: auto; justify-content: safe center;
   }
+  /* The keyboard scrolls the scores too; its ring stays inside what scrolls. */
+  .scoreboard.full .main:focus-visible { outline-offset: -2px; border-radius: 20px; }
   .players { display: grid; gap: clamp(8px, 1.6cqi, 24px); }
   .players.n1 { grid-template-columns: minmax(0, 1fr); }
   .players.n2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -7429,8 +8009,8 @@ const SCOREBOARD_CSS = `${BASE_CSS}
   .players.n4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   .player {
     display: flex; flex-direction: column; align-items: center; gap: clamp(4px, .8cqi, 12px); min-width: 0;
-    padding: clamp(12px, 2.2cqi, 32px) 12px; border-radius: 20px;
-    border: 2px solid var(--divider-color, rgba(127,127,127,.25)); transition: border-color .3s, background .3s;
+    padding: clamp(12px, 2.2cqi, 32px) 12px; border-radius: 20px; border: 2px solid transparent;
+    background: color-mix(in srgb, var(--primary-text-color) 4%, transparent); transition: border-color .3s, background .3s;
   }
   .player.active { border-color: var(--ad-accent); background: color-mix(in srgb, var(--ad-accent) 12%, transparent); }
   .player.winner {
@@ -7462,9 +8042,11 @@ const SCOREBOARD_CSS = `${BASE_CSS}
   .scorecard .total { font-weight: 800; color: var(--primary-text-color); }
   .scorecard tr.active th { color: var(--ad-accent-text); }
   .scorecard tr.winner > * { background: color-mix(in srgb, ${STATUS_COLORS.ready} 16%, transparent); }
+  /* A long name takes a second line in a narrow tile instead of losing its end. */
   .player .name {
-    max-width: 100%; min-height: 1.2em; font-size: clamp(16px, 2.8cqi, 40px); font-weight: 700;
-    color: var(--primary-text-color); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    max-width: 100%; min-height: 1.2em; font-size: clamp(16px, 2.8cqi, 40px); font-weight: 700; line-height: 1.2;
+    text-align: center; color: var(--primary-text-color); overflow-wrap: anywhere; hyphens: auto;
+    display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden;
   }
   .player.active .name::before { content: "▶ "; content: "▶ " / ""; color: var(--ad-accent-text); }
   .big {
@@ -7481,27 +8063,38 @@ const SCOREBOARD_CSS = `${BASE_CSS}
     .players.n3, .players.n4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .n3 .big, .n4 .big { font-size: clamp(44px, min(15cqi, 14vh), 120px); }
   }
-  .route {
-    display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: .4em;
-    min-height: 1.8em; font-size: clamp(14px, 2.6cqi, 34px);
+  /* The route, a note and the details keep their lines while empty, so a tile stays as
+     high from the first dart to the game shot. A tile too narrow for a route with what it
+     leaves, or for a long note, keeps two lines for them from the start. */
+  .route { align-self: stretch; container-type: inline-size; font-size: clamp(14px, 2.6cqi, 34px); line-height: 1.2; }
+  /* Three beds always fit one line: a narrow tile takes smaller type for them. */
+  .route-line {
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: .4em; min-height: 1.8em;
+    font-size: min(1em, 10cqi);
   }
-  .bed {
-    padding: .12em .55em; border-radius: 10px; font-weight: 800;
-    color: var(--ad-accent-text); border: 2px solid var(--ad-accent);
-  }
-  .bed:first-child { color: #fff; background: var(--ad-accent-fill); }
+  @container (max-width: 15em) { .player .route-line { min-height: calc(3.28em + 10px); } }
+  .route .bed, .setup .bed { padding: .12em .55em; border-radius: 10px; border-width: 2px; }
   .details { font-size: clamp(12px, 1.9cqi, 24px); color: var(--ad-muted-text); font-variant-numeric: tabular-nums; }
+  .player .details { align-self: stretch; container-type: inline-size; text-align: center; line-height: 1.4; }
+  .details-line { display: block; min-height: 1.4em; }
+  @container (max-width: 13em) { .player .details-line { min-height: 2.8em; } }
   .cricket { width: 100%; border-collapse: collapse; table-layout: fixed; font-variant-numeric: tabular-nums; }
+  /* On a full screen the chalkboard's rows share its whole height, without bands above
+     and below it. */
+  .scoreboard.full .main > .cricket { height: 100%; }
   .cricket th, .cricket td { padding: .1em .3em; text-align: center; }
+  /* Names break onto a second line in a narrow column instead of losing their end. */
   .cricket thead th {
-    font-size: clamp(14px, min(2.6cqi, 3.4vh), 34px); font-weight: 700; color: var(--primary-text-color);
-    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    font-size: clamp(12px, min(2.6cqi, 3.4vh), 34px); font-weight: 700; line-height: 1.1; color: var(--primary-text-color);
+    overflow-wrap: anywhere; hyphens: auto;
   }
   .cricket tr > :first-child { width: 20%; }
   .cricket tbody th {
     font-size: clamp(16px, min(3cqi, 3vh), 42px); font-weight: 800; color: var(--ad-muted-text);
   }
   .cricket td { font-size: clamp(20px, min(4.4cqi, 3.6vh), 60px); font-weight: 800; line-height: 1.05; color: var(--ad-accent-text); }
+  /* A number without marks keeps the line of one with them, so the first mark moves nothing. */
+  .cricket td::after { content: "\\200b"; }
   .cricket th.aim { font-size: clamp(14px, min(2.4cqi, 3vh), 30px); }
   .cricket th.aim .bed { display: inline-block; }
   .cricket tr.closed > * { opacity: .3; }
@@ -7517,8 +8110,8 @@ const SCOREBOARD_CSS = `${BASE_CSS}
   .summary th, .summary td { padding: .12em .4em; line-height: 1.2; text-align: center; }
   .summary tr > :first-child { width: 26%; text-align: left; }
   .summary thead th {
-    font-size: clamp(14px, min(2.6cqi, 3.4vh), 34px); font-weight: 700; color: var(--primary-text-color);
-    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    font-size: clamp(12px, min(2.6cqi, 3.4vh), 34px); font-weight: 700; line-height: 1.1; color: var(--primary-text-color);
+    overflow-wrap: anywhere; hyphens: auto;
   }
   .summary thead th.caption {
     font-size: clamp(11px, min(1.5cqi, 2vh), 18px); letter-spacing: .12em; text-transform: uppercase; color: var(--ad-accent-text);
@@ -7534,72 +8127,62 @@ const SCOREBOARD_CSS = `${BASE_CSS}
     font-size: clamp(12px, 1.9cqi, 24px); font-weight: 700; letter-spacing: .12em; text-transform: uppercase;
     color: var(--ad-accent-text);
   }
+  /* The facts keep their lines while their numbers grow: a narrow box lays them out in
+     columns, whose rows stay as many as the facts are. */
+  .facts-box { align-self: stretch; container-type: inline-size; font-size: clamp(14px, 2.4cqi, 32px); }
   .facts {
     display: flex; flex-wrap: wrap; justify-content: center; gap: .3em 1.2em;
-    font-size: clamp(14px, 2.4cqi, 32px); color: var(--ad-muted-text); font-variant-numeric: tabular-nums;
+    color: var(--ad-muted-text); font-variant-numeric: tabular-nums;
   }
+  @container (max-width: 48em) { .facts { display: grid; grid-template-columns: repeat(3, auto); justify-content: center; } }
+  @container (max-width: 30em) { .facts { grid-template-columns: repeat(2, auto); } }
   .facts b { color: var(--primary-text-color); }
   .caller-toggle {
     display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 999px; cursor: pointer;
     font: inherit; font-size: clamp(12px, 1.5cqi, 18px); font-weight: 600; color: var(--ad-muted-text);
-    border: 1px dashed var(--divider-color, rgba(127,127,127,.4)); background: none;
+    border: 1px solid var(--divider-color, rgba(127,127,127,.4)); background: none;
   }
   .caller-toggle[aria-pressed="true"] {
     color: #fff; background: var(--ad-accent-fill); border: 1px solid var(--ad-accent-fill);
   }
   .header-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
-  .visit { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)) auto; gap: clamp(6px, 1.2cqi, 16px); }
-  .visit.plain { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  /* The tile beside the darts has a width of its own, whatever it shows, so the darts
+     keep theirs: their beds are sized by it. */
+  .visit { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)) minmax(5em, .6fr); gap: clamp(6px, 1.2cqi, 16px); }
   .dart, .sum {
     display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
     padding: clamp(6px, 1.2cqi, 16px); border-radius: 14px;
   }
   .dart {
-    border: 1px solid var(--divider-color, rgba(127,127,127,.25));
+    position: relative; border: 1px solid transparent;
     background: color-mix(in srgb, var(--primary-text-color) 4%, transparent);
   }
-  .dart .segment { font-size: clamp(18px, 3.6cqi, 48px); font-weight: 800; color: var(--primary-text-color); }
+  /* A dart's bed and points grow with its own tile, which is narrow beside a pad. */
+  .visit .dart { container-type: inline-size; }
+  .dart .segment { font-size: clamp(16px, 24cqi, 48px); font-weight: 800; color: var(--primary-text-color); }
   .dart.empty .segment { color: var(--ad-muted-text); }
-  .dart .points, .sum .muted { font-size: clamp(11px, 1.6cqi, 20px); min-height: 1.2em; }
+  .dart .points { font-size: clamp(11px, 7cqi, 20px); line-height: 1.2; min-height: 1.2em; }
+  .sum .muted { font-size: clamp(11px, 1.6cqi, 20px); min-height: 1.2em; }
   .dart .points { color: var(--ad-muted-text); }
-  .sum { min-width: 4.5em; color: #fff; background: var(--ad-accent-fill); }
+  .sum { min-width: 0; border: 1px solid transparent; color: var(--ad-accent-text); background: color-mix(in srgb, var(--ad-accent) 14%, transparent); }
+  /* The last visit, which a tap undoes; the second tap that confirms is red. */
+  button.sum { position: relative; font: inherit; cursor: pointer; touch-action: manipulation; }
+  button.sum:focus-visible { outline: 3px solid var(--ad-accent); outline-offset: 2px; }
+  .visit .sum .cue { top: clamp(4px, .8cqi, 10px); right: clamp(4px, .8cqi, 10px); width: clamp(12px, 1.6cqi, 20px); height: clamp(12px, 1.6cqi, 20px); }
+  .sum.confirm .cue { color: inherit; }
   /* A dart of the visit corrects with a tap; entered, corrected and bot darts are marked. */
   button.dart { font: inherit; color: inherit; cursor: pointer; touch-action: manipulation; }
-  button.dart:focus-visible, .pad button:focus-visible { outline: 3px solid var(--ad-accent); outline-offset: 2px; }
+  /* Every tile of the visit is as high as one a finger taps, so the row keeps its height
+     whether its darts and the last visit can be tapped or not. */
+  @media (any-pointer: coarse) { .visit > :is(.dart, .sum) { min-height: 44px; } }
+  button.dart:focus-visible { outline: 3px solid var(--ad-accent); outline-offset: 2px; }
+  .visit .dart .cue {
+    top: clamp(3px, 4cqi, 10px); right: clamp(3px, 4cqi, 10px); width: clamp(11px, 9cqi, 20px); height: clamp(11px, 9cqi, 20px);
+  }
   .dart.picked { border-color: var(--ad-accent); box-shadow: inset 0 0 0 2px var(--ad-accent); }
   .dart.manual, .dart.corrected { border-style: dashed; }
-  .dart.bot { border-color: color-mix(in srgb, var(--ad-accent) 45%, transparent); }
-  .pad, .undo-only { font-size: clamp(14px, 1.8cqi, 22px); }
-  .pad { display: grid; gap: clamp(6px, 1cqi, 12px); }
-  .pad-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-  .pad-head .section-label { flex: 1; min-width: 8em; }
-  .pad button, .undo-only {
-    min-height: 48px; padding: 0 10px; border-radius: 12px; font: inherit; font-weight: 700; cursor: pointer;
-    touch-action: manipulation; color: var(--primary-text-color);
-    border: 2px solid var(--divider-color, rgba(127,127,127,.3));
-    background: color-mix(in srgb, var(--primary-text-color) 5%, transparent);
-  }
-  .pad button:disabled { opacity: .4; cursor: default; }
-  .pad button[aria-pressed="true"] {
-    color: #fff; background: var(--ad-accent-fill); border-color: var(--ad-accent-fill);
-  }
-  .pad .multiplier { min-width: 56px; }
-  .pad-numbers { display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); gap: 6px; }
-  @container (max-width: 560px) { .pad-numbers { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
-  .pad-extra { display: flex; flex-wrap: wrap; gap: 6px; }
-  .pad-extra button { flex: 1 1 5.5em; }
-  .pad .secondary, .undo-only { color: var(--ad-accent-text); border-color: var(--ad-accent); background: none; }
-  /* The board instead of the keys: a tap says where the dart is. */
-  .pad .view { margin-left: auto; }
-  .pad-board {
-    width: min(100%, 420px, 52vh); height: auto; aspect-ratio: 1; margin-inline: auto;
-    cursor: crosshair; touch-action: manipulation; -webkit-tap-highlight-color: transparent;
-  }
-  .pad-board.disabled { opacity: .4; cursor: default; }
-  .pad-board .spot { fill: #3182ce; stroke: #fff; stroke-width: 3; pointer-events: none; }
-  .pad-board .spot.seen { fill: none; stroke: var(--ad-accent); stroke-width: 4; stroke-dasharray: 7 5; pointer-events: auto; }
-  .pad-hint { text-align: center; font-size: .8em; color: var(--ad-muted-text); }
-  .undo-only { justify-self: start; align-self: flex-start; }
+  .dart.manual, .dart.corrected { border-color: var(--divider-color, rgba(127,127,127,.4)); }
+  .dart.bot { background: color-mix(in srgb, var(--ad-accent) 10%, transparent); }
   .lobby-player.bot .bot-icon { font-size: 1.3em; }
   .sum .muted { color: inherit; }
   .sum .value { font-size: clamp(22px, 4.2cqi, 56px); font-weight: 800; line-height: 1; font-variant-numeric: tabular-nums; }
@@ -7617,6 +8200,7 @@ const SCOREBOARD_CSS = `${BASE_CSS}
   .choosing .main { justify-content: flex-start; }
   .lobby {
     display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: clamp(14px, 2.4cqi, 32px); align-items: start;
+    font-size: clamp(14px, 1.2cqi, 19px);
   }
   /* A portrait tablet or a phone stacks the games above the players; a small landscape
      screen keeps them side by side. */
@@ -7652,7 +8236,7 @@ const SCOREBOARD_CSS = `${BASE_CSS}
   .lobby-player.resting { color: var(--ad-muted-text); background: none; outline: 1px dashed var(--divider-color, rgba(127,127,127,.4)); }
   /* In a narrow column the moves go below the name and the start score. */
   .lobby-player { flex-wrap: wrap; row-gap: 4px; }
-  .lobby-player .who { flex: 1 1 6em; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .lobby-player .who { flex: 1 1 6em; min-width: 0; overflow-wrap: anywhere; hyphens: auto; }
   .lobby-moves { display: inline-flex; gap: 6px; margin-left: auto; }
   .lobby-player button { min-width: 48px; padding: 0; }
   .lobby-start { display: inline-flex; align-items: center; gap: 4px; font-variant-numeric: tabular-nums; }
@@ -7666,7 +8250,7 @@ const SCOREBOARD_CSS = `${BASE_CSS}
   .name-entry { display: flex; gap: 8px; }
   .lobby-name {
     flex: 1; min-width: 0; min-height: 48px; box-sizing: border-box; padding: 0 14px; border-radius: 14px;
-    font: inherit; font-size: 16px; color: var(--primary-text-color); background: none;
+    font: inherit; font-size: max(16px, 1em); color: var(--primary-text-color); background: none;
     border: 2px solid var(--divider-color, rgba(127,127,127,.3));
   }
   .steppers { display: flex; flex-wrap: wrap; gap: 8px 24px; }
@@ -7679,12 +8263,25 @@ const SCOREBOARD_CSS = `${BASE_CSS}
   .options { display: flex; flex-wrap: wrap; gap: 8px; }
   .options .section-label { flex-basis: 100%; margin-bottom: 0; }
   /* The start stays in reach at the bottom of the screen while the page scrolls, below
-     both columns. */
+     both columns and above a phone's home indicator, across the whole card. The card's
+     background lies on the page's, so the games scrolling beneath stay hidden with a
+     theme whose cards are see-through. */
   .lobby-actions {
+    --ad-card-fill: var(--ha-card-background, var(--card-background-color, #1c1c1c));
     grid-column: 1 / -1;
     position: sticky; bottom: 0; z-index: 1; display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end;
-    gap: 10px; padding: 8px 0; background: var(--ha-card-background, var(--card-background-color, #1c1c1c));
+    gap: 10px; margin: 0 calc(-1 * var(--ad-pad));
+    padding: 10px var(--ad-pad) calc(10px + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px)));
+    background: linear-gradient(var(--ad-card-fill), var(--ad-card-fill)), var(--primary-background-color, #111);
+    box-shadow: 0 -10px 12px -10px rgba(0, 0, 0, .45);
   }
+  /* On a phone the start fills the rest of the row, or a row of its own. */
+  @container (max-width: 560px) { .lobby-actions .start { flex: 1 1 10em; } }
+  /* On a screen higher than the choice, as a large monitor, the start bar stays at the
+     bottom of the card instead of right below the choice. */
+  .scoreboard.full.choosing .lobby { flex: 1 0 auto; grid-template-rows: auto minmax(0, 1fr); }
+  .scoreboard.full.choosing .lobby-actions { align-self: end; }
+  @container (max-width: 880px) { .scoreboard.full.choosing .lobby { grid-template-rows: auto auto minmax(0, 1fr); } }
   .lobby-hint { flex: 1 1 100%; font-weight: 700; color: var(--ad-warn-text); }
   .lobby-hint:empty { display: none; }
   .lobby .secondary { background: none; }
@@ -7798,7 +8395,7 @@ const SCOREBOARD_CSS = `${BASE_CSS}
   .lobby .mode { flex: 1; font-size: clamp(15px, 2cqi, 22px); }
   .formats { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
   /* Finger-sized at a touch screen. */
-  @media (pointer: coarse) { .lobby-toggle, .caller-toggle { min-height: 40px; } }
+  @media (any-pointer: coarse) { .lobby-toggle, .caller-toggle { min-height: 40px; } }
 
   /* Full height: numbers and tables take the width (cqi) and the height (cqh) of the
      scores, less what the names, routes and details below them need. */
@@ -7833,8 +8430,11 @@ const SCOREBOARD_CSS = `${BASE_CSS}
   .scoreboard.full .banner { font-size: clamp(16px, min(3.4cqi, 5.5vh), 44px); padding: .3em 1em; }
   /* A small landscape screen, such as 800 × 480 or 1024 × 600: less room around the parts. */
   @media (max-height: 640px) {
-    .scoreboard.full { padding: 10px 16px; gap: 8px; }
+    .scoreboard.full { --ad-pad: 16px; padding: 10px var(--ad-pad); gap: 8px; }
     .scoreboard.full .visit :is(.dart, .sum) { padding: 4px 6px; flex-direction: row; gap: 8px; }
+    /* The words and the score of the tile beside the darts side by side need its room. */
+    .scoreboard.full .visit { grid-template-columns: repeat(3, minmax(0, 1fr)) minmax(8.5em, .8fr); }
+    .scoreboard.full .visit .dart .segment { font-size: clamp(14px, min(19cqi, 5vh), 40px); }
     .scoreboard.full .player { padding-block: 8px; }
   }
   /* Darts entered or corrected on a landscape screen: the pad beside the scores, where
@@ -7868,11 +8468,102 @@ const SCOREBOARD_CSS = `${BASE_CSS}
     .scoreboard.full .cricket tr.total td { font-size: clamp(18px, min(7cqi, 7.2cqh), 90px); }
     .scoreboard.full .cricket tbody th { font-size: clamp(13px, min(4.4cqi, 5.4cqh), 56px); }
   }
+  /* A phone: the pad's keys take less room so the scores stay in sight. Its label gets a
+     line of its own, the bulls, the miss and the actions share one row. */
+  @container (max-width: 560px) {
+    .scoreboard.full .pad-head .section-label { flex-basis: 100%; }
+    .scoreboard.full :is(.pad, .pad-numbers) { gap: 4px; }
+    .scoreboard.full .pad button { min-height: 42px; padding: 0 6px; }
+    .scoreboard.full .pad-extra { display: grid; grid-template-columns: repeat(auto-fit, minmax(4.2em, 1fr)); gap: 4px; }
+    .scoreboard.full .pad-extra button { line-height: 1.1; }
+  }
+  /* The board to tap fills the room the scores leave, on every screen: below them the
+     scores keep a short line each, beside them the board takes the pad's column from
+     the top to the bottom. Its zoom switch sits on the board's corner, as on a map, so
+     the head keeps one line. */
+  .scoreboard.full:has(.pad.on-board) > .main { flex: 1 1 0; min-height: 96px; }
+  .scoreboard.full:has(.pad.on-board) > .pad-area { flex: 4 1 0; min-height: 0; display: flex; flex-direction: column; }
+  .scoreboard.full.with-pad:has(.pad.on-board) > .pad-area { align-self: stretch; }
+  .scoreboard.full .pad.on-board {
+    flex: 1 1 0; min-height: 0;
+    grid-template-columns: minmax(0, 1fr) auto; grid-template-rows: auto minmax(160px, 1fr) auto auto;
+    grid-template-areas: "label view" "board board" "hint hint" "extra extra";
+  }
+  .scoreboard.full .pad.on-board > .pad-head { display: contents; }
+  .scoreboard.full .pad.on-board > .pad-head > .section-label { grid-area: label; align-self: center; }
+  .scoreboard.full .pad.on-board > .pad-head > .view { grid-area: view; }
+  .scoreboard.full .pad.on-board > .pad-head > .zoom {
+    grid-area: board; justify-self: end; align-self: start; z-index: 1; margin: 6px; min-height: 0;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, .35);
+  }
+  .scoreboard.full .pad.on-board > .pad-board { grid-area: board; width: 100%; height: 100%; min-height: 0; aspect-ratio: auto; }
+  .scoreboard.full .pad.on-board > .pad-hint { grid-area: hint; }
+  .scoreboard.full .pad.on-board > .pad-extra { grid-area: extra; }
+  .scoreboard.full .section-label { font-size: clamp(11px, 1cqi, 15px); }
+  /* A large landscape screen, as a touch monitor beside the board: the keys grow with
+     its height. */
+  @media (orientation: landscape) and (min-height: 641px) {
+    .scoreboard.full.with-pad .pad { font-size: clamp(14px, min(1.8cqi, 2.6vh), 28px); }
+    .scoreboard.full.with-pad .pad button:not(.zoom) { min-height: clamp(48px, 7vh, 88px); }
+  }
+  /* A phone on its side: the pad takes the right half from the top to the bottom, its
+     numbers in rows of ten as on a large screen, or of seven or five where ten keys
+     would be narrower than a finger, 40 px. */
+  @media (orientation: landscape) and (max-height: 440px) {
+    .scoreboard.full.with-pad {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      grid-template-areas: "header pad" "banner pad" "main pad" "visit pad";
+    }
+    .scoreboard.full.with-pad > .pad-area { align-self: stretch; overflow-y: auto; container-type: inline-size; }
+    .scoreboard.full.with-pad .pad-head .section-label { flex-basis: 100%; }
+    .scoreboard.full.with-pad .pad-numbers { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+    @container (min-width: 298px) { .scoreboard.full.with-pad .pad-numbers { grid-template-columns: repeat(7, minmax(0, 1fr)); } }
+    @container (min-width: 427px) { .scoreboard.full.with-pad .pad-numbers { grid-template-columns: repeat(10, minmax(0, 1fr)); } }
+    .scoreboard.full.with-pad .pad { gap: 4px; }
+    .scoreboard.full.with-pad .pad-numbers { gap: 3px; }
+    .scoreboard.full.with-pad .pad button { min-height: 40px; padding: 0 4px; }
+    .scoreboard.full.with-pad .pad-extra { display: grid; grid-template-columns: repeat(auto-fit, minmax(4.2em, 1fr)); gap: 4px; }
+    .scoreboard.full.with-pad .pad-extra button { line-height: 1.1; }
+    /* The board's hint gives way, too long for the width of half a phone. */
+    .scoreboard.full.with-pad .pad.on-board {
+      grid-template-rows: auto minmax(120px, 1fr) auto; grid-template-areas: "label view" "board board" "extra extra";
+    }
+    .scoreboard.full.with-pad .pad.on-board > .pad-hint { display: none; }
+  }
+  /* Little room for the scores, as beside a pad on a phone: each player on one line, the
+     name beside the score, so that every score stays in sight. Three or four players in
+     two rows of tiles need their line sooner. */
+${compactPlayers(".scoreboard.full .players", 200)}
+${compactPlayers(".scoreboard.full .players:is(.n3, .n4)", 280)}
+  /* Little room above the visit, as on a phone on its side: the visit without its
+     label, the facts smaller, and a smaller start of the next game; with even less
+     room, the number and the start alone. */
+  @container (max-height: 240px) {
+    .scoreboard.full .single { gap: 4px; }
+    .scoreboard.full .single .label { display: none; }
+    .scoreboard.full .single .facts { font-size: 13px; }
+    .scoreboard.full .single .big { font-size: clamp(28px, 100cqh - 64px, 320px); }
+    .scoreboard.full .main:has(.lobby-cta) .single .big { font-size: clamp(28px, 100cqh - 112px, 320px); }
+    .scoreboard.full .lobby-cta { min-height: 44px; font-size: 16px; }
+  }
+  @container (max-height: 150px) {
+    .scoreboard.full .single .facts { display: none; }
+    .scoreboard.full .main:has(.lobby-cta) .single .big { font-size: clamp(28px, 100cqh - 56px, 320px); }
+  }
+  /* A Cricket chalkboard with little room: rows as high as the room allows. */
+  @container (max-height: 260px) {
+    .scoreboard.full .cricket :is(th, td), .scoreboard.full .cricket.many :is(th, td) { padding-block: 0; line-height: 1.05; }
+    .scoreboard.full .cricket td, .scoreboard.full .cricket.many td { font-size: clamp(11px, min(4.4cqi, 8cqh), 60px); }
+    .scoreboard.full .cricket tbody th, .scoreboard.full .cricket.many tbody th { font-size: clamp(11px, min(3cqi, 7cqh), 42px); }
+    .scoreboard.full .cricket thead th, .scoreboard.full .cricket.many thead th { font-size: clamp(11px, min(2.6cqi, 6.5cqh), 34px); }
+    .scoreboard.full .cricket tr.total td, .scoreboard.full .cricket.many tr.total td { font-size: clamp(11px, min(4.2cqi, 9cqh), 56px); }
+  }
 `;
 
 const PLAYERS_CSS = `${BASE_CSS}
   .players-card { display: flex; flex-direction: column; gap: 16px; padding: 18px; box-sizing: border-box; }
   .profiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 10px; }
+${balancedCss(".profiles", 210, 10, 36)}
   .profile {
     display: flex; flex-direction: column; gap: 6px; padding: 12px 14px; border-radius: 14px; min-width: 0;
     background: color-mix(in srgb, var(--primary-text-color) 5%, transparent);
@@ -7902,34 +8593,38 @@ const PLAYERS_CSS = `${BASE_CSS}
   .match b { color: var(--ad-ok-text); }
   .players-card header .export { flex: 0 0 auto; margin-left: auto; min-height: 32px; font-size: 13px; }
   /* Finger-sized at a touch screen. */
-  @media (pointer: coarse) { .players-card header .export { min-height: 40px; } }
+  @media (any-pointer: coarse) { .players-card header .export { min-height: 40px; } }
 `;
 
 const DOUBLES_CSS = `${BASE_CSS}
   .doubles-card { display: flex; flex-direction: column; gap: 14px; padding: 18px; box-sizing: border-box; }
+  /* The title keeps its word; the counts beside it go below it on a narrow card. */
+  .doubles-card > header { flex-wrap: wrap; align-items: baseline; row-gap: 4px; }
+  .doubles-card > header .title { flex-shrink: 0; }
+  .doubles-card > header .meta { flex: 1 1 16em; text-align: right; text-wrap: balance; }
   .doubles-body { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 18px; align-items: start; }
   @container (max-width: 560px) { .doubles-body { grid-template-columns: minmax(0, 1fr); } }
   .doubles-board { max-width: 380px; width: 100%; margin: 0 auto; aspect-ratio: 1; }
   .ring path { stroke: var(--ha-card-background, var(--card-background-color, #1c1c1c)); stroke-width: 1.5; }
   .double-list { display: grid; gap: 6px; }
   .double {
-    display: grid; grid-template-columns: 3.4em minmax(0, 1fr) auto 3.4em; gap: 10px; align-items: center;
+    display: grid; grid-template-columns: 3.4em minmax(0, 1fr) 3.2em 4.4em 3.4em; gap: 10px; align-items: center;
     font-variant-numeric: tabular-nums;
   }
   .double .bed {
     padding: 2px 0; border-radius: 8px; text-align: center; font-size: 12px; font-weight: 800;
     color: color-mix(in srgb, var(--c) 50%, var(--primary-text-color, #212121)); border: 1px solid var(--c);
   }
-  /* The rate's colour, darkened so white text stays readable on it. */
-  .double.favourite .bed {
-    color: #fff; background: color-mix(in srgb, var(--c) 60%, #000); border-color: color-mix(in srgb, var(--c) 60%, #000);
-  }
+  /* The favourite double: tinted in its rate's colour, like the next bed of a route. */
+  .double.favourite .bed { background: color-mix(in srgb, var(--c) 20%, transparent); }
   .double .bar {
     height: 6px; border-radius: 999px; overflow: hidden;
     background: color-mix(in srgb, var(--primary-text-color) 10%, transparent);
   }
   .double .bar i { display: block; height: 100%; border-radius: inherit; }
-  .double .count { font-size: 12px; color: var(--secondary-text-color); }
+  /* Fixed columns keep the bars of every row equally long. */
+  .double .landed { font-size: 13px; font-weight: 700; text-align: right; }
+  .double .count { font-size: 12px; color: var(--secondary-text-color); text-align: right; }
   .double .rate { font-size: 13px; font-weight: 700; text-align: right; }
 `;
 
@@ -7954,7 +8649,7 @@ const PROGRESS_CSS = `
   }
   .badge-text { display: flex; flex-direction: column; gap: 1px; min-width: 0; font-size: 12px; line-height: 1.3; }
   .badge-text b { font-size: 13px; color: var(--primary-text-color); }
-  .badge-text > span { color: var(--secondary-text-color); }
+  .badge-text > span { color: var(--ad-muted-text); }
   .badge.locked {
     background: none; border: 1px dashed color-mix(in srgb, var(--primary-text-color) 22%, transparent);
     padding: 7px 9px;
@@ -7973,11 +8668,12 @@ const PROGRESS_CSS = `
   :is(.trend-player, .group-player):first-child { border-top: 0; }
   .trend-name { font-weight: 700; margin-bottom: 6px; color: var(--primary-text-color); }
   .trends { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; }
+${balancedCss(".trends", 140, 8, 36)}
   .trend {
     display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 6px; align-items: center;
     padding: 8px 10px; border-radius: 12px; background: color-mix(in srgb, var(--primary-text-color) 5%, transparent);
   }
-  .trend-label { font-size: 11px; color: var(--ad-muted-text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .trend-label { font-size: 11px; line-height: 1.25; color: var(--ad-muted-text); overflow-wrap: break-word; hyphens: auto; }
   .trend-value { font-size: 14px; font-weight: 700; text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
   .trend .spark { grid-column: 1 / -1; height: 24px; }
   .spark polyline {
@@ -7985,6 +8681,7 @@ const PROGRESS_CSS = `
     vector-effect: non-scaling-stroke;
   }
   .spark .dot { stroke-width: 5; }
+  .spark .gap { stroke-dasharray: 3 4; opacity: .55; }
   .arrow.up { color: var(--ad-ok-text); }
   .arrow.down { color: var(--ad-error-text); }
   .arrow.steady { color: var(--secondary-text-color); }
@@ -8000,7 +8697,7 @@ const PROGRESS_CSS = `
   .group-change.worse { color: var(--ad-error-text); }
 `;
 
-const LEADERBOARD_CSS = `${BASE_CSS}${SEGMENTED_CSS}
+const LEADERBOARD_CSS = `${BASE_CSS}
   .leaderboard { display: flex; flex-direction: column; gap: 14px; padding: 18px; box-sizing: border-box; }
   .leaderboard header { flex-wrap: wrap; }
   .records { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 10px; }
@@ -8115,7 +8812,7 @@ async function loadForm() {
     const helpers = await window.loadCardHelpers();
     const card = await helpers.createCardElement({ type: "entities", entities: [] });
     await card.constructor.getConfigElement?.();
-  } catch (error) {
+  } catch {
     // The editor shows its form as soon as Home Assistant defines it.
   }
 }
@@ -8147,6 +8844,54 @@ function createElements(Base) {
       this.attachShadow({ mode: "open" });
       this._watchedStates = [];
       this._confirm = null;
+      this._initHints();
+    }
+
+    // Building block, hint: what a pointer's tooltip tells shows on a tap too. A finger or a
+    // pen on anything with a title that does nothing else shows the title in a bubble over
+    // the card, so nothing moves; a mouse keeps the browser's own tooltip. Another tap,
+    // Escape or a few seconds close it.
+    _initHints() {
+      const root = this.shadowRoot;
+      root.addEventListener("pointerdown", (event) => (this._pointer = event.pointerType), true);
+      root.addEventListener("click", (event) => {
+        const target = event.target.closest("[title]");
+        const acts = target?.closest("button, a, input, select, label, [role=button], .tappable");
+        if (target && !acts && this._pointer && this._pointer !== "mouse") this._showHint(target);
+        else this._hideHint();
+      });
+      root.addEventListener("keydown", (event) => event.key === "Escape" && this._hideHint());
+    }
+
+    _showHint(target) {
+      // Every card with something to hint at is built in a root; a message is not.
+      const box = this.shadowRoot.querySelector(".root");
+      let bubble = box.querySelector(":scope > .hint-bubble");
+      if (!bubble) {
+        bubble = document.createElement("div");
+        bubble.className = "hint-bubble";
+        bubble.setAttribute("role", "status");
+        box.append(bubble);
+      }
+      bubble.textContent = target.getAttribute("title");
+      bubble.hidden = false;
+      // Above what was tapped, or below it where the card has no room above, and never
+      // beyond the card's sides.
+      const area = box.getBoundingClientRect();
+      const spot = target.getBoundingClientRect();
+      const { offsetWidth: width, offsetHeight: height } = bubble;
+      const middle = spot.left - area.left + spot.width / 2 - width / 2;
+      const above = spot.top - area.top - height - 8;
+      bubble.style.left = `${Math.max(8, Math.min(middle, area.width - width - 8))}px`;
+      bubble.style.top = `${above >= 4 ? above : spot.bottom - area.top + 8}px`;
+      clearTimeout(this._hintTimer);
+      this._hintTimer = setTimeout(() => this._hideHint(), HINT_SECONDS * 1000);
+    }
+
+    _hideHint() {
+      clearTimeout(this._hintTimer);
+      const bubble = this.shadowRoot.querySelector(".hint-bubble");
+      if (bubble) bubble.hidden = true;
     }
 
     setConfig(config) {
@@ -8175,6 +8920,7 @@ function createElements(Base) {
 
     // A pending confirmation ends with the card, so it shows no "Confirm?" when it returns.
     disconnectedCallback() {
+      this._hideHint();
       clearTimeout(this._confirmTimer);
       this._confirm = null;
       this._confirmChanged();
@@ -8369,15 +9115,6 @@ function createElements(Base) {
       );
     }
 
-    // Enter and space act on an element that is a button to assistive technology.
-    _onKeys(element, action) {
-      element?.addEventListener("keydown", (event) => {
-        if (event.key !== "Enter" && event.key !== " ") return;
-        event.preventDefault();
-        action();
-      });
-    }
-
     // Replace markup only when it changes, so animations and focus survive updates.
     // A focused element with data-focus gets the focus back after a change, and a
     // text field what was typed in it and where the caret was.
@@ -8401,11 +9138,246 @@ function createElements(Base) {
     _text(element, text) {
       if (element.textContent !== text) element.textContent = text;
     }
+
+    // The status in words, as wide as the longest words it takes during a game.
+    _showStatus(pill, key) {
+      this._setHtml(pill, `<span>${escapeHtml(this._t(key))}</span>`);
+      const words = PLAY_STATUSES.map((name) => this._t(name));
+      pill.dataset.widest = words.reduce((longest, text) => (text.length > longest.length ? text : longest));
+    }
   }
 
   // Live visit card ------------------------------------------------------------
 
-  class AutodartsCard extends CardBase {
+  // Correcting a dart of the visit, on the live card and the scoreboard: a tap on a
+  // dart picks it, the pad puts it where it is with the keys or a spot on the board.
+  class PadCard extends CardBase {
+    // The config entry of the board, for actions of the integration.
+    _entry() {
+      const device = this._hass.devices?.[this._deviceId];
+      return device?.primary_config_entry ?? device?.config_entries?.[0] ?? null;
+    }
+
+    // The state of correcting and the taps that change it: the darts, the pad, and the
+    // frame the loupe moves in. The pad shows the board instead of the keys, all of it
+    // or zoomed in; the fingers on it and when the last one set a dart.
+    _initPad(darts, frame) {
+      this._padFrame = frame;
+      this._pick = null;
+      this._multiplier = 1;
+      this._padBoard = false;
+      this._padZoom = null;
+      this._touches = new Map();
+      this._gesture = null;
+      this._touched = 0;
+      darts?.addEventListener("click", (event) => {
+        const dart = event.target.closest("[data-dart]");
+        if (dart) this._pickDart(Number(dart.dataset.dart));
+        // The last visit beside the darts undoes it.
+        const action = event.target.closest("[data-pad]");
+        if (action) this._padAction(action.dataset.pad);
+      });
+      this._el.pad.addEventListener("click", (event) => {
+        const target = event.target.closest("[data-pad]");
+        if (!target || target.disabled) return;
+        const spot = target.dataset.pad === "spot";
+        // A finger that let go of the board has set its dart already.
+        if (spot && Date.now() - this._touched < 800) return;
+        // A tap on the board says where the dart is.
+        const value = spot ? boardSpot(target, event, padViewBox(this._padZoom)) : target.dataset.value;
+        this._padAction(target.dataset.pad, value);
+      });
+      for (const type of ["pointerdown", "pointermove", "pointerup", "pointercancel"]) {
+        this._el.pad.addEventListener(type, (event) => this._boardTouch(event));
+      }
+    }
+
+    // What the pad shows of the darts of the visit, for any pad: the board instead of
+    // the keys, zoomed in or not, and the darts where they are, the one being corrected
+    // where the board saw it. A picked dart that left the visit is dropped.
+    _padBase(darts) {
+      if (this._pick && !darts.some((dart) => dart.dart === this._pick.dart)) this._pick = null;
+      const board = this._padBoard;
+      const pins = darts
+        .filter((dart) => Number.isFinite(dart.x) && Number.isFinite(dart.y))
+        .map((dart) => ({ x: dart.x, y: dart.y, seen: dart.dart === this._pick?.dart }));
+      return { board, zoom: board ? this._padZoom : null, pins };
+    }
+
+    // A tap on a dart of the visit opens the pad to correct it; another tap closes it.
+    _pickDart(dart) {
+      if (this.preview) return;
+      const shown = visitThrows(this._state("visit")).find((item) => item.dart === dart);
+      this._pick =
+        this._pick?.dart === dart || !shown ? null : { dart, multiplier: Math.min(Math.max(shown.multiplier, 1), 3) };
+      if (this._padBoard) this._padZoom = this._openZoom();
+      this._update();
+    }
+
+    // Where the board to tap opens: on a small screen, zoomed in on where the board saw
+    // the dart being corrected; for darts entered by hand, the whole board.
+    _openZoom() {
+      const width = this.getBoundingClientRect().width;
+      const small = Math.min(width, window.innerHeight) < PAD_SMALL;
+      return this._pick && width > 0 && small ? this._zoomAt(this._pick.dart) : null;
+    }
+
+    // Zoomed in on a dart of the visit, the one being corrected or else the last one;
+    // on the bull without a dart that has a position.
+    _zoomAt(dart) {
+      const darts = visitThrows(this._state("visit")).filter((item) => Number.isFinite(item.x) && Number.isFinite(item.y));
+      const at = darts.find((item) => item.dart === dart) ?? (dart === undefined ? darts.at(-1) : null);
+      if (dart !== undefined && !at) return null;
+      return { scale: PAD_ZOOM, x: (at?.x ?? 0) * NORM, y: -(at?.y ?? 0) * NORM };
+    }
+
+    // Fingers on the board to tap: one aims with the loupe and sets the dart where it
+    // lets go; a second finger turns aiming into zooming and moving the board. A mouse
+    // clicks instead.
+    _boardTouch(event) {
+      if (event.pointerType === "mouse") return;
+      const touches = this._touches;
+      if (event.type === "pointerdown") {
+        const svg = event.target.closest?.("svg.pad-board[data-pad='spot']");
+        if (!svg) return;
+        event.preventDefault();
+        svg.setPointerCapture?.(event.pointerId);
+        touches.set(event.pointerId, { clientX: event.clientX, clientY: event.clientY });
+        if (!this._gesture) {
+          this._gesture = { svg, aim: event.pointerId, pinch: null };
+          this._el.loupe.innerHTML = `<svg>${svg.innerHTML}</svg>`;
+        } else if (touches.size === 2) {
+          const [a, b] = [...touches.values()];
+          const middle = { clientX: (a.clientX + b.clientX) / 2, clientY: (a.clientY + b.clientY) / 2 };
+          this._gesture.aim = null;
+          this._gesture.pinch = {
+            distance: Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY) || 1,
+            scale: this._padZoom?.scale ?? 1,
+            anchor: boardPoint(svg, middle, padViewBox(this._padZoom)),
+          };
+        }
+        this._aim(event);
+        return;
+      }
+      const gesture = this._gesture;
+      if (!gesture || !touches.has(event.pointerId)) return;
+      if (event.type === "pointermove") {
+        touches.set(event.pointerId, { clientX: event.clientX, clientY: event.clientY });
+        if (gesture.pinch && touches.size === 2) this._pinch();
+        else this._aim(event);
+        return;
+      }
+      touches.delete(event.pointerId);
+      if (event.type === "pointerup" && gesture.aim === event.pointerId) {
+        const spot = boardSpot(gesture.svg, event, padViewBox(this._padZoom));
+        this._touched = Date.now();
+        this._endGesture();
+        this._padAction("spot", spot);
+      } else if (!touches.size) {
+        this._endGesture();
+      }
+    }
+
+    // The loupe above the aiming finger, which would hide the spot itself, or beside it
+    // where there is no room above; it shows the board around the spot magnified.
+    _aim(event) {
+      const gesture = this._gesture;
+      const loupe = this._el.loupe;
+      const view = padViewBox(this._padZoom);
+      const point = gesture.aim === event.pointerId ? boardPoint(gesture.svg, event, view) : null;
+      loupe.hidden = !point;
+      if (!point) return;
+      const size = view.size / LOUPE_ZOOM;
+      loupe.firstElementChild.setAttribute("viewBox", viewBoxText({ x: point[0] - size / 2, y: point[1] - size / 2, size }));
+      const box = this._padFrame.getBoundingClientRect();
+      const width = loupe.offsetWidth || 132;
+      const x = event.clientX - box.left;
+      const y = event.clientY - box.top;
+      const above = y - width - 24;
+      const beside = x + 24 + width <= box.width ? x + 24 : x - 24 - width;
+      const left = above >= 0 ? x - width / 2 : beside;
+      loupe.style.left = `${Math.round(Math.min(Math.max(left, 0), Math.max(box.width - width, 0)))}px`;
+      loupe.style.top = `${Math.round(above >= 0 ? above : Math.max(y - width / 2, 0))}px`;
+    }
+
+    // Two fingers zoom the board, and the spot between them stays between them.
+    _pinch() {
+      const { svg, pinch } = this._gesture;
+      const [a, b] = [...this._touches.values()];
+      const scale = Math.min(
+        Math.max((pinch.scale * Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY)) / pinch.distance, 1),
+        PAD_ZOOM_MOST
+      );
+      const rect = svg.getBoundingClientRect();
+      const pixels = Math.min(rect.width, rect.height) / (PAD_VIEW / scale);
+      if (!pinch.anchor || !(pixels > 0)) return;
+      const middle = { x: (a.clientX + b.clientX) / 2, y: (a.clientY + b.clientY) / 2 };
+      this._padZoom =
+        scale > 1.02
+          ? {
+              scale,
+              x: pinch.anchor[0] - (middle.x - rect.left - rect.width / 2) / pixels,
+              y: pinch.anchor[1] - (middle.y - rect.top - rect.height / 2) / pixels,
+            }
+          : null;
+      svg.setAttribute("viewBox", viewBoxText(padViewBox(this._padZoom)));
+    }
+
+    _endGesture() {
+      this._clearGesture();
+      this._update();
+    }
+
+    _clearGesture() {
+      this._gesture = null;
+      this._touches.clear();
+      this._el.loupe.hidden = true;
+    }
+
+    // Fingers on the board keep the pad as it is until they let go. A pad that closes or
+    // shows its keys ends what the fingers did, which no longer reach it.
+    _keepPad(pad) {
+      if (this._gesture && pad?.board) return true;
+      if (this._gesture) this._clearGesture();
+      return false;
+    }
+
+    _padAction(action, value) {
+      if (this.preview) return;
+      const pick = this._pick;
+      const data = (extra) => ({ ...(this._entry() ? { config_entry_id: this._entry() } : {}), ...extra });
+      if (action === "multiplier") {
+        if (pick) pick.multiplier = Number(value);
+        else this._multiplier = Number(value);
+      } else if (action === "bed" && pick) {
+        this._call("autodarts", "correct_dart", data({ dart: pick.dart, segment: value }));
+        this._pick = null;
+      } else if (action === "bed") {
+        this._call("autodarts", "throw_dart", data({ segment: value }));
+        this._multiplier = 1;
+      } else if (action === "spot") {
+        // The bed follows from the spot, in Home Assistant as on the board.
+        if (!value) return;
+        const [x, y] = value;
+        this._call("autodarts", pick ? "correct_dart" : "throw_dart", data({ ...(pick ? { dart: pick.dart } : {}), x, y }));
+        this._pick = null;
+      } else if (action === "board" || action === "keys") {
+        this._padBoard = action === "board";
+        this._padZoom = this._padBoard ? this._openZoom() : null;
+      } else if (action === "zoom") {
+        this._padZoom = padViewBox(this._padZoom).size < PAD_VIEW ? null : this._zoomAt(pick?.dart);
+      } else if (action === "cancel") {
+        this._pick = null;
+      } else if (this._confirmed(action)) {
+        // Passing the turn and undoing the last visit need a second tap.
+        this._call("autodarts", action === "next" ? "next_player" : "undo_visit", data({}));
+      }
+      this._update();
+    }
+
+  }
+
+  class AutodartsCard extends PadCard {
     static keys = KEYS;
 
     static defaults = DEFAULTS;
@@ -8434,13 +9406,6 @@ function createElements(Base) {
           </div>
           <div class="scoreboard" hidden></div>
         </div>`;
-      const slots = [1, 2, 3]
-        .map(
-          (n) =>
-            `<div class="slot empty"><div class="index">${t("dart")} ${n}</div>` +
-            `<div class="segment">–</div><div class="value">&nbsp;</div></div>`
-        )
-        .join("");
       const recent = `<div class="recent" hidden><span class="muted">${t("recent")}</span><div class="recent-list"></div></div>`;
       return `
         <div class="visit">
@@ -8453,7 +9418,8 @@ function createElements(Base) {
             </div>
           </div>
           ${c.show_practice ? practice : ""}
-          <div class="slots">${slots}</div>
+          <div class="slots"></div>
+          <div class="pad-area appear" hidden></div>
           ${c.show_recent ? recent : ""}
         </div>`;
     }
@@ -8463,7 +9429,7 @@ function createElements(Base) {
       return `
         <div class="board">
           <div class="board-frame">
-            <svg viewBox="-230 -230 460 460" role="button" tabindex="0" aria-label="${t("board_label")}">
+            <svg viewBox="-230 -230 460 460" role="img" aria-label="${t("board_label")}">
               <g class="face">${boardSvg(c.board_style)}</g>
               <g class="hits${c.blink ? " blink" : ""}"></g>
               <g class="aim"></g>
@@ -8522,6 +9488,7 @@ function createElements(Base) {
               ${this._boardHtml(t)}
               ${this._sessionHtml(t)}
               ${this._footerHtml(t)}
+              <div class="loupe" hidden aria-hidden="true"></div>
             </div>
           </div>
         </ha-card>`;
@@ -8540,7 +9507,10 @@ function createElements(Base) {
         practiceRoute: root.querySelector(".practice-route"),
         scoreboard: root.querySelector(".scoreboard"),
         aim: root.querySelector(".aim"),
-        slots: [...root.querySelectorAll(".slot")],
+        layout: root.querySelector(".layout"),
+        slots: root.querySelector(".slots"),
+        pad: root.querySelector(".pad-area"),
+        loupe: root.querySelector(".loupe"),
         since: root.querySelector(".since"),
         stats: Object.fromEntries(
           [...root.querySelectorAll(".stat")].map((el) => [el.dataset.stat, el.querySelector(".value")])
@@ -8551,13 +9521,12 @@ function createElements(Base) {
         darts: root.querySelector(".darts"),
         svg: root.querySelector("svg"),
       };
+      this._initPad(this._el.slots, this._el.layout);
       this._el.controls?.addEventListener("click", (event) => this._onControl(event));
       this._el.chips?.addEventListener("click", (event) => {
         const id = event.target.closest(".chip")?.dataset.entity;
         if (id) this._moreInfo(id);
       });
-      this._el.svg.addEventListener("click", () => this._moreInfo(this._ids.visit));
-      this._onKeys(this._el.svg, () => this._moreInfo(this._ids.visit));
     }
 
     _darts() {
@@ -8572,7 +9541,6 @@ function createElements(Base) {
     }
 
     _update() {
-      const hass = this._hass;
       const c = this._config;
       const el = this._el;
       const t = (key) => this._t(key);
@@ -8582,7 +9550,7 @@ function createElements(Base) {
       this.style.setProperty("--ad-status", STATUS_COLORS[status]);
       this.style.setProperty("--ad-accent", cssColor(c.accent_color, "var(--primary-color)"));
       this.style.setProperty("--ad-highlight", cssColor(c.highlight_color, GOLD));
-      el.pill.textContent = t(statusText);
+      this._showStatus(el.pill, statusText);
 
       const darts = this._darts();
       const known = darts.filter(Boolean);
@@ -8607,19 +9575,12 @@ function createElements(Base) {
         );
       }
 
-      el.slots.forEach((slot, index) => {
-        const dart = darts[index];
-        const [segment, value] = [slot.querySelector(".segment"), slot.querySelector(".value")];
-        if (!dart) {
-          slot.className = `slot ${index < darts.length ? "unknown" : "empty"}`;
-          segment.textContent = index < darts.length ? "?" : "–";
-          value.innerHTML = "&nbsp;";
-          return;
-        }
-        slot.className = `slot ${kind(dart)}${index === darts.length - 1 ? " latest" : ""}`;
-        segment.textContent = label(hass, dart);
-        value.textContent = `${dart.number * dart.multiplier} ${t("points")}`;
-      });
+      // Darts of the current visit correct with a tap, which Home Assistant carries out
+      // also while the board is offline; the bot's darts do not.
+      const tappable = c.corrections && !this.preview;
+      if (!tappable) this._pick = null;
+      this._setHtml(el.slots, [0, 1, 2].map((index) => this._slotHtml(darts[index], index, darts.length, tappable)).join(""));
+      this._updatePad(darts);
 
       // The practice sensor carries one game at a time; a training game comes first.
       const view = c.show_practice ? gameView((name) => this._state(name)) : { mode: "idle" };
@@ -8628,6 +9589,45 @@ function createElements(Base) {
       this._updateStats();
       this._updateChips();
       this._updateControls(status);
+    }
+
+    // A dart of the visit: its bed and points, and a pencil where a tap corrects it.
+    _slotHtml(dart, index, count, tappable) {
+      const t = (key) => escapeHtml(this._t(key));
+      const head = `<span class="index">${t("dart")} ${index + 1}</span>`;
+      if (!dart) {
+        const unknown = index < count;
+        return (
+          `<div class="slot ${unknown ? "unknown" : "empty"}">${head}` +
+          `<span class="segment">${unknown ? "?" : "–"}</span><span class="value">&nbsp;</span></div>`
+        );
+      }
+      const correctable = tappable && Number.isInteger(dart.dart) && !dart.bot;
+      const picked = correctable && this._pick?.dart === dart.dart;
+      const style = `slot ${kind(dart)}${index === count - 1 ? " latest" : ""}${picked ? " picked" : ""}`;
+      const bed = label(this._hass, dart);
+      const points = dart.number * dart.multiplier;
+      const content = `${head}<span class="segment">${escapeHtml(bed)}</span><span class="value">${points} ${t("points")}</span>`;
+      if (!correctable) return `<div class="${style}">${content}</div>`;
+      // The label names the dart and what a tap does: "T20 60 – Correct dart 1".
+      const spoken = `${bed} ${points} – ${fill(this._t("correct_title"), { dart: dart.dart })}`;
+      return (
+        `<button type="button" class="${style} tappable" data-dart="${dart.dart}" data-focus="dart-${dart.dart}"` +
+        ` aria-label="${escapeHtml(spoken)}">${content}${EDIT_ICON}</button>`
+      );
+    }
+
+    // The pad of the dart being corrected, below the darts; fingers on its board keep it
+    // as it is until they let go. While the bot is at the board, it waits.
+    _updatePad(darts) {
+      const el = this._el;
+      const base = this._padBase(darts.filter(Boolean));
+      const pick = this._pick;
+      const pad = pick
+        ? { dart: pick.dart, multiplier: pick.multiplier, disabled: botAtBoard(gameView((name) => this._state(name))), ...base }
+        : null;
+      el.pad.hidden = !pad;
+      if (!this._keepPad(pad)) this._setHtml(el.pad, pad ? padHtml(pad, { t: (key) => this._t(key) }) : "");
     }
 
     _updatePractice(view) {
@@ -8888,7 +9888,8 @@ function createElements(Base) {
           ${
             c.show_stats
               ? `<div class="tiles" role="group" aria-label="${t("statistics")}">${tiles}</div>` +
-                `<button type="button" class="action details reveal">${t("statistics_label")}</button>`
+                `<button type="button" class="link details" aria-label="${t("statistics_label")}">` +
+                `${t("details")}${cueHtml("details", true)}</button>`
               : ""
           }
           ${
@@ -9028,7 +10029,6 @@ function createElements(Base) {
         this._confirmChanged();
       });
       // A tap on the tiles opens the details; keyboards and screen readers have a button of their own.
-      root.querySelector(".tiles")?.addEventListener("click", () => this._moreInfo(this._ids.darts));
       root.querySelector(".details")?.addEventListener("click", () => this._moreInfo(this._ids.darts));
       // A tap on a bed tells its hits, on a touch screen too.
       this._el.heatSvg?.addEventListener("click", (event) => {
@@ -9269,7 +10269,7 @@ function createElements(Base) {
           device_id: this._deviceId,
           ...(source ? { player: source } : {}),
         });
-      } catch (error) {
+      } catch {
         // A board that is being removed has no positions to show.
       }
       if (this._positionsFor !== key) return;
@@ -9472,17 +10472,20 @@ function createElements(Base) {
       const size = this._historySize();
       const labels = size <= 30;
       const share = (score) => fmt(Math.min(180, Math.max(0, score)) / 180);
-      const bars = visits.map((visit) => {
+      // A narrow chart shows only the last slots, the rest marked far, so that every
+      // score above its bar stays readable.
+      const far = (index) => (index < visits.length - HISTORY_NARROW || index >= Math.max(HISTORY_NARROW, visits.length) ? " far" : "");
+      const bars = visits.map((visit, index) => {
         const tip = `${visit.segments.join(" · ")}${visit.segments.length ? " = " : ""}${visit.score}`;
         return (
-          `<div class="visit-bar" title="${escapeHtml(tip)}">` +
+          `<div class="visit-bar${far(index)}" title="${escapeHtml(tip)}">` +
           (labels ? `<span class="label">${visit.score}</span>` : "") +
           `<div class="fill" style="--height:${share(visit.score)};background:${VISIT_COLORS[visitBucket(visit.score)]}"></div></div>`
         );
       });
       // Empty slots keep the bar width steady while the session fills the chart.
       for (let index = visits.length; index < size; index += 1) {
-        bars.push(`<div class="visit-bar empty"><div class="fill"></div></div>`);
+        bars.push(`<div class="visit-bar empty${far(index)}"><div class="fill"></div></div>`);
       }
       const average = this._number("average");
       const line =
@@ -9543,7 +10546,7 @@ function createElements(Base) {
         </div>`;
       const controls = `
         <div class="controls">
-          <button data-action="calibrate">${t("calibrate")}</button>
+          <button data-action="calibrate">${t("calibrate_all")}</button>
           <button data-action="reset">${t("reset")}</button>
           <button data-action="restart">${t("restart")}</button>
         </div>`;
@@ -9634,7 +10637,7 @@ function createElements(Base) {
       const [status, statusText] = this._status();
       this.style.setProperty("--ad-status", STATUS_COLORS[status]);
       this.style.setProperty("--ad-accent", cssColor(c.accent_color, "var(--primary-color)"));
-      el.pill.textContent = t(statusText);
+      this._showStatus(el.pill, statusText);
 
       const running = detectionRunning((name) => this._state(name), status);
       el.toggle.setAttribute("aria-checked", String(running));
@@ -9647,8 +10650,13 @@ function createElements(Base) {
       el.update.hidden = update?.state !== "on" && update?.state !== "off";
       el.update.classList.toggle("ok", update?.state === "off");
       el.update.disabled = update?.state !== "on";
-      el.update.textContent =
-        update?.state === "on" ? `${t("update_available")} ${update.attributes?.latest_version ?? ""}`.trim() : t("up_to_date");
+      // An update opens its details with a tap, and says so with an arrow.
+      this._setHtml(
+        el.update,
+        update?.state === "on"
+          ? `${escapeHtml(`${t("update_available")} ${update.attributes?.latest_version ?? ""}`.trim())}${cueHtml("details", true)}`
+          : escapeHtml(t("up_to_date"))
+      );
 
       this._updateChips();
       this._updateSystem();
@@ -9680,7 +10688,8 @@ function createElements(Base) {
         value === null
           ? ""
           : `<button class="metric" data-entity="${escapeHtml(this._ids[name])}" data-focus="${escapeHtml(name)}">` +
-            `<span class="value">${escapeHtml(value)}</span><span class="name">${escapeHtml(text)}</span></button>`;
+            `<span class="value">${escapeHtml(value)}</span>` +
+            `<span class="name opens">${escapeHtml(text)}${cueHtml("details", true)}</span></button>`;
       // Percentages read as Home Assistant writes them; other units keep their symbol.
       const measured = (name, digits, unit) => {
         const number = this._number(name);
@@ -9703,9 +10712,11 @@ function createElements(Base) {
       ].filter(Boolean);
       if (this._el.systemInfo) {
         this._el.systemInfo.hidden = !info.length;
-        this._el.systemInfo.textContent = info.join(" · ");
+        this._setHtml(this._el.systemInfo, `<span class="opens">${escapeHtml(info.join(" · "))}</span>${cueHtml("details", true)}`);
       }
       this._el.system.hidden = !markup && !info.length;
+      const tiles = this._el.system.parentElement;
+      tiles.className = `info balanced n${[...tiles.children].filter((tile) => !tile.hidden).length}`;
       this._setHtml(this._el.metrics, markup);
     }
 
@@ -9729,7 +10740,8 @@ function createElements(Base) {
             `<div class="camera${problem ? " problem" : ""}">` +
             `<div class="camera-head"><button class="camera-name" data-entity="${escapeHtml(target || "")}"` +
             ` data-focus="${escapeHtml(`camera:${camera.number}`)}">` +
-            `${escapeHtml(`${this._t("camera")} ${camera.number}`)}</button><span class="dot" title="${escapeHtml(
+            `<span class="opens">${escapeHtml(`${this._t("camera")} ${camera.number}`)}</span>${cueHtml("details", true)}` +
+            `</button><span class="dot" title="${escapeHtml(
               this._t(problem ? "camera_failure" : "camera_ok")
             )}"></span></div>` +
             `<div class="fps">${escapeHtml(problem ? this._t("camera_failure") : fps || this._t("camera_ok"))}</div>` +
@@ -9737,16 +10749,19 @@ function createElements(Base) {
           );
         })
         .join("");
+      this._el.cameras.className = `camera-grid balanced n${cameras.length}`;
       this._setHtml(this._el.cameras, markup);
     }
 
     _updateControls(status) {
       const controls = this._el.controls;
       if (!controls) return;
+      // Beside every camera's own calibration, this one calibrates them all.
+      const words = { calibrate: "calibrate_all", reset: "reset", restart: "restart" };
       for (const action of ["calibrate", "reset", "restart"]) {
         const button = controls.querySelector(`[data-action="${action}"]`);
         const confirming = this._confirm === action;
-        button.textContent = this._t(confirming ? "confirm" : action);
+        button.textContent = this._t(confirming ? "confirm" : words[action]);
         button.classList.toggle("confirm", confirming);
         button.hidden = !this._ids[action];
         button.disabled = status === "offline";
@@ -9756,7 +10771,7 @@ function createElements(Base) {
 
   // Scoreboard card -------------------------------------------------------------
 
-  class AutodartsScoreboardCard extends CardBase {
+  class AutodartsScoreboardCard extends PadCard {
     static keys = SCOREBOARD_KEYS;
 
     static defaults = SCOREBOARD_DEFAULTS;
@@ -9837,10 +10852,13 @@ function createElements(Base) {
                   ${c.show_status ? `<div class="pill" role="status"></div>` : ""}
                 </div>
               </header>
-              <div class="banner" role="status" hidden></div>
-              <div class="main"></div>
+              <div class="banner appear" role="status" hidden></div>
+              <div class="main"${
+                c.full_height ? ` tabindex="0" role="region" aria-label="${t("view_scoreboard")}"` : ""
+              }></div>
               ${c.show_visit ? `<div class="visit"></div>` : ""}
-              <div class="pad-area" hidden></div>
+              <div class="pad-area appear" hidden></div>
+              <div class="loupe" hidden aria-hidden="true"></div>
               <div class="visually-hidden said" role="status"></div>
             </div>
           </div>
@@ -9859,25 +10877,12 @@ function createElements(Base) {
         callerIcon: root.querySelector(".caller-icon"),
         lobby: root.querySelector(".lobby-toggle"),
         pad: root.querySelector(".pad-area"),
+        loupe: root.querySelector(".loupe"),
         // A live region outside the markup that is replaced, so what it says is heard.
         said: root.querySelector(".said"),
       };
       this._hints = "";
-      this._pick = null;
-      this._multiplier = 1;
-      // The pad shows the board instead of the keys.
-      this._padBoard = false;
-      this._el.visit?.addEventListener("click", (event) => {
-        const dart = event.target.closest("[data-dart]");
-        if (dart) this._pickDart(Number(dart.dataset.dart));
-      });
-      this._el.pad.addEventListener("click", (event) => {
-        const target = event.target.closest("[data-pad]");
-        if (!target || target.disabled) return;
-        // A tap on the board says where the dart is.
-        const value = target.dataset.pad === "spot" ? boardSpot(target, event) : target.dataset.value;
-        this._padAction(target.dataset.pad, value);
-      });
+      this._initPad(this._el.visit, this._el.board);
       this._callerState = null;
       this._followed = null;
       this._el.caller?.addEventListener("click", () => this._toggleCaller());
@@ -9973,6 +10978,7 @@ function createElements(Base) {
         bull_off: on("bullOff"),
         bull_off_distance: on("bullOffDistance"),
         teams: on("teams"),
+        three_in_a_bed: !this._state("threeInABed") || on("threeInABed"),
         starts: this._startIds().map((id) => {
           const start = Number(this._hass.states[id]?.state);
           return Number.isInteger(start) ? start : 0;
@@ -10067,17 +11073,14 @@ function createElements(Base) {
       this._update();
     }
 
-    // The start button stays disabled while the game lacks players.
-    // The config entry of the board, for actions of the integration.
-    _entry() {
-      const device = this._hass.devices?.[this._deviceId];
-      return device?.primary_config_entry ?? device?.config_entries?.[0] ?? null;
-    }
-
     // Darts count only while the board detects them: the start switches detection on,
     // which the new game screen says beforehand.
     _startGame(choice) {
-      const options = { entry: this._entry(), distance: Boolean(this._ids.bullOffDistance) };
+      const options = {
+        entry: this._entry(),
+        distance: Boolean(this._ids.bullOffDistance),
+        bed: Boolean(this._ids.threeInABed),
+      };
       if (this._detectionOff()) this._toggleDetection();
       if (choice.tournament) this._startTournament(tournamentStartData(choice, options));
       else this._call("autodarts", "start_game", startGameData(choice, options));
@@ -10092,7 +11095,7 @@ function createElements(Base) {
         const entry = this._entry();
         try {
           await this._hass.callService("autodarts", "stop_tournament", entry ? { config_entry_id: entry } : {});
-        } catch (error) {
+        } catch {
           return;
         }
       }
@@ -10105,69 +11108,45 @@ function createElements(Base) {
       return status !== "offline" && !detectionRunning((name) => this._state(name), status);
     }
 
-    // Correcting and entering darts ------------------------------------------------
-
-    // A tap on a dart of the visit opens the pad to correct it; another tap closes it.
-    _pickDart(dart) {
-      if (this.preview) return;
-      const shown = visitThrows(this._state("visit")).find((item) => item.dart === dart);
-      this._pick =
-        this._pick?.dart === dart || !shown ? null : { dart, multiplier: Math.min(Math.max(shown.multiplier, 1), 3) };
-      this._update();
-    }
-
-    _padAction(action, value) {
-      if (this.preview) return;
-      const pick = this._pick;
-      const data = (extra) => ({ ...(this._entry() ? { config_entry_id: this._entry() } : {}), ...extra });
-      if (action === "multiplier") {
-        if (pick) pick.multiplier = Number(value);
-        else this._multiplier = Number(value);
-      } else if (action === "bed" && pick) {
-        this._call("autodarts", "correct_dart", data({ dart: pick.dart, segment: value }));
-        this._pick = null;
-      } else if (action === "bed") {
-        this._call("autodarts", "throw_dart", data({ segment: value }));
-        this._multiplier = 1;
-      } else if (action === "spot") {
-        // The bed follows from the spot, in Home Assistant as on the board.
-        if (!value) return;
-        const [x, y] = value;
-        this._call("autodarts", pick ? "correct_dart" : "throw_dart", data({ ...(pick ? { dart: pick.dart } : {}), x, y }));
-        this._pick = null;
-      } else if (action === "board") {
-        this._padBoard = !this._padBoard;
-      } else if (action === "cancel") {
-        this._pick = null;
-      } else if (this._confirmed(action)) {
-        // Passing the turn and undoing the last visit need a second tap.
-        this._call("autodarts", action === "next" ? "next_player" : "undo_visit", data({}));
-      }
-      this._update();
-    }
-
-    // The pad while a dart is corrected, or the keypad while darts are entered
-    // by hand; a single undo button where only that is possible.
+    // The pad while a dart is corrected, or the keypad while darts are entered by hand.
     _pad(view, darts) {
       const c = this._config;
-      const practice = this._state("practice")?.attributes ?? {};
-      const game = view.practice ?? view.cricket ?? view.party ?? null;
-      const thrower = view.bullOff?.throws.find((item) => item.player === view.bullOff.player);
-      // While the bot is at the board, its darts count; nobody enters any.
-      const disabled = Boolean((game ? upScore(game) : thrower)?.bot);
-      const undo = practice.undo === true && !darts.length;
+      const disabled = botAtBoard(view);
       const confirm = ["next", "undo"].includes(this._confirm) ? this._confirm : null;
-      if (this._pick && !darts.some((dart) => dart.dart === this._pick.dart)) this._pick = null;
-      // On the board, the darts of the visit where they are; the dart being corrected where the board saw it.
-      const board = this._padBoard;
-      const pins = darts
-        .filter((dart) => Number.isFinite(dart.x) && Number.isFinite(dart.y))
-        .map((dart) => ({ x: dart.x, y: dart.y, seen: dart.dart === this._pick?.dart }));
-      if (this._pick) return { dart: this._pick.dart, multiplier: this._pick.multiplier, disabled, board, pins };
+      const base = this._padBase(darts);
+      if (this._pick) return { dart: this._pick.dart, multiplier: this._pick.multiplier, disabled, ...base };
       if (c.keypad && this._state("manualEntry")?.state === "on") {
-        return { dart: null, multiplier: this._multiplier, disabled, undo, confirm, board, pins };
+        return { dart: null, multiplier: this._multiplier, disabled, undo: this._undoable(darts), confirm, ...base };
       }
-      return c.corrections && undo ? { only: "undo", confirm } : null;
+      return null;
+    }
+
+    // The last visit can be undone while the board is empty.
+    _undoable(darts) {
+      return this._state("practice")?.attributes?.undo === true && !darts.length;
+    }
+
+    // The tile beside the darts: the score of the visit being thrown, or, while the board
+    // is empty and between games, the last visit, which a tap undoes where it can. It
+    // takes the place of a button of its own, so nothing moves when the darts are pulled.
+    _visitTile(view, visit, darts, undo) {
+      const t = (key) => this._t(key);
+      const last = recentVisits(visit?.attributes?.recent_visits, 1)[0];
+      if (view.mode !== "idle" && darts.length) {
+        return (
+          `<div class="sum"><span class="muted">${escapeHtml(t("visit_short"))}</span>` +
+          `<span class="value">${escapeHtml(usable(visit) ? visit.state : "–")}</span></div>`
+        );
+      }
+      const score = last ? String(last.score) : "–";
+      const content = (name) => `<span class="muted">${escapeHtml(t(name))}</span><span class="value">${escapeHtml(score)}</span>`;
+      if (!undo) return `<div class="sum last">${content("last_short")}</div>`;
+      const confirm = this._confirm === "undo";
+      const spoken = confirm ? t("confirm") : `${t("undo_visit")}: ${score}`;
+      return (
+        `<button type="button" class="sum last tappable${confirm ? " confirm" : ""}" data-pad="undo" data-focus="undo:"` +
+        ` aria-label="${escapeHtml(spoken)}">${content(confirm ? "undo_short" : "last_short")}${UNDO_CUE}</button>`
+      );
     }
 
     // Tournament ------------------------------------------------------------------
@@ -10353,7 +11332,7 @@ function createElements(Base) {
       const [status, statusText] = this._status();
       this.style.setProperty("--ad-status", STATUS_COLORS[status]);
       this.style.setProperty("--ad-accent", cssColor(c.accent_color, "var(--primary-color)"));
-      if (el.pill) this._text(el.pill, t(statusText));
+      if (el.pill) this._showStatus(el.pill, statusText);
 
       const visit = this._state("visit");
       const view = gameView((name) => this._state(name));
@@ -10380,6 +11359,7 @@ function createElements(Base) {
           suggestions: lobbySuggestions(this._state("profiles"), this._board().names, ui.links, choice.players),
           distance: Boolean(this._ids.bullOffDistance),
           teams: Boolean(this._ids.teams),
+          bed: Boolean(this._ids.threeInABed),
           running: ![undefined, "off", "unknown", "unavailable"].includes(this._state("game")?.state),
           confirmEnd: this._confirm === "end",
           confirmStart: this._confirm === "start",
@@ -10407,7 +11387,8 @@ function createElements(Base) {
       } else if (view.mode === "idle" && games.length) {
         main += `<button type="button" class="lobby-cta" data-lobby="open">${escapeHtml(t("lobby_open"))}</button>`;
       }
-      el.lobby.hidden = !games.length || Boolean(this._lobby);
+      // Between games the big button opens the new game screen; the header needs none.
+      el.lobby.hidden = !games.length || Boolean(this._lobby) || main.includes('class="lobby-cta"');
       el.board.classList.toggle("choosing", Boolean(this._lobby));
       el.board.classList.toggle("idling", Boolean(panel));
       this._text(el.title, title);
@@ -10443,21 +11424,12 @@ function createElements(Base) {
       const tappable = c.corrections && !this.preview && !away;
       const pad = this.preview || away ? null : this._pad(view, darts);
       el.pad.hidden = !pad;
-      el.board.classList.toggle("with-pad", Boolean(pad && !pad.only));
-      this._setHtml(
-        el.pad,
-        !pad
-          ? ""
-          : pad.only
-            ? `<button type="button" class="undo-only" data-pad="undo" data-focus="undo:">↶ ${escapeHtml(
-                t(pad.confirm === "undo" ? "confirm" : "undo_visit")
-              )}</button>`
-            : padHtml(pad, { t })
-      );
+      el.board.classList.toggle("with-pad", Boolean(pad));
+      if (!this._keepPad(pad)) this._setHtml(el.pad, pad ? padHtml(pad, { t }) : "");
       if (!el.visit) return;
       el.visit.hidden = away;
-      // Between games the big number already is the visit score.
-      el.visit.classList.toggle("plain", view.mode === "idle");
+      // The keypad has an undo key of its own.
+      const undo = Boolean(c.corrections && !this.preview && !away && !pad && this._undoable(darts));
       const slots = [0, 1, 2].map((index) => {
         const dart = darts[index];
         if (!dart) return `<div class="dart empty"><span class="segment">–</span><span class="points"></span></div>`;
@@ -10470,16 +11442,11 @@ function createElements(Base) {
         // The label names the dart and what a tap does: "T20 60 – Correct dart 1".
         const spoken = `${bed} ${points} – ${fill(t("correct_title"), { dart: dart.dart })}`;
         return tappable && Number.isInteger(dart.dart) && !dart.bot
-          ? `<button type="button" class="${style}" data-dart="${dart.dart}" data-focus="dart-${dart.dart}"` +
-              ` aria-label="${escapeHtml(spoken)}">${content}</button>`
+          ? `<button type="button" class="${style} tappable" data-dart="${dart.dart}" data-focus="dart-${dart.dart}"` +
+              ` aria-label="${escapeHtml(spoken)}">${content}${EDIT_ICON}</button>`
           : `<div class="${style}">${content}</div>`;
       });
-      const sum =
-        view.mode === "idle"
-          ? ""
-          : `<div class="sum"><span class="muted">${escapeHtml(t("visit_short"))}</span>` +
-            `<span class="value">${escapeHtml(usable(visit) ? visit.state : "–")}</span></div>`;
-      this._setHtml(el.visit, slots.join("") + sum);
+      this._setHtml(el.visit, slots.join("") + this._visitTile(view, visit, darts, undo));
     }
   }
 
@@ -10544,6 +11511,14 @@ function createElements(Base) {
         export: root.querySelector(".export"),
       };
       this._el.export?.addEventListener("click", () => this._export());
+      // The players whose badge gallery shows all its badges.
+      this._openBadges = new Set();
+      root.querySelector(".badges-list")?.addEventListener("click", (event) => {
+        const name = event.target.closest("[data-badges]")?.dataset.badges;
+        if (name === undefined) return;
+        if (!this._openBadges.delete(name)) this._openBadges.add(name);
+        this._updateProgress();
+      });
     }
 
     // The action writes the file; it downloads through Home Assistant with the
@@ -10602,6 +11577,7 @@ function createElements(Base) {
       el.count.textContent = view.players.length ? String(view.players.length) : "";
       el.empty.hidden = view.players.length > 0;
       const html = playersHtml(view, this._ui());
+      el.profiles.className = `profiles balanced n${view.players.length}`;
       this._setHtml(el.profiles, html.players);
       if (el.h2hSection) {
         el.h2hSection.hidden = !view.headToHead.length;
@@ -10627,6 +11603,18 @@ function createElements(Base) {
       ].join("");
     }
 
+    // Below a player's badges, a link to all of them, or back to the earned ones and the
+    // next goals; none where all of them show anyway.
+    _moreBadgesHtml(player) {
+      if (!this._config.show_locked || shownBadges(player, true, false).length === player.badges.length) return "";
+      const open = this._openBadges.has(player.name);
+      const words = open ? this._t("badges_fewer") : fill(this._t("badges_all"), { count: this._format(player.badges.length) });
+      return (
+        `<button type="button" class="link more-badges" data-badges="${escapeHtml(player.name)}" aria-expanded="${open}">` +
+        `${escapeHtml(words)}${cueHtml("expand", true)}</button>`
+      );
+    }
+
     _updateProgress() {
       const c = this._config;
       const root = this.shadowRoot;
@@ -10646,7 +11634,9 @@ function createElements(Base) {
               (player) =>
                 `<div class="badge-player"><div class="badge-owner"><b>${escapeHtml(player.name)}</b>` +
                 `<span class="muted">${escapeHtml(count(player))}</span></div>` +
-                `<div class="badge-list">${badgesHtml(player, ui, c.show_locked)}</div></div>`
+                `<div class="badge-list">${badgesHtml(player, ui, c.show_locked, this._openBadges.has(player.name))}</div>` +
+                this._moreBadgesHtml(player) +
+                `</div>`
             )
             .join("")
         );
@@ -10800,6 +11790,7 @@ function createElements(Base) {
                 </div>
                 <div>
                   <div class="double-list"></div>
+                  <p class="muted">${t("doubles_legend")}</p>
                   <p class="muted">${t("doubles_routes")}</p>
                 </div>
               </div>
@@ -10826,10 +11817,15 @@ function createElements(Base) {
       this.style.setProperty("--ad-accent", cssColor(c.accent_color, "var(--primary-color)"));
       const view = doublesView(this._state("doubles"), this._state("profiles"), c.player);
       el.title.textContent = c.title || [t("doubles_title"), view.player].filter(Boolean).join(" · ");
-      el.meta.textContent = view.attempts
-        ? `${this._format(view.attempts)} ${t("doubles_darts")}` +
-          (view.rate === null ? "" : ` · ${this._percent(view.rate, 1)}`)
-        : "";
+      el.meta.textContent = [
+        view.landed ? `${this._format(view.landed)} ${t("doubles_hit")}` : null,
+        view.attempts
+          ? `${this._format(view.attempts)} ${t("doubles_darts")}` +
+            (view.rate === null ? "" : ` · ${this._percent(view.rate, 1)}`)
+          : null,
+      ]
+        .filter(Boolean)
+        .join(" · ");
       el.empty.hidden = view.doubles.length > 0;
       // A name without a profile is most likely mistyped, which the card says.
       el.empty.textContent = view.known ? t("doubles_empty") : fill(t("doubles_unknown_player"), { player: view.player });
@@ -10915,17 +11911,17 @@ function createElements(Base) {
 
 // Card picker entries with their documentation in both languages.
 const CARDS = [
-  { type: CARD_TYPE, key: "live", docs: ["cards.md#live-card", "de/karten.md#live-karte"] },
-  { type: TRAINING_TYPE, key: "training", docs: ["cards.md#training-card", "de/karten.md#trainingskarte"] },
-  { type: STATUS_TYPE, key: "status", docs: ["cards.md#board-status-card", "de/karten.md#board-status"] },
-  { type: SCOREBOARD_TYPE, key: "scoreboard", docs: ["cards.md#scoreboard-card", "de/karten.md#anzeigetafel"] },
-  { type: PLAYERS_TYPE, key: "players", docs: ["cards.md#players-card", "de/karten.md#spielerkarte"] },
-  { type: DOUBLES_TYPE, key: "doubles", docs: ["cards.md#doubles-card", "de/karten.md#doubles-karte"] },
-  { type: LEADERBOARD_TYPE, key: "leaderboard", docs: ["cards.md#leaderboard-card", "de/karten.md#bestenliste"] },
+  { type: CARD_TYPE, key: "live", docs: ["cards.html#live-card", "de/cards.html#live-karte"] },
+  { type: TRAINING_TYPE, key: "training", docs: ["cards.html#training-card", "de/cards.html#trainingskarte"] },
+  { type: STATUS_TYPE, key: "status", docs: ["cards.html#board-status-card", "de/cards.html#board-status"] },
+  { type: SCOREBOARD_TYPE, key: "scoreboard", docs: ["cards.html#scoreboard-card", "de/cards.html#anzeigetafel"] },
+  { type: PLAYERS_TYPE, key: "players", docs: ["cards.html#players-card", "de/cards.html#spielerkarte"] },
+  { type: DOUBLES_TYPE, key: "doubles", docs: ["cards.html#doubles-card", "de/cards.html#doubles-karte"] },
+  { type: LEADERBOARD_TYPE, key: "leaderboard", docs: ["cards.html#leaderboard-card", "de/cards.html#bestenliste"] },
 ];
-const STRATEGY_DOCS = ["cards.md#automatic-dashboard", "de/karten.md#automatisches-dashboard"];
+const STRATEGY_DOCS = ["cards.html#automatic-dashboard", "de/cards.html#automatisches-dashboard"];
 
-const documentation = ([en, de]) => `${REPOSITORY}/${pageLanguage() === "de" ? de : en}`;
+const documentation = ([en, de]) => `${DOCUMENTATION}/${pageLanguage() === "de" ? de : en}`;
 
 // Home Assistant reads the entries when it opens its card picker, so the
 // getters answer in the language of that moment.
@@ -11005,6 +12001,7 @@ export {
   bestsHtml,
   bestsView,
   boardSpot,
+  padViewBox,
   boardStatus,
   boardSvg,
   bullOffLeaders,
@@ -11051,6 +12048,7 @@ export {
   livePanel,
   lobbyChange,
   lobbyChoice,
+  lobbyHints,
   lobbyGames,
   lobbyHtml,
   lobbySuggestions,

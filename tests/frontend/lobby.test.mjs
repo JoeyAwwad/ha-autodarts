@@ -160,6 +160,7 @@ test("the choice starts from what the board has set, with every name once", () =
     double_in: false,
     bull_off: false,
     bull_off_distance: false,
+    three_in_a_bed: true,
     tournament: false,
     format: "round_robin",
     third_place: false,
@@ -280,7 +281,8 @@ test("the state of the game decides when the screen and idle mode may come", () 
 
 test("between games a big button opens the new game screen with the board's settings", () => {
   const { card } = setup();
-  assert.equal($(card, ".lobby-toggle").hidden, false);
+  // The big button opens it between games; the header keeps no second one.
+  assert.equal($(card, ".lobby-toggle").hidden, true);
   assert.equal(text(card, ".lobby-toggle"), "＋New game");
   assert.equal(text(card, ".main .lobby-cta"), "New game");
   assert.equal(choosing(card), false);
@@ -365,7 +367,7 @@ test("a card that reaches the page before Home Assistant waits for it", () => {
 
 test("the new game screen starts the chosen game with players, format and rules", () => {
   const { hass, card } = setup();
-  tap(card, ".lobby-toggle");
+  tap(card, ".main .lobby-cta");
   lobbyTap(card, "game", "cricket");
   assert.deepEqual(chosenGame(card), ["Cricket"]);
   // Cricket has no double in or out.
@@ -396,7 +398,8 @@ test("the new game screen starts the chosen game with players, format and rules"
     ],
   ]);
   assert.equal(choosing(card), false);
-  assert.equal($(card, ".lobby-toggle").hidden, false);
+  assert.equal(text(card, ".main .lobby-cta"), "New game");
+  assert.equal($(card, ".lobby-toggle").hidden, true);
 });
 
 test("names are typed in, and a player can play only once and four at most", () => {
@@ -495,6 +498,39 @@ test("X01 rules, bull-off by distance and the board's config entry go with the s
   tap(other.card, ".lobby-toggle");
   lobbyTap(other.card, "start");
   assert.equal(started(other.hass)[0][2].config_entry_id, "entry-9");
+});
+
+test("Wild Mouse offers three in a bed, which goes with its start", () => {
+  const games = { state: "off", attributes: { options: [...OPTIONS, "wild_mouse"] } };
+  const { hass, card } = setup({ "select.practice_game": games, "switch.practice_three_in_a_bed": "off" });
+  tap(card, ".lobby-toggle");
+  lobbyTap(card, "game", "wild_mouse");
+  assert.deepEqual(options(card), [
+    ["bull_off", "false"],
+    ["three_in_a_bed", "false"],
+  ]);
+  assert.equal(text(card, '[data-value="three_in_a_bed"]'), "Three in a bed");
+  lobbyTap(card, "toggle", "three_in_a_bed");
+  lobbyTap(card, "start");
+  assert.deepEqual(started(hass)[0][2], {
+    game: "wild_mouse",
+    players: ["Alex", "Sam"],
+    legs: 3,
+    sets: 1,
+    bull_off: false,
+    three_in_a_bed: true,
+  });
+  // Other games leave the rule out, and so does a board without it.
+  tap(card, ".lobby-toggle");
+  lobbyTap(card, "game", "cricket");
+  assert.deepEqual(options(card), [["bull_off", "false"]]);
+  const older = setup({ "select.practice_game": games });
+  tap(older.card, ".lobby-toggle");
+  lobbyTap(older.card, "game", "wild_mouse");
+  assert.deepEqual(options(older.card), [["bull_off", "false"]]);
+  lobbyTap(older.card, "start");
+  assert.equal("three_in_a_bed" in started(older.hass)[0][2], false);
+  assert.equal(startGameData({ game: "wild_mouse", players: ["A"] }, { bed: true }).three_in_a_bed, true);
 });
 
 test("during a game the screen opens with it chosen and can end it with a second tap", (t) => {

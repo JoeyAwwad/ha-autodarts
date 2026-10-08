@@ -3,6 +3,7 @@ and tool versions kept in two places agree with each other."""
 
 import json
 import re
+import tomllib
 from pathlib import Path
 
 import pytest
@@ -271,7 +272,7 @@ def test_pre_commit_runs_the_ruff_of_the_test_requirements():
     assert version == pinned(ROOT / "requirements-test.txt", "ruff")
 
 
-@pytest.mark.parametrize("script", ["browser.sh", "screenshots.sh"])
+@pytest.mark.parametrize("script", ["browser.sh", "screenshots.sh", "visual.sh"])
 def test_the_playwright_image_matches_the_playwright_package(script):
     text = (E2E / script).read_text(encoding="utf-8")
     images = re.findall(
@@ -283,3 +284,20 @@ def test_the_playwright_image_matches_the_playwright_package(script):
     # The browsers of the image fit only the same version of the package.
     assert images == [pinned(E2E / "requirements-browser.in", "playwright")]
     assert images == [pinned(E2E / "requirements-browser.txt", "playwright")]
+
+
+def test_osv_exceptions_cover_only_the_pinned_versions():
+    ignored = tomllib.loads((ROOT / "osv-scanner.toml").read_text(encoding="utf-8"))
+    # The rules of the dependency review, which the workflow reads.
+    review = yaml.safe_load(
+        (ROOT / ".github" / "dependency-review.yml").read_text(encoding="utf-8")
+    )
+    for vulnerability in ignored["IgnoredVulns"]:
+        package, version = re.match(r"(\S+) (\S+): ", vulnerability["reason"]).groups()
+        # Once the test base moves on, the exception has to go.
+        assert pinned(ROOT / "requirements-test.txt", package) == version, (
+            f"remove {vulnerability['id']} from osv-scanner.toml and .github/dependency-review.yml"
+        )
+    assert review["allow-ghsas"] == [
+        vulnerability["id"] for vulnerability in ignored["IgnoredVulns"]
+    ]

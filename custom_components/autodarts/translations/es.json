@@ -419,7 +419,7 @@
         "name": "Recalibración automática"
       },
       "auto_distortion": {
-        "name": "Corrección automática de la distorsión"
+        "name": "Corrección de la distorsión"
       },
       "training_session": {
         "name": "Sesión de entrenamiento"
@@ -456,6 +456,9 @@
       },
       "practice_manual_entry": {
         "name": "Entrada manual de la partida"
+      },
+      "practice_three_in_a_bed": {
+        "name": "Three in a bed de la partida Wild Mouse"
       }
     },
     "select": {
@@ -489,6 +492,7 @@
           "killer": "Killer",
           "cut_throat": "Cut-Throat Cricket",
           "tactics": "Tactics",
+          "wild_mouse": "Wild Mouse",
           "golf": "Golf",
           "baseball": "Baseball",
           "count_up": "Count-Up",
@@ -531,7 +535,8 @@
           "1001": "1001",
           "cricket": "Cricket",
           "cut_throat": "Cut-Throat Cricket",
-          "tactics": "Tactics"
+          "tactics": "Tactics",
+          "wild_mouse": "Wild Mouse"
         }
       }
     },
@@ -840,6 +845,21 @@
     },
     "export_limit": {
       "message": "En la última hora se escribieron {count} exportaciones, el máximo de la integración. Inténtalo de nuevo más tarde."
+    },
+    "unknown_game": {
+      "message": "Ningún juego se llama «{game}». Nombra uno de los juegos de práctica, como 501, Cricket o Around the Clock."
+    },
+    "voice_game_on": {
+      "message": "Game on: {game} con {players}."
+    },
+    "voice_game_on_alone": {
+      "message": "Game on: {game}."
+    },
+    "voice_and": {
+      "message": "y"
+    },
+    "voice_bot": {
+      "message": "el bot"
     }
   },
   "issues": {
@@ -900,7 +920,7 @@
         },
         "game": {
           "name": "Juego",
-          "description": "X01 de 101 a 1001 puntos, un juego de Cricket, un juego de fiesta o un juego de entrenamiento."
+          "description": "X01 de 101 a 1001 puntos, un juego de Cricket, un juego de fiesta o un juego de entrenamiento. También vale un nombre como lo muestra la lista de juegos, en cualquier idioma de la integración, como «Around the Clock»."
         },
         "players": {
           "name": "Jugadores",
@@ -933,6 +953,10 @@
         "teams": {
           "name": "Equipos",
           "description": "Cuatro jugadores de X01 o de un juego de Cricket juegan en dos equipos: los jugadores 1 y 3 contra los jugadores 2 y 4."
+        },
+        "three_in_a_bed": {
+          "name": "Three in a bed",
+          "description": "Wild Mouse: tres dardos de una tirada en el mismo segmento cierran un objetivo propio, como mandan las reglas. Desactivado, se omite."
         },
         "start_scores": {
           "name": "Puntuaciones iniciales",
@@ -1198,6 +1222,7 @@
         "killer": "Killer",
         "cut_throat": "Cut-Throat Cricket",
         "tactics": "Tactics",
+        "wild_mouse": "Wild Mouse",
         "golf": "Golf",
         "baseball": "Baseball",
         "count_up": "Count-Up",

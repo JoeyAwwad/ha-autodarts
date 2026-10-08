@@ -1,6 +1,6 @@
 # Scoreboard at the board
 
-[← Documentation](README.md) · [Deutsch](de/anzeigetafel.md)
+[← Documentation](README.md) · [Deutsch](scoreboard.de.md)
 
 A tablet or a TV next to the board turns your darts room into a stage: the score large enough to read from the oche, the checkout route of the player at the board, the next game or a whole tournament chosen right there, a caller, and between games a leaderboard. Everything runs in Home Assistant; the screen only needs a browser.
 
@@ -34,7 +34,7 @@ The [card guide](cards.md#scoreboard-card) lists every option.
 
 ## Landscape, portrait and TV
 
-The scoreboard adapts to the shape of the screen. With `full_height: true` it is exactly the screen below the toolbar: a banner, the visit or the keypad make the numbers and tables smaller instead of pushing the page past the screen, so nothing needs scrolling, from a small 800 × 480 display to a TV. On a phone it leaves room for the browser's address bar.
+The scoreboard adapts to the shape of the screen. With `full_height: true` it is exactly the screen below the toolbar: a banner, the visit or the keypad make the numbers and tables smaller instead of pushing the page past the screen, so nothing needs scrolling, from a small 800 × 480 display to a TV. On a phone it leaves room for the browser's address bar, and in the companion app for the status bar and the home indicator.
 
 <table>
   <tr>
@@ -49,17 +49,19 @@ The scoreboard adapts to the shape of the screen. With `full_height: true` it is
 
 - **Landscape tablet or TV:** the best choice for X01 and the party games, whose player tiles sit side by side.
 - **Portrait tablet:** fine for Cricket, whose chalkboard is tall, and for X01: two players stand one above the other, three or four two by two, and the scores use the height of the screen.
+- **Phone:** everything fits one screen, upright or on its side. With the keypad or the board to tap, every player's score becomes one line, so all scores stay in sight; on its side, the keypad takes the right half of the screen from top to bottom. To [correct a dart](#correct-and-enter-darts), the board opens zoomed in, with a loupe under the finger.
+- **Touch monitor:** on a 24 or 27 inch touch screen beside the board, every button is large enough for a finger, also with a mouse plugged in, and the board to tap has the loupe and the two-finger zoom of a phone.
 - **Distance:** the remaining score is the largest text on the screen and grows with it. The bigger the screen, the farther away it reads, so a TV also serves the people watching.
 
 ## Choose the next game
 
-Tap **New game** below the score between games, or at the top right at any time. The screen also opens by itself a few seconds after a match or a training game ends, with the last choice ready for a rematch; a dart thrown instead closes it again.
+Tap **New game** below the score between games, or at the top right during a game. The screen also opens by itself a few seconds after a match or a training game ends, with the last choice ready for a rematch; a dart thrown instead closes it again.
 
 <img src="images/en/lobby.webp" alt="Animation: on the tablet, New game opens the screen, Cricket is chosen, Sam joins Alex, the legs per set go up to three and the game starts on the scoreboard" width="760">
 
 1. **Game:** X01, the Cricket games, the party games and the training games, grouped. `lobby_games` limits the choice to the games you play.
 2. **Players:** tap a name to add the player, ▲ and ▼ to change the order, ✕ to remove them. Players [linked to a person](statistics.md#players-and-persons) who is at home come first, with their picture. Type a new name, or add a guest without one. In X01, − and + beside a player set a [start score](games.md#start-scores-handicap) of their own. In X01 and the Cricket games, **+ Bot** seats the [bot](games.md#playing-against-the-bot) after the players; − and + beside it change its level.
-3. **Format and options:** legs per set and sets to win; double out and double in for X01; the [bull-off](games.md#bull-off); *Teams* for four players of X01 or Cricket.
+3. **Format and options:** legs per set and sets to win; double out and double in for X01; the [bull-off](games.md#bull-off); *Teams* for four players of X01 or Cricket; *Three in a bed* for [Wild Mouse](games.md#wild-mouse).
 4. **Start.** The scoreboard shows the game at once. If detection is stopped, the start switches it on, and the screen says so above the button beforehand. The start button stays at the bottom of the screen while the page scrolls. During a game, *End game* stops it after a second tap.
 
 <img src="images/en/scoreboard-lobby.png" alt="The new game screen on a landscape tablet: the games by group with 501 chosen, Alex and Sam with their pictures, Sam starting from 301, three legs per set, double out and the start button" width="760">
@@ -78,7 +80,7 @@ The scoreboard always shows what is being played, and the player at the board is
 | Bull-off | The bed of every player's dart and its distance from the center, the dart that leads, and *Tie – throw again* when a tie throws again |
 | Training games | The target in large type with the round, the points or the hit rate |
 
-Along the bottom it shows the three darts of the current visit and their score; a tap on a dart [corrects it](#correct-and-enter-darts). When a match is decided, a banner names the winner with the result, for example *Alex wins the match 3 : 2!*, and after an X01 or Cricket match the [match summary](games.md#match-summary) takes the place of the players: averages, checkout rate, highest checkout, 180s and the best leg of everybody.
+Along the bottom it shows the three darts of the current visit and their score, and while the board is empty the last visit; a tap on a dart [corrects it](#correct-and-enter-darts). Nothing moves while you play: the tiles keep their height from the first dart to the game shot. When a match is decided, a banner names the winner with the result, for example *Alex wins the match 3 : 2!*, and after an X01 or Cricket match the [match summary](games.md#match-summary) takes the place of the players: averages, checkout rate, highest checkout, 180s and the best leg of everybody.
 
 <img src="images/en/match-summary.png" alt="Scoreboard after Alex beat Sam 2 : 1 in 301: the match summary with legs, 3-dart average, first 9, checkout rate, highest checkout, 180s, 140+, 100+, best leg, darts at a double and darts of both players" width="760">
 
@@ -98,13 +100,17 @@ Along the bottom it shows the three darts of the current visit and their score; 
 <img src="images/en/correct-dart.webp" alt="Animation: the scoreboard shows T20, S20 and T20 for 140; a tap on the second dart opens the pad, a tap on T and on 20 corrects it, and the visit reads 180" width="760">
 
 - **A dart read wrong:** tap it in the visit along the bottom. A pad opens with S, D and T, the numbers 1 to 20, 25, Bull and Miss; tap the multiplier and the number, and the game counts the dart there. A second tap on the dart, or *Cancel*, closes the pad.
-- **Where it really is:** tap *🎯 Board* in the pad and then the spot on the board where the dart is. The bed follows from the spot, and the dart counts there for the [dart positions](statistics.md#heatmap-and-dart-positions). A dashed ring shows where the board saw it. Corrected with the keys, the dart has no position, so a misread spot never spoils the grouping.
+- **Where it really is:** choose *Board* at the top of the pad and tap the spot on the board where the dart is. The bed follows from the spot, and the dart counts there for the [dart positions](statistics.md#heatmap-and-dart-positions). A dashed ring shows where the board saw it. Corrected with the keys, the dart has no position, so a misread spot never spoils the grouping.
 
-  <img src="images/en/correct-dart-board.webp" alt="Animation: the board read the second dart as T20 for 180; a tap on it opens the pad, 🎯 Board shows the board with a dashed ring where the board saw the dart, and a tap on the single 20 above it corrects the visit to 140" width="760">
+  <img src="images/en/correct-dart-board.webp" alt="Animation: the board read the second dart as T20 for 180; a tap on it opens the pad, Board shows the board with a dashed ring where the board saw the dart, and a tap on the single 20 above it corrects the visit to 140" width="760">
 
-- **A visit noticed too late:** after the takeout, *Undo last visit* below the visit takes the last visit back, with a second tap to confirm. Correct its darts, then end it with *Next player*.
+- **On a phone:** the board opens zoomed in around where the board saw the dart, so a fingertip finds the right bed. Hold a finger on the board and slide it: a loupe above the finger shows the spot enlarged with a cross, and the dart goes where the finger lets go. Two fingers zoom further and move the board; the round magnifier in the board's corner shows all of it with its minus and zooms back in with its plus.
+
+  <img src="images/en/correct-dart-loupe.webp" alt="Animation on a phone: the board read the second dart as T20 for 180; a tap on it and on Board opens the board zoomed in around the dashed ring where the board saw it; a finger slides up from the ring, the loupe above it shows the single 20 under a cross, and where the finger lets go the visit becomes 140" width="360">
+
+- **A visit noticed too late:** after the takeout, the tile *Last* beside the darts shows the last visit with a curved arrow; a tap on it and a second one on the red *Undo?* take it back. Correct its darts, then end it with *Next player*.
 - **Darts entered by hand:** for darts the board missed, or a player without cameras, switch on *Practice manual entry* and the card's `keypad` option. The keypad enters every tapped bed as a dart; *Next player* ends the visit. On a landscape screen, the pad and the keypad sit beside the scores, so both fit the screen.
-- **What you see:** darts entered or corrected by hand get a dashed frame, the bot's darts a light one.
+- **What you see:** a pencil marks every dart that a tap corrects; darts entered or corrected by hand get a dashed frame, and the bot's darts a tint of the accent color.
 
 <img src="images/en/scoreboard-keypad.png" alt="The scoreboard with the keypad: Alex has entered T20 and S19 by hand, marked with dashed frames; below, S, D and T, the numbers 1 to 20, 25, Bull, Miss and Next player" width="760">
 

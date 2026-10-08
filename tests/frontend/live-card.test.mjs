@@ -440,21 +440,19 @@ test("a card in the editor preview ignores taps", () => {
   assert.equal(text(card, '[data-action="reset"]'), "Reset detection");
 });
 
-test("the board opens the visit's more-info on click, Enter and Space", () => {
+test("the board is a picture: a tap opens nothing, the chips open their entity's details", () => {
   const { card } = setup({ "sensor.local_visit_score": visit([]) });
+  const svg = $(card, "svg");
+  assert.equal(svg.getAttribute("role"), "img");
+  assert.equal(svg.hasAttribute("tabindex"), false);
   const events = [];
   document.addEventListener("hass-more-info", (event) => events.push(event), { once: true });
   const opened = moreInfo(card);
-  const svg = $(card, "svg");
   svg.dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
-  const keys = ["Enter", " ", "a"].map((key) => {
-    const event = new window.KeyboardEvent("keydown", { key, cancelable: true });
-    svg.dispatchEvent(event);
-    return event.defaultPrevented;
-  });
-  assert.deepEqual(keys, [true, true, false]);
-  const id = "sensor.dartboard_local_visit_score";
-  assert.deepEqual(opened, [id, id, id]);
+  assert.deepEqual(opened, []);
+  $(card, ".chip").click();
+  const id = opened[0];
+  assert.equal(opened.length, 1);
   // The event leaves the shadow root for Home Assistant's dialog.
   assert.equal(events.length, 1);
   assert.deepEqual([events[0].bubbles, events[0].composed, events[0].detail], [true, true, { entityId: id }]);
@@ -695,7 +693,7 @@ test("the checkout training shows the finish, the route and the attempts", () =>
   const { hass, card } = setup(finish({ attempt_visit: 2, attempt_visits: 3, rate: 25 }));
   assert.equal(text(card, ".practice-title"), "Checkout training");
   assert.equal(text(card, ".practice-remaining"), "81");
-  assert.equal(text(card, ".practice-meta"), "Visit 2 / 3 · 1 / 4 checked out · 25%");
+  assert.equal(text(card, ".practice-meta"), "Visit 2 / 3 · 1 / 4 checked out · 25% · Best –");
   assert.deepEqual(
     $$(card, ".practice-route .bed").map((bed) => bed.textContent),
     ["T15", "D18"]
@@ -703,7 +701,7 @@ test("the checkout training shows the finish, the route and the attempts", () =>
   assert.deepEqual(paths(card, "aim"), [bedPath("T15")]);
 
   card.hass = update(hass, finish({ bust: true, rate: null }));
-  assert.equal(text(card, ".practice-meta"), "Visit 1 / 3 · 1 / 4 checked out");
+  assert.equal(text(card, ".practice-meta"), "Visit 1 / 3 · 1 / 4 checked out · – % · Best –");
   assert.equal(text(card, ".practice-route .note.bust"), "Bust – the score stays");
   assert.equal($$(card, ".practice-route .bed").length, 0);
 
@@ -862,7 +860,7 @@ test("the bull-off shows who throws and how close each dart landed", () => {
   assert.equal(text(card, ".practice-remaining"), "Bull");
   assert.equal(text(card, ".practice-route"), "Closest to the bull starts");
   assert.deepEqual(scores(card), [
-    ["player-score", "Alex", "12.4 mm", "S20"],
+    ["player-score", "Alex", "12.4 mm", "S20"],
     ["player-score active", "Player 2", "", "–"],
   ]);
   assert.deepEqual(paths(card, "aim"), [bedPath("Bull"), bedPath("25")]);
@@ -886,7 +884,7 @@ test("the bull-off shows who throws and how close each dart landed", () => {
   );
   assert.equal(text(card, ".practice-route .note.rethrow"), "Tie – throw again");
   assert.deepEqual(scores(card), [
-    ["player-score active", "Kim", "10.2 mm", "25"],
+    ["player-score active", "Kim", "10.2 mm", "25"],
     ["player-score winner", "Alex Winner", "leads", "Bull"],
   ]);
 });

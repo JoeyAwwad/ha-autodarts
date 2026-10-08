@@ -1,8 +1,8 @@
 # Autodarts for Home Assistant: documentation
 
-[← Project page](../README.md) · [Deutsche Dokumentation](de/README.md)
+[← Project page](https://github.com/Dennis-Otto/ha-autodarts) · [Deutsche Dokumentation](README.de.md)
 
-Everything about the Autodarts integration: how to set it up, play and train with it, put a scoreboard next to the board, follow your statistics and let your home join in.
+Everything about the Autodarts integration: how to set it up, play and train with it, put a scoreboard next to the board, follow your statistics and let your home join in. The [website of the documentation](https://dennis-otto.github.io/ha-autodarts/) has the same pages, with a search and a switch to German.
 
 <img src="images/en/hero.webp" alt="Animation: a 301 match on the live card and the scoreboard side by side. Alex throws three triple 20s, Sam scores 85, and Alex checks out 121 for the game shot" width="760">
 
@@ -20,7 +20,7 @@ Everything about the Autodarts integration: how to set it up, play and train wit
 | [Games and rules](games.md) | Every game at a glance, four ways to start one, matches, the match summary, teams, handicaps, the bull-off, tournaments and the rules of X01, the Cricket games, the party games and the training games |
 | [Scoreboard at the board](scoreboard.md) | A tablet or TV next to the board: setup, landscape and portrait, the new game screen, tournaments, the caller and idle mode |
 | [Statistics and players](statistics.md) | Training sessions, personal bests, the heatmap and dart positions, progress over time, doubles, player profiles, achievements, trends and grouping, the leaderboard, the weekly report, the training calendar and exports |
-| [Automations](automations.md) | Eleven blueprints, their settings, board events and ready-to-use examples |
+| [Automations](automations.md) | Twelve blueprints, their settings, board events and ready-to-use examples |
 | [Online matches](online-matches.md) | Busts, won legs and matches of online matches as board events, with the browser extension Tools for Autodarts *(experimental)* |
 
 ## Reference
@@ -38,9 +38,9 @@ Everything about the Autodarts integration: how to set it up, play and train wit
 
 | Page | What you'll find |
 | --- | --- |
-| [Changelog](../CHANGELOG.md) | What every version brought |
+| [Changelog](https://github.com/Dennis-Otto/ha-autodarts/blob/main/CHANGELOG.md) | What every version brought |
 | [Roadmap](roadmap.md) | Released versions and what comes next |
-| [Development](development.md) | Tests, Docker end-to-end test, demo instance, screenshots and CI |
+| [Development](development.md) | Tests, Docker end-to-end test, demo instance, accessibility check, screenshots, the screenshot bot, the visual check and CI |
 | [Releases](releases.md) | How versions and release notes are produced |
 | [Creator kit](creator-kit.md) | Facts, descriptions, videos, animations and pictures for YouTubers, streamers and bloggers, free to use |
 
@@ -60,6 +60,8 @@ Everything about the Autodarts integration: how to set it up, play and train wit
     <td width="50%" valign="top"><img src="images/en/status-card.png" alt="Board status card with detection, connections, board PC load and cameras" width="100%"><br><b>A board that looks after itself.</b> Start the detection when you enter the darts room, stop it when you leave, and get a notification when the board goes offline or a camera fails. <a href="automations.md#blueprints">Blueprints</a></td>
   </tr>
 </table>
+
+<!-- --8<-- [start:devices-and-languages] -->
 
 ## Supported devices
 
@@ -85,4 +87,6 @@ The integration speaks English, German, Dutch, French and Spanish: setup, option
 - The caller speaks the card's language with a voice of your browser or tablet for that language.
 - The documentation is in English and German, the blueprints in English because Home Assistant does not translate blueprints.
 
-To improve a translation or add a language, see [translations in CONTRIBUTING.md](../CONTRIBUTING.md#translations).
+Texts that are missing in a language, or older than their English original, are listed in that language's [translation issue](https://github.com/Dennis-Otto/ha-autodarts/issues?q=is%3Aissue%20is%3Aopen%20label%3Atranslations), which a bot keeps up to date. It explains how to fix them right on GitHub, without programming. To improve a translation or add a language, see [translations in CONTRIBUTING.md](https://github.com/Dennis-Otto/ha-autodarts/blob/main/CONTRIBUTING.md#translations).
+
+<!-- --8<-- [end:devices-and-languages] -->

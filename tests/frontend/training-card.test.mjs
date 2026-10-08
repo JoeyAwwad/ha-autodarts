@@ -71,7 +71,7 @@ test("an empty session invites the first dart, or a session start", () => {
   assert.equal(text(card, ".empty-hint"), "Start a session to count your darts.");
 });
 
-test("tiles show the session records and open the darts' more-info", () => {
+test("tiles show the session records, and nothing opens with a tap on them", () => {
   const { hass, card } = setup();
   assert.deepEqual(
     $$(card, ".tile").map((tile) => [tile.dataset.tile, tile.querySelector(".value").textContent]),
@@ -89,9 +89,11 @@ test("tiles show the session records and open the darts' more-info", () => {
   assert.equal($(card, '[data-tile="max"]').classList.contains("hot"), false);
   card.hass = update(hass, { "sensor.training_scores_180": "1" });
   assert.equal($(card, '[data-tile="max"]').classList.contains("hot"), true);
+  // A tile is static: it has no frame, no cue and no tap.
   const opened = moreInfo(card);
   $(card, '[data-tile="bulls"]').click();
-  assert.deepEqual(opened, ["sensor.dartboard_training_darts"]);
+  assert.deepEqual(opened, []);
+  assert.equal($(card, ".tile .cue"), null);
 });
 
 test("the heatmap colours every hit bed from blue to red with its share", () => {
@@ -320,7 +322,9 @@ test("without the recorder, visits of the open dashboard are added once each", a
   assert.equal(text(noEvents, ".history-chart"), "Completed visits appear here.");
 });
 
-test("a new session starts an empty history and closes the stream of the old one", async () => {
+test("a new session starts an empty history and closes the stream of the old one", async (t) => {
+  // Both sessions lie within the week of history the card loads.
+  t.mock.timers.enable({ apis: ["Date"], now: Date.parse("2026-09-26T16:05:00Z") });
   const { streams, connection } = historyStream();
   const { hass, card } = setup({}, {}, { connection });
   send(streams[0], [visitRow("2026-09-26T14:31:00.000+00:00", 180)]);
@@ -432,6 +436,15 @@ test("the history size keeps between five and sixty visits, with labels up to th
   assert.equal($$(invalid, ".visit-bar").length, 20);
   assert.equal($$(invalid, ".visit-bar .label").length, 7);
   assert.equal($(invalid, ".average-line"), null);
+  // A narrow chart shows the last ten slots, whose scores stay readable: the seven
+  // visits and three empty slots; with more visits than that, the newest ten.
+  const near = (card) => $$(card, ".visit-bar:not(.far)").map((bar) => (bar.classList.contains("empty") ? "·" : bar.title));
+  assert.deepEqual(near(invalid).filter((slot) => slot === "·").length, 3);
+  assert.equal(near(invalid).length, 10);
+  const full = chart({}, {}, rows.slice(-15));
+  assert.deepEqual(near(full), rows.slice(-10).map((row) => `S20 · S20 · S20 = ${row.a.score}`));
+  assert.equal($$(full, ".visit-bar.empty:not(.far)").length, 0);
+  assert.match($(full, "style").textContent, /@container \(max-width: 560px\) \{ \.visit-bar\.far \{ display: none; \} \}/);
 });
 
 test("past sessions list when they ended, how long they took and how they went", () => {
@@ -635,7 +648,7 @@ test("personal bests list every record with a value and the longest streak", () 
   assert.deepEqual(bests(german).at(-1), ["Längste Serie", "12 Tage"]);
 });
 
-test("the statistics tiles are read out, and a button of their own opens the details", () => {
+test("the statistics tiles are read out, and a visible link with an arrow opens the details", () => {
   const { card } = setup();
   const tiles = $(card, ".tiles");
   // A group, not a button: a button would hide the eight figures from screen readers.
@@ -644,12 +657,17 @@ test("the statistics tiles are read out, and a button of their own opens the det
     ["group", null, "Training statistics"]
   );
   assert.equal(text(card, '[data-tile="highest"]'), "140Highest visit");
+  // The link says "Details" with an arrow; a screen reader hears what it opens.
   const details = $(card, ".details");
-  assert.deepEqual([details.localName, details.type, details.textContent], ["button", "button", "Training statistics, open the details"]);
+  assert.deepEqual(
+    [details.localName, details.type, details.className, details.textContent, details.getAttribute("aria-label")],
+    ["button", "button", "link details", "Details", "Training statistics, open the details"]
+  );
+  assert.equal(details.querySelectorAll(".cue.details.inline").length, 1);
   const opened = moreInfo(card);
   tiles.click();
   details.click();
-  assert.deepEqual(opened, ["sensor.dartboard_training_darts", "sensor.dartboard_training_darts"]);
+  assert.deepEqual(opened, ["sensor.dartboard_training_darts"]);
   assert.equal($(setup({}, { show_stats: false }).card, ".details"), null);
   // The fire emoji is decoration only.
   assert.equal($(card, ".streak [aria-hidden]").textContent, "🔥");

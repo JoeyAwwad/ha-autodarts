@@ -419,7 +419,7 @@
         "name": "Automatic recalibration"
       },
       "auto_distortion": {
-        "name": "Automatic distortion correction"
+        "name": "Distortion correction"
       },
       "training_session": {
         "name": "Training session"
@@ -456,6 +456,9 @@
       },
       "practice_manual_entry": {
         "name": "Practice manual entry"
+      },
+      "practice_three_in_a_bed": {
+        "name": "Practice Wild Mouse three in a bed"
       }
     },
     "select": {
@@ -489,6 +492,7 @@
           "killer": "Killer",
           "cut_throat": "Cut-Throat Cricket",
           "tactics": "Tactics",
+          "wild_mouse": "Wild Mouse",
           "golf": "Golf",
           "baseball": "Baseball",
           "count_up": "Count-Up",
@@ -531,7 +535,8 @@
           "1001": "1001",
           "cricket": "Cricket",
           "cut_throat": "Cut-Throat Cricket",
-          "tactics": "Tactics"
+          "tactics": "Tactics",
+          "wild_mouse": "Wild Mouse"
         }
       }
     },
@@ -840,6 +845,21 @@
     },
     "export_limit": {
       "message": "{count} exports were written in the last hour, as many as the integration writes. Try again later."
+    },
+    "unknown_game": {
+      "message": "No game is called \"{game}\". Name one of the practice games, such as 501, Cricket or Around the Clock."
+    },
+    "voice_game_on": {
+      "message": "Game on: {game} with {players}."
+    },
+    "voice_game_on_alone": {
+      "message": "Game on: {game}."
+    },
+    "voice_and": {
+      "message": "and"
+    },
+    "voice_bot": {
+      "message": "the bot"
     }
   },
   "issues": {
@@ -900,7 +920,7 @@
         },
         "game": {
           "name": "Game",
-          "description": "X01 from 101 to 1001 points, a Cricket game, a party game or a training game."
+          "description": "X01 from 101 to 1001 points, a Cricket game, a party game or a training game. A name as the game list shows it, in any language of the integration, works too, such as \"Around the Clock\"."
         },
         "players": {
           "name": "Players",
@@ -933,6 +953,10 @@
         "teams": {
           "name": "Teams",
           "description": "Four players of X01 or a Cricket game play as two teams: players 1 and 3 against players 2 and 4."
+        },
+        "three_in_a_bed": {
+          "name": "Three in a bed",
+          "description": "Wild Mouse: three darts of a visit in the same bed close a target of their own, as the rules have it. Off leaves it out."
         },
         "start_scores": {
           "name": "Start scores",
@@ -1198,6 +1222,7 @@
         "killer": "Killer",
         "cut_throat": "Cut-Throat Cricket",
         "tactics": "Tactics",
+        "wild_mouse": "Wild Mouse",
         "golf": "Golf",
         "baseball": "Baseball",
         "count_up": "Count-Up",

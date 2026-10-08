@@ -2,6 +2,103 @@
 
 All notable changes of the Autodarts integration. The complete notes of every version, with each pull request, are on the [releases page](https://github.com/Dennis-Otto/ha-autodarts/releases); what comes next is in the [roadmap](docs/roadmap.md). Versions follow [Semantic Versioning](https://semver.org/).
 
+## Unreleased
+
+### New
+
+- **Wild Mouse:** a fourth Cricket game, also known as Minnesota Cricket. Besides 20 to 15 and the bull, every player closes three doubles, three triples and three in a bed. A dart counts for its number while it is open, otherwise for doubles or triples; the chalkboard has a row for each, the board outlines the next target, and teams, the bot and tournaments play it too. *Three in a bed* on the new game screen, or *Practice Wild Mouse three in a bed*, leaves the bed out ([rules](docs/games.md#wild-mouse)).
+
+## [1.9.2](https://github.com/Dennis-Otto/ha-autodarts/compare/v1.9.1...v1.9.2) (2026-10-08)
+
+### New
+
+- **Betas for testers:** every change for users becomes a beta of the next release within minutes, which HACS offers to those who turn on the switch *Pre-release* of the integration ([how](docs/installation.md#betas-for-testers)).
+
+### Changed
+
+- **Help on the documentation website:** the help links of the cards in the card picker and of the automatic dashboard, and the documentation link of the integration, open the [documentation website](https://dennis-otto.github.io/ha-autodarts/) instead of GitHub, in German when Home Assistant speaks German.
+
+### Documentation
+
+- The website switches between English and German on every page, with German menus, search and dates, and starts with a page of its own for each language. The German pages moved next to the English ones, such as `docs/games.de.md` next to `docs/games.md`; the old addresses of the German overview and card guide lead there.
+
+## [1.9.1](https://github.com/Dennis-Otto/ha-autodarts/compare/v1.9.0...v1.9.1) (2026-10-07)
+
+### Fixed
+
+- **Readable badges:** the words under a badge of the players card, such as when it was earned, had too little contrast on the gold of the badge in the dark theme. They now take the muted text of every other card and reach the contrast that WCAG 2.1 AA asks for.
+- **The keyboard reaches the scores:** when the pad leaves a full-height scoreboard on a phone too little room, its scores scroll. A keyboard can now reach and scroll them as well, and a screen reader names them *Scoreboard*.
+
+### Documentation
+
+- The accessibility check of the cards, which axe-core runs in the browser test on a laptop and a phone in both themes.
+
+## 1.9.0
+
+### New
+
+- **Start a game by voice:** a new blueprint lets Assist start a practice game, for example "Starte 501 für Alex und Sam", "Start the game Cricket for Alex" or "Spiele 501 gegen den Bot", in German or English. Assist answers with the game and the players, or with what was wrong. Every sentence has a number from 101 to 1001 or the word "Spiel" or "game", so Assist's own commands, such as a timer, stay its own (#123).
+- **`autodarts.start_game` understands a voice:** a game by its name in any language of the integration, such as "Around the Clock" or "Doppeltraining", or by the beginning of a name that fits one game alone; a player's name in the spelling of the player's profile; and with `response_variable`, an answer in words to say instead of a failure (#123).
+- **Hints on a tap:** what a mouse shows as a tooltip, a tap with a finger or a pen now shows in a small bubble over the card, without moving anything: the darts of a last visit, a visit in the training chart, a trend arrow, a double, the columns of a tournament's table, a camera's dot and the hint of a setup (#122).
+
+### Changed
+
+- **Game settings in a view of their own:** the live view of the automatic dashboard shows the live card alone. The rows of the practice game, its players, start scores and the tournament moved to the new view *Game settings* (#121).
+
+### Documentation
+
+- The voice blueprint with its sentences, the names and the answer of the start action, the new view and the hint building block, in English and German, with the screenshots and animations recorded anew. The example of an automation of your own no longer catches "start a timer for 5 minutes".
+
+## 1.8.1
+
+### Fixed
+
+- **Nothing moves while a game goes on:** the scoreboard's tiles grew and shrank with what they showed: the average after the first dart, a route or a setup that took another line on a narrow tile, the points under a thrown dart, and *Undo last visit* as a row of its own after every takeout, which also shrank the numbers of a full-height scoreboard. Every tile, the visit and the Cricket chalkboard now keep their height from the start of a game to its last dart, on every screen from a 360 pixel phone to a 27 inch monitor, and the new browser step *steady heights* keeps it so (#119).
+- **The status** keeps the width of its longest words during a game, so *Remove your darts* no longer pushes the scoreboard's buttons onto another line on a phone.
+- **Training games:** the checkout rate and the best show a dash until they are known, and a narrow screen lays the facts out in columns; the live card's training head has a line for the game and one for what it says.
+
+### Changed
+
+- **Undo the last visit:** the tile beside the darts shows the last visit while the board is empty, between games too, with a curved arrow where a tap can take it back; a second tap on the red *Undo?* does it. The button below the visit is gone.
+- **Killer notes** are shorter in German, Spanish, French and Dutch, so they fit one line.
+
+### Documentation
+
+- The README's animation is recorded anew with tiles that hold still, and the development guide has the rule that nothing moves during a game.
+
+## 1.8.0
+
+### New
+
+- **Correct darts on the live card:** a tap on a dart of the visit opens the scoreboard's pad below the darts, with its keys, its board, the loupe and the zoom. A pencil at the top right marks every dart a tap corrects. The new option `corrections` switches it off.
+- **Loupe and zoom on touch screens:** on a small screen, the board of a correction opens zoomed in on where the board saw the dart. A finger held on the board shows a loupe above it and sets the dart where it lets go; two fingers zoom and move the board. A round magnifier switches between the zoomed part and the whole board. The loupe and the fingers work on every touch screen, a 24 or 27 inch touch monitor too.
+- **Every double hit counts:** the doubles card counts every double any dart hits, in every game and in plain training, next to the rate where darts were aimed at a double. The doubles sensor carries them as `landed`.
+
+### Improved
+
+- **Phones, tablets and touch monitors:** every card fits and reads well from a 360 pixel phone to a 27 inch touch monitor, upright and on its side. The full-height scoreboard stays one screen high, the board to tap fills the room the scores leave, keys grow on large screens, and every control is at least 40 pixels for a finger on any touch screen, also with a mouse plugged in.
+- **Clear at a glance:** a pencil shows what a tap edits, an arrow what a tap opens; static parts such as the player tiles, the visit's total, the status and the beds of a route no longer look like buttons. The second tap that confirms is red on every card, the pad says why it waits while the bot throws, and the new game screen says why a player sits out. States change with calm animations, and not at all where the device asks for less motion.
+- **The badge gallery** shows each player's badges earned and the three nearest goals; *All 18 badges* opens the rest.
+- **Trends** run on through weeks without darts, and a figure without two halves to compare shows no arrow.
+- **Grids** keep a tile from standing alone in a last row: four players stand two by two rather than three and one.
+
+### Fixed
+
+- **The scoreboard on a phone** was cut off at the bottom, and the new game screen's start bar showed what scrolled beneath it.
+- **The positions heatmap** drew darts that landed beside the board; only darts on the board show (#112).
+- **The doubles card** stayed empty after a game with doubles in it.
+- **On a phone on its side,** the board to tap was only 160 pixels high, and a zoomed board drew over the keys.
+- **A finger on the board to tap** could outlast a pad that closed under it, and later boards no longer redrew.
+
+### Changed
+
+- **Shorter entity names** where Home Assistant's rows cut them: *Distortion correction* instead of *Automatic distortion correction* in every language, and in German *Übungsspiel neues Match*, *Übungsspiel neues Leg* and *Turnier Dauer der Zusammenfassung*. Existing entity ids stay; a new installation names the distortion switch `switch.<board>_distortion_correction`.
+- **Taps that opened details unannounced:** the training card's tiles open nothing any more, *Details* below them does; the live card's board is a picture. The status card's own calibration reads *Calibrate all*.
+
+### Documentation
+
+- The loupe, the zoom and touch monitors, correcting on the live card with a new animation, and the UI building blocks in the development guide.
+
 ## 1.7.1
 
 ### Fixed

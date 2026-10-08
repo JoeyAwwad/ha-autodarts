@@ -34,6 +34,7 @@ from yaml import safe_load
 
 from custom_components.autodarts.bot import Bot
 from custom_components.autodarts.local_coordinator import EVENT_TYPES
+from custom_components.autodarts.services import _game_key
 
 from .local_helpers import (
     BLUEPRINTS,
@@ -182,7 +183,7 @@ def test_blueprints_listen_to_events_of_the_integration(path):
 
 
 @pytest.mark.parametrize(
-    "document", ["README.md", "docs/automations.md", "docs/de/automationen.md"]
+    "document", ["README.md", "docs/automations.md", "docs/automations.de.md"]
 )
 def test_documents_import_every_blueprint(document):
     """Each import button opens the blueprint file on the main branch."""
@@ -198,7 +199,7 @@ def test_documents_import_every_blueprint(document):
     assert imported == {path.name for path in PATHS}
 
 
-@pytest.mark.parametrize("document", ["docs/automations.md", "docs/de/automationen.md"])
+@pytest.mark.parametrize("document", ["docs/automations.md", "docs/automations.de.md"])
 def test_the_documentation_lists_every_setting(document):
     """Each input of each blueprint has a row in the tables of the settings."""
     text = (ROOT / document).read_text(encoding="utf-8")
@@ -1977,29 +1978,34 @@ async def test_practice_caller_names_the_score_to_leave_without_a_checkout(hass)
 
 @pytest.mark.parametrize(
     ("document", "language"),
-    [("docs/automations.md", "en"), ("docs/de/automationen.md", "de")],
+    [("docs/automations.md", "en"), ("docs/automations.de.md", "de")],
 )
 async def test_the_voice_example_starts_every_game(hass, document, language):
-    """Every game, spoken as the practice game select names it, becomes its option."""
+    """Every game, spoken as the practice game select names it, starts that game;
+    the names become the players, and Assist says what the action answers."""
     text = (ROOT / document).read_text(encoding="utf-8")
     (example,) = [
         safe_load(block)
         for block in re.findall(r"```yaml\n(.*?)```", text, re.DOTALL)
         if "trigger: conversation" in block
     ]
-    variables, start = example["actions"][0]["variables"], example["actions"][1]
+    start, answer = example["actions"]
+    assert start["response_variable"] == "result"
+    assert answer == {"set_conversation_response": "{{ result.message }}"}
     translation = json.loads(
         (
             ROOT / "custom_components/autodarts/translations" / f"{language}.json"
         ).read_text(encoding="utf-8")
     )
     games = translation["entity"]["select"]["practice_game"]["state"]
+    names = {"en": "Dennis and Lea", "de": "Dennis und Lea"}[language]
     for option, name in games.items():
         if option == "off":
             continue
-        run = {"trigger": {"slots": {"game": name, "names": "Dennis"}}}
-        said = Template(variables["said"], hass).async_render(run, parse_result=False)
+        run = {"trigger": {"slots": {"game": name, "names": names}}}
         game = Template(start["data"]["game"], hass).async_render(
-            {**run, "said": said, "spoken": variables["spoken"]}, parse_result=False
+            run, parse_result=False
         )
-        assert game == option, name
+        assert await _game_key(hass, game) == option, name
+    players = Template(start["data"]["players"], hass).async_render(run)
+    assert players == ["Dennis", "Lea"]
