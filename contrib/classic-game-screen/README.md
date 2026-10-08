@@ -20,7 +20,7 @@ A full-screen game screen for a TV or monitor at the board, in the style of play
   ![The result screen](images/result.png)
 - **Correct a dart** the board read wrong: tap it (every dart has a ✎) and pick the right bed. See [Correcting darts](#correcting-darts).
 - **Drawn dartboard** with a marker where each dart landed (from the board's `/api/events` coordinates). The camera picture is one tap away (warped straight-on with the calibration homography from `/api/system`).
-- **Wild Mouse (Minnesota) Cricket**, which the integration does not have. The card scores it itself from the board's darts.
+- **Wild Mouse (Minnesota) Cricket.** Where the integration plays Wild Mouse itself (the releases after 1.9.2), and the card hands it every game of up to four players, with the bot, legs, three in a bed and the integration's statistics. A bigger party, or an older integration, is scored by the card from the board's darts. See [Wild Mouse rules](#wild-mouse-rules).
 - Resets the board when it hangs in "Takeout in progress" with no darts on it (seen with Autodarts 2.0.2), and wakes it from standby. With several screens on one board, keep the reset on one of them and set `stuck_takeout_reset: 0` on the others.
 
 ## Install
@@ -58,7 +58,7 @@ The board's local API must be reachable from the browser (it answers CORS with `
 
 ## Players and photos
 
-Add as many players as there are: Wild Mouse takes up to 24, and with five or more the thrower's card is shown big and everybody else small. The integration's own games (X01, Cricket, party and training games) play up to four; with more in the list they start with the first four, and the New game screen says so. *Shuffle order* mixes up who throws first.
+Add as many players as there are: Wild Mouse takes up to 24 (the card scores it itself from five players on), and with five or more the thrower's card is shown big and everybody else small. The integration's own games (X01, Cricket, party and training games) play up to four; with more in the list they start with the first four, and the New game screen says so. *Shuffle order* mixes up who throws first.
 
 ![Twelve players in Wild Mouse](images/party-12.png)
 
@@ -146,7 +146,7 @@ When the calibration is off or a dart sits on a wire, the board can read a dart 
 
 - **A dart the board missed:** with the integration's *Practice manual entry* switch on, the next empty slot shows **+ Add dart**, which enters it with `autodarts.throw_dart`.
 - **After the takeout:** Undo reopens the last visit, then its darts can be corrected; Next player ends it again.
-- **Wild Mouse** is scored by the card, so the card corrects it itself: the visit is replayed with the right bed, and marks, points and a won leg follow. **+ Add dart** always works there while the leg is open.
+- **Wild Mouse with five or more players** (or on an older integration) is scored by the card, so the card corrects it itself: the visit is replayed with the right bed, and marks, points and a won leg follow. **+ Add dart** always works there while the leg is open.
 
 ## Cricket boards
 
@@ -155,11 +155,13 @@ The chalkboard of every cricket game (Cricket, Cut-Throat, Tactics, Wild Mouse) 
 - **Score** in green next to the thrower's marks where they have closed a target and somebody is still open, and **Close** in amber where somebody else has closed it and could score on them.
 - A **shield** on a row when a dart hits a target that everybody has closed, so it scored nothing.
 - The points a dart scored float up from the player's card (**+20**).
-- Wild Mouse can move to the next player by itself 3, 5 or 10 seconds after the third dart (*Next player after three darts* on the New game screen, or `auto_next: 5`), for boards whose takeout is not seen reliably. The thrower's tag counts down.
+- Wild Mouse can move to the next player by itself 3, 5 or 10 seconds after the third dart (*Next player after three darts* on the New game screen, or `auto_next: 5`), for boards whose takeout is not seen reliably. The thrower's tag counts down. In the integration's Wild Mouse the card presses *Next player* (`autodarts.next_player`) for you.
 
 ![Aim hints on the chalkboard](images/cricket-hints.png)
 
 ## Wild Mouse rules
+
+When the integration plays the game (up to four players, on an integration that has the game), its rules apply: see [Wild Mouse](../../docs/games.md#wild-mouse). The chalkboard then shows the integration's targets, and every dart of the visit says what it counted for (→ 20, → Doubles, no score). The rules below are those of the card's own game, for bigger parties.
 
 Cricket on 20–15 and bull, plus **Doubles** and **Triples** to close, and optionally **Three in a bed**.
 
@@ -168,7 +170,7 @@ Cricket on 20–15 and bull, plus **Doubles** and **Triples** to close, and opti
 - Win: everything closed and not behind on points. Legs are supported.
 - The visit ends when the darts are pulled (the board's throws drop to zero) or with Next player. Undo takes back the last visit. A tap on a dart corrects it.
 
-The game state lives in the browser's `localStorage`, so it belongs to one screen.
+The card's own game lives in the browser's `localStorage`, so it belongs to one screen; the integration's game is shared by every screen and card.
 
 ## Tests
 

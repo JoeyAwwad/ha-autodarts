@@ -54,6 +54,8 @@ const BOT_LEVELS = [["Off", 0], ["Easy", 30], ["Club", 50], ["Pub pro", 70], ["P
 const PLAYER_COLORS = ["#3b82f6", "#f43f5e", "#22c55e", "#f59e0b", "#a855f7", "#06b6d4", "#f97316", "#ec4899",
   "#84cc16", "#eab308", "#6366f1", "#14b8a6"];
 // Games the card scores itself take a whole party; the integration's games take up to four.
+// Wild Mouse is also the integration's own after 1.9.2: where it has it, the card hands it
+// a game of up to four and scores bigger parties, or every game on an older one, itself.
 const LOCAL_GAMES = new Set(["wild_mouse"]);
 const MAX_PLAYERS = 24, MAX_PLAYERS_INTEGRATION = 4;
 const maxPlayers = (game) => (LOCAL_GAMES.has(game) ? MAX_PLAYERS : MAX_PLAYERS_INTEGRATION);
@@ -379,6 +381,8 @@ function boardSvg(visit, throws = []) {
 // Three-in-a-bed the visit's total.
 const WM_NUMBERS = [20, 19, 18, 17, 16, 15, 25];
 const WM_LABEL = { 25: "Bull", D: "Doubles", T: "Triples", B: "3 in a bed" };
+// The integration's names of the extra Wild Mouse targets, as the card names them.
+const WM_TARGET = { doubles: "D", triples: "T", bed: "B" };
 
 class WildMouse {
   constructor(state) {
@@ -1079,6 +1083,13 @@ class AutodartsClassicCard extends HTMLElement {
     return this._st("sensor", "practice_target")?.attributes?.drill || this._st("sensor", "practice_remaining_score")?.attributes?.game || this._game();
   }
 
+  // Whether the integration plays Wild Mouse for these players: it offers the game (the
+  // releases after 1.9.2) and they are no more than it takes.
+  _nativeWildMouse(players = this._setup.players) {
+    const options = this._st("select", "practice_game")?.attributes?.options;
+    return Array.isArray(options) && options.includes("wild_mouse") && players.length <= MAX_PLAYERS_INTEGRATION;
+  }
+
   _isLobby() {
     return this._lobby ?? !(this._wm || this._game());
   }
@@ -1095,7 +1106,7 @@ class AutodartsClassicCard extends HTMLElement {
   async _start(setup = this._setup) {
     const g = setup.game;
     save("setup", setup);
-    if (g === "wild_mouse") {
+    if (g === "wild_mouse" && !this._nativeWildMouse(setup.players)) {
       if (this._game()) await this._call("select", "select_option", { entity_id: this._id("select", "practice_game"), option: "off" });
       this._wake();
       this._wm = WildMouse.create(setup.players.length ? setup.players : ["Player 1"], { legs: setup.legs, bed: setup.bed });
@@ -1110,10 +1121,11 @@ class AutodartsClassicCard extends HTMLElement {
     this._saveWm();
     // The integration plays up to four: the first four in the list.
     const data = { game: g, players: setup.players.length ? setup.players.slice(0, MAX_PLAYERS_INTEGRATION) : ["Player 1"] };
-    if (X01.has(g) || CRICKET.has(g)) {
+    if (X01.has(g) || CRICKET.has(g) || g === "wild_mouse") {
       data.legs = setup.legs;
       if (setup.bot) data.bot_level = setup.bot;
     }
+    if (g === "wild_mouse") data.three_in_a_bed = !!setup.bed;
     if (X01.has(g)) {
       data.double_out = setup.double_out;
       data.double_in = setup.double_in;
@@ -2106,29 +2118,37 @@ class AutodartsClassicCard extends HTMLElement {
   }
 
   // Wild Mouse moves to the next player a few seconds after the third dart, for boards whose
-  // takeout is not seen reliably. Any change to the visit starts the wait again.
-  _autoNext(wm) {
+  // takeout is not seen reliably. due: the visit is complete; key: the visit, so any change
+  // to it starts the wait again; go: moves on.
+  _autoNext(due, key, go) {
     const secs = this._autoNextS();
-    const due = secs > 0 && wm.visit.length >= 3 && wm.winner == null && wm.legWinner == null;
-    const key = due ? `${wm.leg}:${wm.current}:${wm.history.length}:${wm.visit.map((d) => d.seg).join()}` : null;
+    key = due && secs > 0 ? key : null;
     if (key === this._autoKey) return;
     clearTimeout(this._autoTimer);
     this._autoKey = key;
     this._autoTimer = null;
-    if (!due) return;
+    if (!key) return;
     this._autoTimer = setTimeout(() => {
-      if (this._wm !== wm || this._autoKey !== key) return;
+      if (this._autoKey !== key) return;
       this._autoKey = null;
+      go();
+    }, secs * 1000);
+  }
+
+  _autoNextLocal(wm) {
+    const due = wm.visit.length >= 3 && wm.winner == null && wm.legWinner == null;
+    this._autoNext(due, `wm:${wm.leg}:${wm.current}:${wm.history.length}:${wm.visit.map((d) => d.seg).join()}`, () => {
+      if (this._wm !== wm) return;
       wm.next();
       wm.seen = this._boardThrows || 0; // darts still in the board are not thrown again
       this._saveWm();
       this._render();
-    }, secs * 1000);
+    });
   }
 
   _turnTag(thrown) {
     const pips = [0, 1, 2].map((i) => `<i class="${i < thrown ? "used" : ""}"></i>`).join("");
-    const auto = thrown >= 3 && this._wm && this._autoKey ? this._autoNextS() : 0;
+    const auto = thrown >= 3 && this._autoKey ? this._autoNextS() : 0;
     const text = auto ? `Next player in ${auto} s` : thrown >= 3 ? "Pull your darts" : `Throwing · dart ${thrown + 1} of 3`;
     return `<div class="turn-tag ${auto ? "auto" : ""}" style="${auto ? `--auto:${auto}s` : ""}"><span>${text}</span><span class="pips" aria-label="${3 - Math.min(thrown, 3)} darts left">${pips}</span></div>`;
   }
@@ -2162,6 +2182,7 @@ class AutodartsClassicCard extends HTMLElement {
   // target to hit next and the progress through the drill.
   _renderDrill(target, d) {
     this._pointsGame = false;
+    this._autoNext(false);
     this._stage.classList.remove("cricket-mode");
     const game = d.drill || this._game();
     const visit = Array.isArray(d.visit) ? d.visit : [];
@@ -2210,7 +2231,7 @@ class AutodartsClassicCard extends HTMLElement {
   _renderWildMouse() {
     const wm = this._wm;
     this._pointsGame = true;
-    this._autoNext(wm);
+    this._autoNextLocal(wm);
     const label = (t) => (t === 25 ? "Bull" : t === "D" ? "Dbl" : t === "T" ? "Trp" : t === "B" ? "3-Bed" : t);
     const legs = wm.legsToWin > 1;
     const cards = wm.players
@@ -2288,7 +2309,10 @@ class AutodartsClassicCard extends HTMLElement {
     const tgt = this._st("sensor", "practice_target");
     if (tgt?.attributes?.drill) return this._renderDrill(tgt.state, tgt.attributes);
     const a = this._st("sensor", "practice_remaining_score")?.attributes || {};
-    const kind = X01.has(String(a.game)) ? "x01" : CRICKET.has(a.game) ? "cricket" : "other";
+    const kind = X01.has(String(a.game)) ? "x01" : CRICKET.has(a.game) || a.game === "wild_mouse" ? "cricket" : "other";
+    // The integration's Wild Mouse: its targets follow the numbers, and every dart says what it counted for.
+    const wildMouse = a.game === "wild_mouse";
+    const extraTargets = wildMouse && Array.isArray(a.targets) ? a.targets : [];
     this._pointsGame = kind !== "x01" && a.game !== "golf" && a.game !== "killer";
     const visit = Array.isArray(a.visit) ? a.visit : [];
     const visitTotal = visit.reduce((t, s) => t + segmentScore(s), 0);
@@ -2298,8 +2322,12 @@ class AutodartsClassicCard extends HTMLElement {
     const legsToWin = a.legs_to_win || 1;
     const setsToWin = a.sets_to_win || 1;
     const winner = a.winner != null ? scores.find((p) => p.player === a.winner) : null;
+    this._autoNext(wildMouse && visit.length >= 3 && !winner, `ha:${a.player}:${a.round}:${scores.map((p) => `${p.sets ?? 0}.${p.legs ?? 0}`).join()}:${visit.join()}`,
+      () => this._call("autodarts", "next_player"));
 
     const facts = [];
+    if (wildMouse) facts.push("Cricket + doubles & triples");
+    if (extraTargets.includes("bed")) facts.push("3 in a bed");
     if (kind === "x01") facts.push(`${a.double_in ? "Double in · " : ""}${a.double_out ? "Double out" : "Single out"}`);
     if (legsToWin > 1 || setsToWin > 1) facts.push(setsToWin > 1 ? `First to ${setsToWin} sets` : `First to ${legsToWin} legs`);
     if (a.round != null) facts.push(`Round ${a.round}${a.rounds ? ` of ${a.rounds}` : ""}`);
@@ -2333,19 +2361,31 @@ class AutodartsClassicCard extends HTMLElement {
     };
     const current = scores.findIndex((p) => p.player === a.player);
 
-    const slots = this._slots(visit);
+    const counted = Array.isArray(a.counted) ? a.counted : [];
+    const slots = wildMouse
+      ? this._slots(visit, (s, i) => {
+        const t = counted[i];
+        const name = t == null ? null : WM_LABEL[WM_TARGET[t] ?? t] || t;
+        return { text: name == null ? "no score" : `→ ${name}`, miss: name == null };
+      })
+      : this._slots(visit);
 
     const hint =
       a.bust ? `<div class="banner bust">Bust</div>` :
       kind === "x01" && checkout && checkout !== "unknown" ? `<div class="banner">Checkout <b>${esc(checkout)}</b></div>` :
       a.phase === "choose" ? `<div class="banner">Throw to pick your number</div>` :
+      wildMouse && a.bed ? `<div class="banner">Three in a bed!</div>` :
       kind !== "x01" && target && target !== "unknown" ? `<div class="banner">Aim for <b>${esc(target)}</b></div>` : "";
 
     const game = a.game || this._game();
     this._stage.classList.toggle("cricket-mode", kind === "cricket");
     const board = kind === "cricket"
       ? chalkboard(
-        (a.numbers || []).map((n, i) => ({ key: n, label: n === 25 ? "Bull" : n, marks: scores.map((p) => (p.marks || [])[i] || 0) })),
+        [...(a.numbers || []), ...extraTargets].map((n, i) => {
+          const t = WM_TARGET[n];
+          const label = n === 25 ? "Bull" : t === "D" ? "Dbl" : t === "T" ? "Trp" : t === "B" ? "3-Bed" : n;
+          return { key: t ?? n, label, extra: !!t, marks: scores.map((p) => (p.marks || [])[i] || 0) };
+        }),
         scores.map((p) => p.name || `Player ${p.player}`),
         winner ? -1 : current,
         this._colors,
@@ -2372,6 +2412,7 @@ class AutodartsClassicCard extends HTMLElement {
       turnName: scores[current]?.name, legs: scores.map((p) => `${p.sets ?? 0}.${p.legs ?? 0}`).join(),
       remaining: scores[current]?.remaining, requires: !!checkout && checkout !== "unknown",
       shield: kind === "cricket" ? this._deadNumber(visit[visit.length - 1], a.numbers || [], scores) : null,
+      bed: wildMouse && !!a.bed,
     });
   }
 
@@ -2417,17 +2458,19 @@ class AutodartsClassicCard extends HTMLElement {
     const toggle = (act, label, on) => `<button class="toggle ${on ? "on" : ""}" data-act="${act}"><i></i>${label}</button>`;
 
     let options = "";
-    if (X01.has(g) || CRICKET.has(g)) {
+    if (X01.has(g) || CRICKET.has(g) || g === "wild_mouse") {
       options += `<div class="opt"><label>Legs to win</label>${seg("legs", LEGS.map((n) => [n, n]), s.legs)}</div>`;
-      options += `<div class="opt"><label>Play the bot</label>${seg("bot", BOT_LEVELS, s.bot || 0)}</div>`;
+      // The card's own Wild Mouse has no bot.
+      if (g !== "wild_mouse" || this._nativeWildMouse()) options += `<div class="opt"><label>Play the bot</label>${seg("bot", BOT_LEVELS, s.bot || 0)}</div>`;
     }
     if (X01.has(g)) options += `<div class="opt"><label>Rules</label><div class="toggles">${toggle("double_out", "Double out", s.double_out)}${toggle("double_in", "Double in", s.double_in)}</div></div>`;
     if (g === "golf") options += `<div class="opt"><label>Holes</label>${seg("holes", [["9", "9"], ["18", "18"]], s.holes)}</div>`;
     if (g === "wild_mouse") {
-      options += `<div class="opt"><label>Legs to win</label>${seg("legs", LEGS.map((n) => [n, n]), s.legs)}</div>`;
       options += `<div class="opt"><label>Extra target</label><div class="toggles">${toggle("bed", "Three in a bed", s.bed)}</div></div>`;
       options += `<div class="opt"><label>Next player after three darts</label>${seg("auto_next", [["When darts are pulled", 0], ["3 s", 3], ["5 s", 5], ["10 s", 10]], this._autoNextS())}</div>`;
       options += `<p class="note">Close 20–15, bull, 3 doubles and 3 triples. A double or triple on an open number counts for the number first.</p>`;
+      const offered = (this._st("select", "practice_game")?.attributes?.options || []).includes("wild_mouse");
+      if (offered && !this._nativeWildMouse()) options += `<p class="note">More than ${MAX_PLAYERS_INTEGRATION} players: this screen scores the game itself, without the bot and the statistics of Home Assistant.</p>`;
     }
     if (TRAINING.has(g)) options += `<p class="note">Training game: best played alone.</p>`;
 
