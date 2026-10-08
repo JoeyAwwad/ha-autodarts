@@ -62,9 +62,9 @@ test("pictures: a booth photo, the avatars option, a Home Assistant person, else
   localStorage.clear();
   const s = states([], { game: "off", extra: { "person.sam": { entity_id: "person.sam", state: "home", attributes: { friendly_name: "Sam", entity_picture: "/api/image/serve/abc/512x512" }, last_updated: "1" } } });
   const { el } = mount(s, { avatars: { alex: "/local/darts/alex.png", evil: "javascript:alert(1)" } });
-  localStorage.setItem("autodarts-classic:photos", JSON.stringify({ Joey: PIXEL }));
+  localStorage.setItem("autodarts-classic:photos", JSON.stringify({ Robin: PIXEL }));
   el._photos = null;
-  el._setup.players = ["Joey", "Sam", "Alex", "Evil Kid"];
+  el._setup.players = ["Robin", "Sam", "Alex", "Evil Kid"];
   el._render();
   const pics = [...el.shadowRoot.querySelectorAll(".plist .pav")];
   assert.equal(pics[0].getAttribute("src"), PIXEL);
@@ -78,9 +78,9 @@ test("pictures: a booth photo, the avatars option, a Home Assistant person, else
 
 test("the photos show on the score cards and the result screen", () => {
   const { el, $ } = lobby();
-  localStorage.setItem("autodarts-classic:photos", JSON.stringify({ Joey: PIXEL }));
+  localStorage.setItem("autodarts-classic:photos", JSON.stringify({ Robin: PIXEL }));
   el._photos = null;
-  el._setup.players = ["Joey", "Sam"];
+  el._setup.players = ["Robin", "Sam"];
   $('[data-act="game"][data-value="wild_mouse"]').click();
   $('[data-act="start"]').click();
   assert.equal($(".player img.pav").getAttribute("src"), PIXEL);
@@ -88,8 +88,8 @@ test("the photos show on the score cards and the result screen", () => {
 
 test("the booth without a webcam explains why and offers a picture from a file", async () => {
   const { el, $ } = lobby();
-  el._setup.players = ["Joey"]; el._render();
-  $('[data-act="photo"][data-value="Joey"]').click();
+  el._setup.players = ["Robin"]; el._render();
+  $('[data-act="photo"][data-value="Robin"]').click();
   await settle();
   assert.ok($(".booth-layer"));
   assert.match($(".booth-msg").textContent, /localhost|webcam/i);
@@ -106,20 +106,20 @@ test("the booth uses the webcam and frees it again on close", async () => {
   Object.defineProperty(window.HTMLMediaElement.prototype, "srcObject", { set() {}, get() { return null; }, configurable: true });
   try {
     const { el, $ } = lobby();
-    el._setup.players = ["Joey"]; el._render();
-    $('[data-act="photo"][data-value="Joey"]').click();
+    el._setup.players = ["Robin"]; el._render();
+    $('[data-act="photo"][data-value="Robin"]').click();
     await settle(); await settle();
     assert.equal(el._booth.stream, stream);
     assert.equal($('[data-booth="snap"]').hidden, false);
     el._booth.useShot(PIXEL);
     $('[data-booth="keep"]').click();
     assert.equal(stopped, 1, "the camera is released");
-    assert.equal(JSON.parse(localStorage.getItem("autodarts-classic:photos")).Joey, PIXEL);
+    assert.equal(JSON.parse(localStorage.getItem("autodarts-classic:photos")).Robin, PIXEL);
     assert.equal($(".plist img.pav").getAttribute("src"), PIXEL);
-    $('[data-act="photo"][data-value="Joey"]').click();
+    $('[data-act="photo"][data-value="Robin"]').click();
     await settle(); await settle();
     $('[data-booth="remove"]').click();
-    assert.equal(JSON.parse(localStorage.getItem("autodarts-classic:photos")).Joey, undefined);
+    assert.equal(JSON.parse(localStorage.getItem("autodarts-classic:photos")).Robin, undefined);
   } finally {
     delete globalThis.navigator.mediaDevices;
   }

@@ -21,7 +21,7 @@ const written = (calls) => Object.fromEntries(calls.filter((c) => c[0] === "inpu
 function wildMouse(config = { ha_sync: true }) {
   const m = mount(states([], { game: "off", extra: helpers() }), config);
   m.el._sfx.play = () => {}; m.el._caller.say = () => {};
-  m.el._setup.players = ["Joey", "Sam"];
+  m.el._setup.players = ["Robin", "Sam"];
   m.$('[data-act="game"][data-value="wild_mouse"]').click();
   m.$('[data-act="start"]').click();
   return m;
@@ -30,8 +30,8 @@ function wildMouse(config = { ha_sync: true }) {
 test("the screen writes its game to the helpers, and only what changed", () => {
   const m = wildMouse();
   let w = written(m.calls);
-  assert.equal(w.status, "playing"); assert.equal(w.game, "Wild Mouse"); assert.equal(w.player, "Joey");
-  assert.equal(w.scores, "Joey 0 · Sam 0");
+  assert.equal(w.status, "playing"); assert.equal(w.game, "Wild Mouse"); assert.equal(w.player, "Robin");
+  assert.equal(w.scores, "Robin 0 · Sam 0");
   m.calls.length = 0;
   m.el._wm.dart("T20"); m.el._render();
   w = written(m.calls);

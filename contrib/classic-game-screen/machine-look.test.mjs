@@ -45,20 +45,20 @@ test("the result screen ranks the players with their numbers", () => {
   const s = states([]);
   s[`sensor.${P}_practice_remaining_score`].attributes = {
     game: "501", player: 1, winner: 2, legs_to_win: 3, visit: [],
-    scores: [{ player: 1, name: "Joey", remaining: 40, legs: 2, average: 70.4 }, { player: 2, name: "Sam", remaining: 0, legs: 3, average: 66.1 }],
+    scores: [{ player: 1, name: "Robin", remaining: 40, legs: 2, average: 70.4 }, { player: 2, name: "Sam", remaining: 0, legs: 3, average: 66.1 }],
   };
   const { $, $$ } = mount(s);
   assert.equal($(".gs-name").textContent, "Sam");
   const rows = $$(".res-row");
   assert.equal(rows.length, 2);
   assert.match(rows[0].textContent, /Sam[\s\S]*3[\s\S]*legs[\s\S]*66\.1[\s\S]*0[\s\S]*left/);
-  assert.match(rows[1].textContent, /Joey[\s\S]*70\.4[\s\S]*40/);
+  assert.match(rows[1].textContent, /Robin[\s\S]*70\.4[\s\S]*40/);
   assert.ok($('.gameshot [data-act="rematch"]') && $('.gameshot [data-act="new"]'));
 });
 
 test("Wild Mouse shows marks per round and ends on the result screen", async () => {
   const { el, $, $$ } = mount(states([], { game: "off" }));
-  el._setup.players = ["Joey", "Sam"];
+  el._setup.players = ["Robin", "Sam"];
   $('[data-act="game"][data-value="wild_mouse"]').click();
   $('[data-act="start"]').click();
   const w = el._wm;
@@ -69,6 +69,6 @@ test("Wild Mouse shows marks per round and ends on the result screen", async () 
   for (const n of [19, 18, 17, 16, 15]) { v("S1"); v("T" + n); }
   v("S1"); v("BULL", "S25", "D1"); v("S1"); v("D2", "D3", "T1"); v("S1"); w.dart("T2"); w.dart("T3");
   el._render();
-  assert.equal($(".gs-name").textContent, "Joey");
-  assert.match($$(".res-row")[0].textContent, /Joey[\s\S]*MPR[\s\S]*20[\s\S]*points/);
+  assert.equal($(".gs-name").textContent, "Robin");
+  assert.match($$(".res-row")[0].textContent, /Robin[\s\S]*MPR[\s\S]*20[\s\S]*points/);
 });
