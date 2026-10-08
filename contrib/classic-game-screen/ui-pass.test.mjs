@@ -54,7 +54,7 @@ test("up_next: false keeps the splash away, and a solo game never has one", () =
 test("Wild Mouse shows who is up next after the takeout", () => {
   const m = mount(states([], { game: "off" }));
   m.el._sfx.play = () => {}; m.el._caller.say = () => {};
-  m.el._setup.players = ["Robin", "Sam"];
+  m.el._setup.players = ["Joey", "Sam"];
   m.$('[data-act="game"][data-value="wild_mouse"]').click();
   m.$('[data-act="start"]').click();
   m.el._wm.dart("S1"); m.el._render();

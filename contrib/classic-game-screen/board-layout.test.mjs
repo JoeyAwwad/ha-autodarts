@@ -5,7 +5,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { states, mount } from "./dom-helpers.mjs";
 
-function start(game, players = ["Robin", "Sam"]) {
+function start(game, players = ["Joey", "Sam"]) {
   const m = mount(states([], { game: "off" }));
   m.el._sfx.play = () => {}; m.el._caller.say = () => {};
   m.el._setup.players = players;
@@ -28,8 +28,8 @@ test("games without a board of their own keep the normal layout", () => {
   assert.equal(stage(m).classList.contains("board-mode"), false);
 });
 
-test("Snakes & Ladders draws all 50 squares with their numbers, a token per player and the roll key", () => {
-  const m = start("snakes", ["Robin", "Sam", "Alex"]);
+test("Ladder Rush draws all 50 squares with their numbers, a token per player and the roll key", () => {
+  const m = start("snakes", ["Joey", "Sam", "Alex"]);
   const cells = m.$$(".slgrid .slc");
   assert.equal(cells.length, 50);
   assert.deepEqual(cells.map((c) => Number(c.textContent)).sort((a, b) => a - b), Array.from({ length: 50 }, (_, i) => i + 1));
@@ -42,7 +42,7 @@ test("Snakes & Ladders draws all 50 squares with their numbers, a token per play
   assert.equal(m.$$(".slc.down").length, 5);
 });
 
-test("Snakes & Ladders lights the thrower's square and moves the token there", () => {
+test("Ladder Rush lights the thrower's square and moves the token there", () => {
   const m = start("snakes");
   m.el._wm.dart("T1"); m.el._render(); // a treble moves 3
   const lit = m.$$(".slc.cur");
@@ -77,7 +77,7 @@ test("games that do not score points hide the visit total; points games keep it"
 test("target strips wrap into rows for few players and stay on one row for many", () => {
   const rows = (m) => Number(/--rows:(\d+)/.exec(m.$(".gpanel.seqs").getAttribute("style"))[1]);
   const cols = (m) => Number(/--cols:(\d+)/.exec(m.$(".gpanel.seqs").getAttribute("style"))[1]);
-  const solo = start("atc_lite", ["Robin"]);
+  const solo = start("atc_lite", ["Joey"]);
   assert.ok(rows(solo) >= 3);
   assert.ok(rows(solo) * cols(solo) >= 21);
   const many = start("atc_lite", ["A", "B", "C", "D", "E", "F", "G", "H"]);

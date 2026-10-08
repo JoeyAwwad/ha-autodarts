@@ -12,7 +12,7 @@ for (const game of ["derby", "killer_venue", "fight", "conqueror", "targets", "s
   test(`${game}: the board's darts count, and pulling them ends the visit`, () => {
     const m = mount(states([], { game: "off" }));
     m.el._sfx.play = () => {}; m.el._caller.say = () => {};
-    m.el._setup.players = ["Robin", "Sam", "Alex"];
+    m.el._setup.players = ["Joey", "Sam", "Alex"];
     m.$(`[data-act="game"][data-value="${game}"]`).click();
     m.$('[data-act="start"]').click();
     assert.ok(m.el._ws, "the card listens to the board");

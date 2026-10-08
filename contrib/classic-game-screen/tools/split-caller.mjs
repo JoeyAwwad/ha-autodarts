@@ -5,7 +5,7 @@
 //   node contrib/classic-game-screen/tools/split-caller.mjs numbers.wav [out-dir]
 //   node contrib/classic-game-screen/tools/split-caller.mjs take2.m4a out --from 100 --to 180
 //   node contrib/classic-game-screen/tools/split-caller.mjs calls.wav out --lines calls
-//   node contrib/classic-game-screen/tools/split-caller.mjs names.wav out --lines name_robin,name_sam
+//   node contrib/classic-game-screen/tools/split-caller.mjs names.wav out --lines name_joey,name_sam
 //
 // Options: --from / --to (numbers, default 0 and 180), --lines calls | a,b,c, --noise -35
 // (dB: quieter than this is a pause), --gap 0.35 (seconds of quiet between two lines),

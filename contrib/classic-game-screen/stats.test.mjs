@@ -15,7 +15,7 @@ const { groupingMm } = ctx.K;
 
 const dart = (name, x, y) => ({ segment: { name }, coords: { x, y } });
 const send = (m, throws) => m.el._ws.onmessage({ data: JSON.stringify({ type: "state", data: { status: "Throw", throws } }) });
-function start(game, players = ["Robin", "Sam"], config = {}, setup = {}) {
+function start(game, players = ["Joey", "Sam"], config = {}, setup = {}) {
   const m = mount(states([], { game: "off" }), config);
   m.el._sfx.play = () => {}; m.el._caller.say = () => {};
   Object.assign(m.el._setup, { players, ...setup });
@@ -34,18 +34,18 @@ test("grouping: the mean distance of a visit's darts from their middle, in milli
 
 test("the thrower's earlier darts glow on the drawn board; heat: false turns it off", () => {
   const m = start("x01_party");
-  visit3(m, [dart("T20", 0, 0.6), dart("T20", 0.01, 0.61), dart("S20", 0.02, 0.8)]); // Robin
+  visit3(m, [dart("T20", 0, 0.6), dart("T20", 0.01, 0.61), dart("S20", 0.02, 0.8)]); // Joey
   visit3(m, [dart("S5", -0.2, 0.7)]); // Sam
-  assert.equal(m.el._stats().spots.Robin.length, 3);
+  assert.equal(m.el._stats().spots.Joey.length, 3);
   assert.equal(m.el._stats().spots.Sam.length, 1);
-  assert.equal(m.$$(".virtual .heat").length, 3, "Robin's three darts under his next visit");
-  const off = start("x01_party", ["Robin", "Sam"], { heat: false });
+  assert.equal(m.$$(".virtual .heat").length, 3, "Joey's three darts under his next visit");
+  const off = start("x01_party", ["Joey", "Sam"], { heat: false });
   visit3(off, [dart("T20", 0, 0.6)]); visit3(off, [dart("S5", -0.2, 0.7)]);
   assert.equal(off.$$(".virtual .heat").length, 0);
 });
 
 test("the game shot screen shows each player's darts and grouping, and Party X01's score chart", () => {
-  const m = start("x01_party", ["Robin", "Sam"], {}, { start: 301 });
+  const m = start("x01_party", ["Joey", "Sam"], {}, { start: 301 });
   visit3(m, [dart("T20", 0, 0.6), dart("T20", 0.01, 0.6), dart("T20", 0.02, 0.61)]); // 121
   visit3(m, [dart("S1", 0.3, 0.9)]);
   visit3(m, [dart("T20", 0, 0.6), dart("T19", -0.2, -0.57), dart("D2", 0.9, 0.3)]); // 121 - 60 - 57 - 4 = 0
@@ -54,7 +54,7 @@ test("the game shot screen shows each player's darts and grouping, and Party X01
   assert.ok(rows[0].querySelector(".mini-board"));
   assert.match(rows[0].textContent, /\d+ mm\s*grouping/);
   assert.ok(m.$(".score-chart polyline"));
-  assert.match(m.$(".chart-key").textContent, /Robin[\s\S]*Sam/);
+  assert.match(m.$(".chart-key").textContent, /Joey[\s\S]*Sam/);
 });
 
 test("the integration's X01 chart follows the remaining, and an undo takes a visit back", () => {
@@ -78,7 +78,7 @@ test("Party X01 gets the X01 calls: a 180 is celebrated and kept for the gallery
   assert.ok(said.some((l) => /One hundred and eighty/.test(l)), said.join(" | "));
   const kept = JSON.parse(localStorage.getItem("autodarts-classic:moments") || "[]");
   assert.equal(kept.at(-1).kind, "180");
-  assert.equal(kept.at(-1).name, "Robin");
+  assert.equal(kept.at(-1).name, "Joey");
   assert.equal(kept.at(-1).darts.length, 3);
 });
 
@@ -88,7 +88,7 @@ test("the attract screen shows the moments gallery", () => {
   m.el._act("end"); m.el._act("end");
   m.el._active = 0; m.el._idleTick();
   const figs = m.el._idleSlides().join("");
-  assert.match(figs, /Robin · 180/);
+  assert.match(figs, /Joey · 180/);
 });
 
 test("the darts of the leg survive a reload of the page", () => {
@@ -99,5 +99,5 @@ test("the darts of the leg survive a reload of the page", () => {
   document.body.appendChild(again);
   again.hass = { states: states([], { game: "off" }), devices: {}, callService: async () => {} };
   assert.equal(again._wm.kind, "x01_party", "the game comes back");
-  assert.equal(again._stats().spots.Robin.length, 3, "and so do its darts");
+  assert.equal(again._stats().spots.Joey.length, 3, "and so do its darts");
 });

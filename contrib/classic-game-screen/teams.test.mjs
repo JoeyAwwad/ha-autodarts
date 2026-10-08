@@ -37,21 +37,21 @@ test("teams from the list: pairs in order, an odd one joins the last pair, two h
 });
 
 test("a team plays as one: its members take turns visit by visit, also through undo", () => {
-  const m = start(lobby(["Robin", "Sam", "Alex", "Mia"], { teams: "pairs" }), "x01_party");
+  const m = start(lobby(["Joey", "Sam", "Alex", "Mia"], { teams: "pairs" }), "x01_party");
   const g = m.el._wm;
-  assert.deepEqual(g.players.map((p) => p.name), ["Robin & Sam", "Alex & Mia"]);
-  assert.match(m.$(".player.active .turn-tag").textContent, /Robin · dart 1 of 3/);
-  g.dart("T20"); g.next(); // Robin
+  assert.deepEqual(g.players.map((p) => p.name), ["Joey & Sam", "Alex & Mia"]);
+  assert.match(m.$(".player.active .turn-tag").textContent, /Joey · dart 1 of 3/);
+  g.dart("T20"); g.next(); // Joey
   g.dart("T20"); g.next(); // Alex
   m.el._render();
   assert.match(m.$(".player.active .turn-tag").textContent, /Sam · dart 1 of 3/);
   g.undo(); g.undo();
   m.el._render();
-  assert.match(m.$(".player.active .turn-tag").textContent, /Robin/);
+  assert.match(m.$(".player.active .turn-tag").textContent, /Joey/);
 });
 
 test("teams also take turns in the cricket games, and keep their members over a new leg", () => {
-  const m = start(lobby(["Robin", "Sam", "Alex", "Mia"], { teams: "pairs", legs: 2 }), "cricket_party");
+  const m = start(lobby(["Joey", "Sam", "Alex", "Mia"], { teams: "pairs", legs: 2 }), "cricket_party");
   const g = m.el._wm;
   g.next(); g.next();
   assert.equal(g.players[0].mi, 1);
@@ -64,27 +64,27 @@ test("a team's place counts for each member on the Top List", () => {
   const t = sessionTable([{ names: ["A & B", "C & D"], members: [["A", "B"], ["C", "D"]], winners: ["A & B"] }]);
   const pts = Object.fromEntries(t.map((r) => [r.name, r.pts]));
   assert.deepEqual(pts, { A: 3, B: 3, C: 2, D: 2 });
-  const m = start(lobby(["Robin", "Sam", "Alex", "Mia"], { teams: "pairs" }), "x01_party");
+  const m = start(lobby(["Joey", "Sam", "Alex", "Mia"], { teams: "pairs" }), "x01_party");
   m.el._wm.winLeg(1); m.el._render();
-  assert.deepEqual(plain(m.el._session().games[0].members), [["Alex", "Mia"], ["Robin", "Sam"]]);
+  assert.deepEqual(plain(m.el._session().games[0].members), [["Alex", "Mia"], ["Joey", "Sam"]]);
 });
 
 test("the lobby shows the teams, and counts teams for the players a game needs", () => {
-  const m = lobby(["Robin", "Sam", "Alex", "Mia"], { teams: "pairs", game: "scram" });
+  const m = lobby(["Joey", "Sam", "Alex", "Mia"], { teams: "pairs", game: "scram" });
   m.el._act("new");
   assert.equal(m.$$(".team-tag").length, 4);
   assert.equal(m.$('[data-act="start"]').disabled, false, "two teams can play Scram");
-  const one = lobby(["Robin", "Sam", "Alex"], { teams: "two", game: "lives" });
+  const one = lobby(["Joey", "Sam", "Alex"], { teams: "two", game: "lives" });
   one.el._act("new");
   assert.equal(one.$('[data-act="start"]').disabled, false);
 });
 
 test("throw lines: a tap changes a player's line; rookies and regulars start ahead with the bonus", () => {
-  const m = lobby(["Robin", "Sam", "Alex"], { game: "x01_party", start: 501 });
+  const m = lobby(["Joey", "Sam", "Alex"], { game: "x01_party", start: 501 });
   m.el._act("new");
-  m.$('[data-act="level"][data-value="0"]').click(); // Robin: rookie
+  m.$('[data-act="level"][data-value="0"]').click(); // Joey: rookie
   m.$('[data-act="level"][data-value="2"]').click(); m.$('[data-act="level"][data-value="2"]').click(); // Alex: pro
-  assert.equal(m.el._setup.levels.Robin, "rookie");
+  assert.equal(m.el._setup.levels.Joey, "rookie");
   assert.equal(m.el._setup.levels.Alex, "pro");
   m.$('[data-act="handicap"]').click();
   m.$('[data-act="start"]').click();
@@ -106,15 +106,15 @@ test("head starts where a game has a start to give", () => {
 });
 
 test("sudden death settles a dead heat: nearest the bullseye wins, and takes the game on the Top List", () => {
-  const m = start(lobby(["Robin", "Sam", "Alex"]), "targets");
+  const m = start(lobby(["Joey", "Sam", "Alex"]), "targets");
   const g = m.el._wm;
   g.winShared([0, 2]); m.el._render();
   assert.match(m.$(".gameshot").textContent, /Dead heat/);
   m.$('[data-act="sudden"]').click();
   const bo = m.el._wm;
   assert.equal(bo.kind, "bull_off");
-  assert.deepEqual(bo.players.map((p) => p.name), ["Robin", "Alex"]);
-  bo.dart("25"); bo.next(); // Robin: outer bull
+  assert.deepEqual(bo.players.map((p) => p.name), ["Joey", "Alex"]);
+  bo.dart("25"); bo.next(); // Joey: outer bull
   bo.dart("Bull"); bo.next(); // Alex: bullseye
   m.el._render();
   assert.equal(bo.winner, 1);
@@ -122,7 +122,7 @@ test("sudden death settles a dead heat: nearest the bullseye wins, and takes the
   assert.deepEqual([...e.winners], ["Alex"]);
   assert.equal(e.names[0], "Alex");
   const pts = Object.fromEntries(sessionTable(m.el._session().games).map((r) => [r.name, r.pts]));
-  assert.deepEqual(pts, { Alex: 3, Robin: 2, Sam: 1 });
+  assert.deepEqual(pts, { Alex: 3, Joey: 2, Sam: 1 });
 });
 
 test("sudden death: level darts throw again, the board's positions decide when it knows them", () => {
@@ -137,24 +137,24 @@ test("sudden death: level darts throw again, the board's positions decide when i
 });
 
 test("the trophies of the night, and the highlights through a notify service", async () => {
-  const m = start(lobby(["Robin", "Sam"]), "x01_party");
+  const m = start(lobby(["Joey", "Sam"]), "x01_party");
   m.el._wm.winLeg(0); m.el._render();
-  m.el._act("rematch"); m.el._wm.winLeg(1); m.el._render(); // the order turns: Robin is second now
+  m.el._act("rematch"); m.el._wm.winLeg(1); m.el._render(); // the order turns: Joey is second now
   m.el._act("rematch"); m.el._wm.winLeg(1); m.el._render(); // and Sam again
   m.el._act("new");
   m.$('[data-act="trophies"]').click();
   assert.ok(m.$(".trophies"));
-  assert.match(m.$(".tr-champ").textContent, /Robin\s*8 points · 2 wins/);
+  assert.match(m.$(".tr-champ").textContent, /Joey\s*8 points · 2 wins/);
   assert.match(m.$(".tr-podium").textContent, /2\s*S?\s*Sam\s*7 points/);
   assert.equal(m.$$(".tr-games li").length, 3);
   assert.equal(m.$('[data-act="send-highlights"]'), null, "no notify service configured");
-  const n = mount(states([], { game: "off" }), { notify: "notify.mobile_app_robin" });
+  const n = mount(states([], { game: "off" }), { notify: "notify.mobile_app_joey" });
   n.el._sess = m.el._session();
   n.el._act("trophies");
   n.$('[data-act="send-highlights"]').click();
   await new Promise((r) => setTimeout(r, 0));
   const call = n.calls.find((c) => c[0] === "notify");
-  assert.equal(call[1], "mobile_app_robin");
-  assert.match(call[2].title, /Robin wins the night/);
-  assert.match(call[2].message, /1\. Robin 8 pts \(2 wins\)\n2\. Sam 7 pts/);
+  assert.equal(call[1], "mobile_app_joey");
+  assert.match(call[2].title, /Joey wins the night/);
+  assert.match(call[2].message, /1\. Joey 8 pts \(2 wins\)\n2\. Sam 7 pts/);
 });

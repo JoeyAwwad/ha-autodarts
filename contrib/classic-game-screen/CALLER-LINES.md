@@ -12,7 +12,7 @@ read them with a pause between them and split the take with
 node contrib/classic-game-screen/tools/split-caller.mjs numbers.wav voice              # score_0 ... score_180
 node contrib/classic-game-screen/tools/split-caller.mjs take2.wav voice --from 100 --to 180
 node contrib/classic-game-screen/tools/split-caller.mjs calls.wav voice --lines calls   # the calls below, in order
-node contrib/classic-game-screen/tools/split-caller.mjs names.wav voice --lines name_robin,name_sam
+node contrib/classic-game-screen/tools/split-caller.mjs names.wav voice --lines name_joey,name_sam
 ```
 
 The tool refuses to write when the number of spoken parts differs from the number of lines,
@@ -45,9 +45,9 @@ Read in this order for `--lines calls`.
 | `doubles_closed` | Doubles closed! |
 | `triples_closed` | Triples closed! |
 | `bullseye` | Bullseye! (the card's games, and sudden death) |
-| `ladder` | Up the ladder! (Snakes & Ladders) |
-| `snake` | Snake! (Snakes & Ladders) |
-| `goal` | Goal! (Football) |
+| `ladder` | Up the ladder! (Ladder Rush) |
+| `snake` | Snake! (Ladder Rush) |
+| `goal` | Goal! (Bull & Goal) |
 | `killer` | Killer! (Killer Night) |
 | `shanghai` | Shanghai! (Party Shanghai) |
 | `black` | The black! (Snooker) |
@@ -56,7 +56,7 @@ Read in this order for `--lines calls`.
 ## Player names
 
 `name_<name>`: the name in lower case with spaces and other signs as `_`, for example
-`name_robin` or `name_mary_ann`. The caller says the name before "you require", after
+`name_joey` or `name_mary_ann`. The caller says the name before "you require", after
 "game shot" and after "up next".
 
 ## Moment pictures

@@ -61,7 +61,7 @@ test("a round limit ends a party game: the leader wins, level leaders share it",
 test("the lobby offers the round limit and the Shanghai options, and the bar counts the rounds", () => {
   const m = mount(states([], { game: "off" }));
   m.el._sfx.play = () => {}; m.el._caller.say = () => {};
-  m.el._setup.players = ["Robin", "Sam"];
+  m.el._setup.players = ["Joey", "Sam"];
   m.$('[data-act="game"][data-value="snakes"]').click();
   m.$('[data-act="round_cap"][data-value="10"]').click();
   m.$('[data-act="start"]').click();

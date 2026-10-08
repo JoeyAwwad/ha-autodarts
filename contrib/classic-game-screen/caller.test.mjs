@@ -33,7 +33,7 @@ test("the lines of a take: 0 to 180 by default, a range, the calls, or a list", 
   assert.equal(all[180], "score_180");
   assert.deepEqual(lineNames({ from: 100, to: 102 }), ["score_100", "score_101", "score_102"]);
   assert.deepEqual(lineNames({ lines: "calls" }), CALLS);
-  assert.deepEqual(lineNames({ lines: "name_robin, name_sam" }), ["name_robin", "name_sam"]);
+  assert.deepEqual(lineNames({ lines: "name_joey, name_sam" }), ["name_joey", "name_sam"]);
 });
 
 test("every line the card calls is a known call, and the checklist has every call", () => {
@@ -61,7 +61,7 @@ test("split-caller cuts a take into a file per line (with ffmpeg)", { skip: spaw
   fs.rmSync(dir, { recursive: true, force: true });
 });
 
-function start(game, players = ["Robin", "Sam"]) {
+function start(game, players = ["Joey", "Sam"]) {
   const m = mount(states([], { game: "off" }));
   m.el._sfx.play = () => {};
   const said = [];

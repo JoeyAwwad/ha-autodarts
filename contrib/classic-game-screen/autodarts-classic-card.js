@@ -46,7 +46,7 @@ const GROUPS = [
   { name: "Cricket", games: [
     ["cricket", "Cricket", "Close 15–20 and bull"], ["cut_throat", "Cut-Throat", "Points go to opponents"],
     ["tactics", "Tactics", "Cricket from 10 up"], ["wild_mouse", "Wild Mouse", "Cricket plus doubles & triples"],
-    ["mickey_mouse", "Mickey Mouse", "20–12, doubles, trebles, beds"], ["cricket_light", "Cricket Light", "Four random numbers"],
+    ["mickey_mouse", "Mickey Mouse", "20–12, doubles, trebles, beds"], ["cricket_light", "Quick Cricket", "Four random numbers"],
     ["cricket_party", "Party Cricket", "Cricket for 5 to 24"], ["cut_throat_party", "Party Cut-Throat", "Cut-Throat for 5 to 24"]] },
   { name: "Party", games: [
     ["killer", "Killer", "Become the killer, take lives"], ["shanghai", "Shanghai", "Single, double, triple"],
@@ -55,7 +55,7 @@ const GROUPS = [
     ["baseball", "Baseball", "Nine innings of runs"], ["count_up", "Count-Up", "Highest total wins"],
     ["gotcha", "Gotcha", "Exactly 301, knock them back"], ["scram", "Scram", "Stop them, then score"], ["lives", "Lives", "Beat the last visit"],
     ["hi_lo", "Hi-Lo", "Higher or lower?"], ["chase_dragon", "Chase the Dragon", "Trebles 10–20, then the bulls"],
-    ["football", "Football", "Bull for the ball, doubles score"], ["snooker", "Snooker", "Reds, colours, big breaks"]] },
+    ["football", "Bull & Goal", "Bull for the ball, doubles score"], ["snooker", "Snooker", "Reds, colours, big breaks"]] },
   { name: "Training", games: [
     ["around_the_clock", "Around the Clock", "1 to 20, then bull"], ["doubles", "Doubles", "Every double in turn"],
     ["checkout", "Checkout", "Random finishes"], ["bobs_27", "Bob's 27", "The doubles classic"],
@@ -65,12 +65,12 @@ const GROUPS = [
     ["atc_trebles", "Clock Trebles", "T1 to T20"], ["atc_lite", "Clock Lite", "Neighbours count"],
     ["hare_hounds", "Hare & Hounds", "Catch the hare"], ["doubles_ladder", "Doubles Ladder", "Up on a hit, down on a miss"]] },
   { name: "Arcade games", games: [
-    ["snakes", "Snakes & Ladders", "The ring is the dice"], ["derby", "Derby Dash", "Race your number home"],
-    ["tower", "Tower Takedown", "Knock 180 down to zero"], ["limbo", "Limbo", "How low can you go?"],
-    ["bull_hunt", "Bull Hunt", "Everything for the middle"], ["killer_venue", "Killer Night", "Bar rules, 12 rounds"],
-    ["fight", "Fight", "9 lives, your number heals"], ["conqueror", "Conqueror", "Take the board"],
-    ["targets", "Targets", "Blast the targets"], ["moon_landing", "Moon Landing", "200 down to touchdown"],
-    ["beer_tap", "Beer Tap", "Pour the first pint"]] },
+    ["snakes", "Ladder Rush", "The ring is the dice"], ["derby", "Derby Dash", "Race your number home"],
+    ["tower", "Tower Takedown", "Knock 180 down to zero"], ["limbo", "Under the Bar", "How low can you go?"],
+    ["bull_hunt", "Chasing Bullseye", "Everything for the middle"], ["killer_venue", "Killer Night", "Bar rules, 12 rounds"],
+    ["fight", "Nine Lives", "9 lives, your number heals"], ["conqueror", "Board Grab", "Take the board"],
+    ["targets", "Target Blast", "Blast the targets"], ["moon_landing", "Touchdown 200", "200 down to touchdown"],
+    ["beer_tap", "Pour the Pint", "Pour the first pint"]] },
 ];
 const GAME_NAME = Object.fromEntries(GROUPS.flatMap((g) => g.games.map(([id, name]) => [id, name])));
 // Party games that can be played to a round limit (the leader wins when the rounds are up).
@@ -380,7 +380,7 @@ Object.assign(RULES, {
   doubles_ladder: R2("1–24 players", "Climb the doubles.", ["Hit your double to go up to the next one.", "A visit without a hit takes you one down."], "The highest double reached in ten rounds."),
   shanghai_party: R2("1–24 players", "Score the most on the round's number; a Shanghai wins at once.", ["Round 1 is the 1s, round 2 the 2s and so on, 7 or 20 rounds.", "Only the round's number scores: a single its value, a double twice, a treble three times.", "Lite: the numbers either side count as a single of the round's number.", "A Shanghai (single, double and treble of the number in one visit) wins the game at once."], "The most points after the last round, or the first Shanghai."),
   bull_off: R2("The players who finished level", "Settle a dead heat: nearest to the bullseye wins.", ["Everybody throws one dart at the bullseye.", "The nearest dart wins: measured by the board when it knows where the dart sits, else by the bed (bullseye, outer bull, inner single, treble, outer single, double).", "Level again? Those players throw again."], "The dart nearest the middle."),
-  snakes: R2("2–24 players", "Snakes & Ladders with darts: first to square 50.", ["The ring you hit is your dice: bullseye 6, outer bull 5, inner single 4, treble 3, outer single 2, double 1, miss 0.", "Land on a ladder and climb it; land on a snake and slide down.", "You need the exact roll to land on 50 (you bounce back otherwise)."], "The first on 50."),
+  snakes: R2("2–24 players", "Snakes and ladders with darts: first to square 50.", ["The ring you hit is your dice: bullseye 6, outer bull 5, inner single 4, treble 3, outer single 2, double 1, miss 0.", "Land on a ladder and climb it; land on a snake and slide down.", "You need the exact roll to land on 50 (you bounce back otherwise)."], "The first on 50."),
   derby: R2("2–20 players", "A horse race: every player's racer runs on their own number.", ["Your number moves you on: single 1, double 2, treble 3.", "Another player's number pushes their racer back.", "Nine steps to the finish, at most eight rounds; the round is finished when somebody gets home."], "First home (a dead heat is shared), or furthest after eight rounds."),
   tower: R2("1–24 players", "Knock your tower of 180 down to exactly zero.", ["Every dart anywhere knocks off its score; no double needed.", "Going below zero is a bust.", "When somebody hits zero the round is finished, so everybody gets the same darts; a tie plays off from 60."], "The only one to reach zero in the round, or the play-off winner."),
   limbo: R2("2–24 players, 3 lives", "How low can you go?", ["The first player sets the bar: three darts under 60, every dart must score.", "Every next player must score lower than the bar.", "Matching or going over, or a dart that scores nothing, loses a life and resets the bar."], "The last player with a life left."),
@@ -571,7 +571,7 @@ const WM_TARGET = { doubles: "D", triples: "T", bed: "B" };
 
 // The same engine plays the cricket family the card scores itself: Mickey Mouse (20–12,
 // doubles, trebles, beds, bull), Cricket and Cut-Throat for any number of players, and
-// Cricket Light (four random numbers).
+// Quick Cricket (four random numbers).
 const CRICKET_KINDS = {
   wild_mouse: { numbers: WM_NUMBERS, extras: true },
   mickey_mouse: { numbers: [20, 19, 18, 17, 16, 15, 14, 13, 12, 25], extras: true, bed: true },
@@ -1494,7 +1494,7 @@ class LocalGame {
 // -- Countdowns and races --------------------------------------------------------------------------
 
 // X01 for any number of players, and its relatives: Tower Takedown (180, no double, equal
-// turns), Moon Landing (200, beginner may overshoot).
+// turns), Touchdown 200 (200, beginner may overshoot).
 class CountdownGame extends LocalGame {
   static player(o) {
     return { rem: Number(o.start) || 501, in: !o.doubleIn, scored: 0 };
@@ -1576,7 +1576,7 @@ class CountdownGame extends LocalGame {
       .sort((a, b) => (this.isWinner(b.i) - this.isWinner(a.i)) || (this.players[b.i].legs - this.players[a.i].legs) || (a.main - b.main));
   }
 
-  // Tower Takedown: a tower of blocks per player; Moon Landing: a lander coming down.
+  // Tower Takedown: a tower of blocks per player; Touchdown 200: a lander coming down.
   panel() {
     const start = Number(this.opts.start) || 180;
     if (this.kind === "tower") {
@@ -1624,7 +1624,7 @@ class GotchaGame extends LocalGame {
   panel() { return racePanel(this, (p) => p.total / (Number(this.opts.target) || 301)); }
 }
 
-// Beer Tap: every dart pours; the first full glass at the end of a round wins.
+// Pour the Pint: every dart pours; the first full glass at the end of a round wins.
 class BeerTapGame extends LocalGame {
   static player() { return { total: 0 }; }
   score(seg, me) {
@@ -1819,7 +1819,7 @@ class RandomCheckoutGame extends LocalGame {
 // -- Lives -----------------------------------------------------------------------------------------
 
 // 11 Lives (Legs): beat the visit before yours or lose a life. Hi-Lo: call higher or lower
-// before the visit. Limbo: stay under the bar.
+// before the visit. Under the Bar: stay under the bar.
 class LivesGame extends LocalGame {
   static player(o) { return { lives: Number(o.lives) || 3 }; }
   isOut(p) { return p.lives <= 0; }
@@ -1885,7 +1885,7 @@ class LivesGame extends LocalGame {
 }
 
 // Killer (bar rules: hit your own number three times to become a killer, no killing
-// yourself, 12 rounds with rising multipliers) and Fight (9 lives, your number heals).
+// yourself, 12 rounds with rising multipliers) and Nine Lives (9 lives, your number heals).
 // Lite counts the neighbouring numbers too.
 class KillerGame extends LocalGame {
   static tally = false;
@@ -1962,7 +1962,7 @@ function sectorOverlay(n, color, opacity = 0.4, strength = 0) {
 
 // -- Board games -----------------------------------------------------------------------------------
 
-// Snakes & Ladders: the ring is the dice (bull 6, outer bull 5, inner single 4, treble 3,
+// Ladder Rush: the ring is the dice (bull 6, outer bull 5, inner single 4, treble 3,
 // outer single 2, double 1); up the ladders, down the snakes, first to 50.
 // Ladders and snakes run up and down a column of the board, so they never cross it.
 const SNAKES_LADDERS = { 4: 17, 9: 32, 21: 40, 26: 35, 33: 48, 42: 19, 44: 24, 38: 3, 27: 14, 16: 5 };
@@ -2085,7 +2085,7 @@ class DerbyGame extends LocalGame {
   }
 }
 
-// Conqueror: claim the sectors next to yours, strengthen them, take the others'; the bull
+// Board Grab: claim the sectors next to yours, strengthen them, take the others'; the bull
 // makes you king for the visit (attack anywhere); taking a home sector takes it all.
 class ConquerorGame extends LocalGame {
   static tally = false;
@@ -2140,7 +2140,7 @@ class ConquerorGame extends LocalGame {
   }
 }
 
-// Targets: circles on the board take damage by how close darts land; a destroyed one
+// Target Blast: circles on the board take damage by how close darts land; a destroyed one
 // scores and a new one appears.
 class TargetsGame extends LocalGame {
   static player() { return { points: 0, kills: 0 }; }
@@ -2191,7 +2191,7 @@ class TargetsGame extends LocalGame {
 
 // -- Scoring games ---------------------------------------------------------------------------------
 
-// Bull Hunt: go for the middle. Bull +3, outer bull +2, inner single +1, treble −2, the rest
+// Chasing Bullseye: go for the middle. Bull +3, outer bull +2, inner single +1, treble −2, the rest
 // −1; six rounds, the last one double; three bullseyes win at once.
 class BullHuntGame extends LocalGame {
   static player() { return { points: 0, bulls: 0 }; }
@@ -2215,7 +2215,7 @@ class BullHuntGame extends LocalGame {
   banner() { return "Aim for the <b>bull</b>"; }
 }
 
-// Football: hit the bull to get the ball, then every double is a goal; first to five.
+// Bull & Goal: hit the bull to get the ball, then every double is a goal; first to five.
 class FootballGame extends LocalGame {
   static player() { return { goals: 0, ball: false }; }
   score(seg, me) {
@@ -4696,7 +4696,7 @@ class AutodartsClassicCard extends HTMLElement {
     const banner = g.legWinner != null && !over ? `Leg to ${esc(legName)}: pull the darts for leg ${g.leg + 1}` : g.banner();
     this._overlay = g.overlay();
     const panel = g.panel();
-    // A game with a board of its own (Snakes & Ladders, towers, lanes) gets the space:
+    // A game with a board of its own (Ladder Rush, towers, lanes) gets the space:
     // one-line player cards, like the cricket games.
     this._stage.classList.toggle("cricket-mode", !!panel);
     // On a wide screen the board takes the whole left side; the dartboard, the darts of
@@ -5359,7 +5359,7 @@ const CSS = `
   @keyframes pop { from { opacity: 0; transform: scale(1.05); } }
   .gs-undo { justify-self: center; margin-top: 18px; font-size: 0.95rem; opacity: 0.75; }
   /* Panels of the card-scored games: towers, landers, glasses, races, target strips, the
-     Snakes & Ladders board, derby lanes. They take the height the chalkboard takes in cricket. */
+     Ladder Rush board, derby lanes. They take the height the chalkboard takes in cricket. */
   .gpanel {
     flex: 1 1 0; min-height: clamp(120px, 26vh, 320px); display: flex; gap: 10px; padding: 10px; border-radius: 14px;
     background: rgba(0, 0, 0, 0.22); overflow: hidden;
@@ -5669,7 +5669,7 @@ const CSS = `
     .fact { display: none; }
   }
 
-  /* Board games on a wide screen (Snakes & Ladders, strips, lanes, towers), read from the
+  /* Board games on a wide screen (Ladder Rush, strips, lanes, towers), read from the
      oche 2 m away: the game's own board takes the whole left side under the players; the
      dartboard, the darts of the visit and the buttons share a column on the right. */
   .uic { width: 1.2em; height: 1.2em; vertical-align: -0.22em; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
@@ -5712,7 +5712,7 @@ const CSS = `
       width: max-content; max-width: calc(var(--side, 30vw) + 24px); white-space: normal; text-align: center; font-size: clamp(1.1rem, 3vh, 2.1rem);
     }
   }
-  /* Snakes & Ladders: the squares stretch to the panel (never much taller than wide); numbers
+  /* Ladder Rush: the squares stretch to the panel (never much taller than wide); numbers
      and tokens sit above the snakes and ladders, the current player's square is lit. */
   .gpanel.sl { flex-direction: column; justify-content: center; align-items: stretch; gap: clamp(6px, 1.2cqh, 14px); padding: clamp(6px, 1.2cqh, 14px); }
   .slwrap { position: relative; flex: 1 1 0; min-height: 0; display: flex; align-items: center; padding-left: 5.5%; }

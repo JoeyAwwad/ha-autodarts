@@ -20,7 +20,7 @@ A full-screen game screen for a TV or monitor at the board, in the style of play
   ![The result screen](images/result.png)
 - **Correct a dart** the board read wrong: tap it (every dart has a ✎) and pick the right bed. See [Correcting darts](#correcting-darts).
 - **Drawn dartboard** with a marker where each dart landed (from the board's `/api/events` coordinates). The camera picture is one tap away (warped straight-on with the calibration homography from `/api/system`).
-- **Made for the oche, 2 m away**: games with a board of their own (Snakes & Ladders, target strips, derby lanes, towers) give it the whole left side of a wide screen under slim player cards; the dartboard, the darts of the visit and Undo / Next share a column on the right.
+- **Made for the oche, 2 m away**: games with a board of their own (Ladder Rush, target strips, derby lanes, towers) give it the whole left side of a wide screen under slim player cards; the dartboard, the darts of the visit and Undo / Next share a column on the right.
 - **The night**: tonight's Top List (3, 2 and 1 points a game), an attract screen between games, teams, throw lines and handicaps, sudden death for a dead heat, and the trophies at the end. See *The night at the board*.
 - **Statistics**: the thrower's earlier darts glow on the drawn board, each player's darts and grouping on the game shot screen, the X01 score chart, and a gallery of 180s, big checkouts and game shots.
 - **Your voice**: record the caller and the sound effects on the screen, or cut one long take into files. See *Feedback, sound and the caller*.
@@ -55,7 +55,7 @@ replay_on: ["180", "game_shot"]   # optional: moments that get a thrower replay 
 auto_next: 0                   # optional: Wild Mouse moves on this many seconds after the third dart (0: when darts are pulled)
 ha_sync: false                 # optional: write the game to Home Assistant helpers and take controls from them
 avatars:                       # optional: pictures by player name, shared by every screen
-  Robin: /local/darts/robin.png
+  Joey: /local/darts/joey.png
 keys: true                     # keyboard, presenter and TV remote keys (see At the board)
 intro: true                    # the match intro with photos and head to head
 up_next: true                  # the Up next splash when the turn passes
@@ -65,7 +65,7 @@ idle: 180                      # seconds before the attract screen between games
 session_gap_h: 6               # hours without a game before tonight's Top List starts again
 heat: true                     # the thrower's earlier darts on the drawn board
 highlight_photo: true          # the blueprint's highlight photo on the game shot screen
-notify: notify.mobile_app_robin # optional: where Send the highlights sends the night
+notify: notify.mobile_app_joey # optional: where Send the highlights sends the night
 buttons:                       # optional: smart-home buttons in the bar, lit while on
   - light.board
   - entity: scene.darts_party
@@ -83,7 +83,7 @@ Add as many players as there are: Wild Mouse takes up to 24 (the card scores it 
 Every player has a picture on their score card, in the player list and on the result screen, in their colour:
 
 1. **A photo taken at the screen**: 📷 next to a name opens the photo booth. It uses the webcam of the screen's PC, counts down and takes a square photo; *Choose a picture* takes one from a file instead. Photos are kept in that screen's browser.
-2. **The `avatars` option**, for pictures every screen shares: `avatars: {Robin: /local/darts/robin.png}`.
+2. **The `avatars` option**, for pictures every screen shares: `avatars: {Joey: /local/darts/joey.png}`.
 3. **The picture of a Home Assistant person** with the same name, automatically.
 4. Otherwise the player's initials.
 
@@ -96,8 +96,8 @@ The integration's own games already have their entities. With `ha_sync: true` an
 | Helper | |
 | --- | --- |
 | `input_text.darts_screen_status` | `idle`, `lobby`, `playing` or `finished` |
-| `input_text.darts_screen_game`, `_player`, `_scores`, `_last_dart`, `_winner` | the game, who is throwing, "Robin 60 · Sam 20", the last dart (T20, BULL …), the winner |
-| `input_text.darts_screen_players` | set it to "Robin, Sam, Alex" to fill the player list |
+| `input_text.darts_screen_game`, `_player`, `_scores`, `_last_dart`, `_winner` | the game, who is throwing, "Joey 60 · Sam 20", the last dart (T20, BULL …), the winner |
+| `input_text.darts_screen_players` | set it to "Joey, Sam, Alex" to fill the player list |
 | `input_select.darts_screen_game` | picking a game starts it with those players |
 | `input_button.darts_screen_new_game`, `_rematch`, `_next_player`, `_undo`, `_end_game` | the screen's buttons |
 
@@ -188,14 +188,14 @@ Besides the integration's games, the screen plays 31 games of its own, for up to
 
 | | |
 | --- | --- |
-| **Cricket family** | Wild Mouse, Mickey Mouse (20–12, doubles, trebles, beds, bull), Cricket Light (four random numbers), Party Cricket and Party Cut-Throat for 5–24 |
-| **Countdowns and races** | Party X01 (5–24 players, legs, double in/out), Tower Takedown, Moon Landing, Gotcha, Beer Tap |
+| **Cricket family** | Wild Mouse, Mickey Mouse (20–12, doubles, trebles, beds, bull), Quick Cricket (four random numbers), Party Cricket and Party Cut-Throat for 5–24 |
+| **Countdowns and races** | Party X01 (5–24 players, legs, double in/out), Tower Takedown, Touchdown 200, Gotcha, Pour the Pint |
 | **Two-player** | Scram |
-| **Party** | Party Shanghai (1–7 or 1–20, a Lite option where the neighbours count), Lives, Hi-Lo, Chase the Dragon, Football, Snooker |
-| **Arcade games** | Snakes & Ladders, Derby Dash, Limbo, Bull Hunt, Killer Night, Fight, Conqueror, Targets |
+| **Party** | Party Shanghai (1–7 or 1–20, a Lite option where the neighbours count), Lives, Hi-Lo, Chase the Dragon, Bull & Goal, Snooker |
+| **Arcade games** | Ladder Rush, Derby Dash, Under the Bar, Chasing Bullseye, Killer Night, Nine Lives, Board Grab, Target Blast |
 | **Training** | Random Checkout, Clock Doubles, Clock Trebles, Clock Lite, Hare & Hounds, Doubles Ladder |
 
-Games with a board of their own show it big on the left of a wide screen (Snakes & Ladders' 50 squares, towers, landers, glasses, derby lanes, target strips that wrap into rows); Conqueror, Killer Night, Fight, Derby Dash, Targets and Party Shanghai also paint the drawn dartboard. The head-to-head games (Lives, Hi-Lo, Limbo, Fight, Killer Night, Conqueror) need two players or teams, and Scram exactly two. Party games without a limit of their own can be played to a **round limit** (10, 15 or 20 rounds): the leader then wins, level leaders share it.
+Games with a board of their own show it big on the left of a wide screen (Ladder Rush's 50 squares, towers, landers, glasses, derby lanes, target strips that wrap into rows); Board Grab, Killer Night, Nine Lives, Derby Dash, Target Blast and Party Shanghai also paint the drawn dartboard. The head-to-head games (Lives, Hi-Lo, Under the Bar, Nine Lives, Killer Night, Board Grab) need two players or teams, and Scram exactly two. Party games without a limit of their own can be played to a **round limit** (10, 15 or 20 rounds): the leader then wins, level leaders share it.
 
 ## Wild Mouse rules
 
@@ -215,7 +215,7 @@ The card's own game lives in the browser's `localStorage`, so it belongs to one 
 - **Tonight's Top List**: every game of two or more players gives 3, 2 and 1 points to the first three (a shared win is 3 each). It shows in the lobby and on the attract screen; a game counts once, also after a reload, and undo on the game shot screen takes it off again. *New session* (tap twice) starts over; after `session_gap_h` quiet hours it starts over by itself.
 - **Attract screen**: after `idle` quiet seconds in the lobby or on the game shot screen (never during a game) the screen shows the brand, a clock, the Top List big enough for the room, the board's records and the gallery of 180s, big checkouts and game shots. A dart, a key or a tap wakes it.
 - **Teams**: *Teams* on the New game screen plays Pairs (1 and 2, 3 and 4 in the list; an odd one out joins the last pair), Two teams (the first half against the second) or Auto (pairs above six players), in every game the card scores. A team's members take turns visit by visit; the card shows who throws, and each member gets the team's points on the Top List.
-- **Throw lines and handicaps**: tap a player's line in the list for Rookie, Regular or Pro; it shows on their card. With *Start bonus*, rookies and regulars start ahead where a game has a start to give (Party X01, Tower, Moon Landing, the target strips, Snakes & Ladders, Derby Dash).
+- **Throw lines and handicaps**: tap a player's line in the list for Rookie, Regular or Pro; it shows on their card. With *Start bonus*, rookies and regulars start ahead where a game has a start to give (Party X01, Tower, Touchdown 200, the target strips, Ladder Rush, Derby Dash).
 - **Sudden death**: a dead heat offers one dart each at the bullseye; the nearest wins (measured by the board when it knows where the dart sits), level players throw again, and the winner takes the game on the Top List.
 - **Trophies**: *Trophies* over the Top List shows the champion of the night, the podium and every game's winner. With `notify:` set, *Send the highlights* sends the night to a phone.
 - **Statistics**: during a game the thrower's earlier darts glow on the drawn board (`heat: false` turns it off); the game shot screen shows each player's darts on a small board with their grouping in millimetres, and X01 games a chart of the scores coming down.

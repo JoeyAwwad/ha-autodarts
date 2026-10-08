@@ -85,14 +85,14 @@ const FIND = `
   const card = deep(document, "autodarts-classic-card");`;
 
 // -- the games ------------------------------------------------------------------------------------
-const TWO = ["Robin", "Sam"], ONE = ["Robin"];
+const TWO = ["Joey", "Sam"], ONE = ["Joey"];
 const GAMES = [
   ["501", TWO, [["T20", "T20", "S20"], ["S5", "T19", "S1"]]],
   ["cricket", TWO, [["T20", "S19", "D18"], ["T20", "S20", "T17"]]],
   ["cut_throat", TWO, [["T20", "T19", "S18"], ["T20", "S20", "S16"]]],
   ["tactics", TWO, [["T20", "S12", "D10"], ["T11", "S20", "T19"]]],
   ["wild_mouse", TWO, [["T20", "D5", "T19"], ["S18", "D18", "Bull"]]],
-  ["killer", ["Robin", "Sam", "Alex"], [["S7"], ["S12"], ["S3"], ["D7", "D12", "S1"]]],
+  ["killer", ["Joey", "Sam", "Alex"], [["S7"], ["S12"], ["S3"], ["D7", "D12", "S1"]]],
   ["shanghai", TWO, [["S1", "D1", "T1"], ["S1", "S5", "S1"]]],
   ["halve_it", TWO, [["S15", "D15", "S1"], ["S2", "S3", "S4"]]],
   ["golf", TWO, [["D1"], ["T1", "S1"]]],
@@ -107,11 +107,11 @@ const GAMES = [
   ["jdc_challenge", ONE, [["S10", "D10", "T10"], ["S11", "S11", "Miss"]]],
   ["singles", ONE, [["S1", "D1", "T1"], ["S2", "Miss", "S2"]]],
   // The games the card scores itself.
-  ["x01_party", ["Robin", "Sam", "Alex", "Mia", "Tom"], [["T20", "T20", "S20"], ["S5", "T19", "S1"]]],
+  ["x01_party", ["Joey", "Sam", "Alex", "Mia", "Tom"], [["T20", "T20", "S20"], ["S5", "T19", "S1"]]],
   ["mickey_mouse", TWO, [["T20", "S12", "D13"], ["T14", "S20", "Bull"]]],
   ["cricket_light", TWO, [["T20", "S19", "D18"], ["T17", "S16", "S15"]]],
-  ["cricket_party", ["Robin", "Sam", "Alex", "Mia", "Tom", "Ben"], [["T20", "S19", "D18"], ["T20", "S20", "T17"]]],
-  ["cut_throat_party", ["Robin", "Sam", "Alex", "Mia", "Tom"], [["T20", "T19", "S18"], ["T20", "S20", "S16"]]],
+  ["cricket_party", ["Joey", "Sam", "Alex", "Mia", "Tom", "Ben"], [["T20", "S19", "D18"], ["T20", "S20", "T17"]]],
+  ["cut_throat_party", ["Joey", "Sam", "Alex", "Mia", "Tom"], [["T20", "T19", "S18"], ["T20", "S20", "S16"]]],
   ["gotcha", TWO, [["T20", "T20", "S20"], ["T20", "T20", "S20"]]],
   ["lives", TWO, [["T20", "S5", "S1"], ["S5", "S5", "S1"]]],
   ["hi_lo", TWO, [["T20", "S5", "S1"], ["S5", "S5", "S1"]]],
@@ -124,18 +124,18 @@ const GAMES = [
   ["atc_lite", ONE, [["S20", "S2", "S3"], ["S4", "Miss", "S5"]]],
   ["hare_hounds", TWO, [["S13", "S6", "Miss"], ["S20", "S1", "S18"]]],
   ["doubles_ladder", ONE, [["D1", "D2", "Miss"], ["Miss", "Miss", "Miss"]]],
-  ["snakes", ["Robin", "Sam", "Alex"], [["T1", "I20", "Bull"], ["D1", "25", "S5"], ["T5", "T5", "I3"]]],
-  ["derby", ["Robin", "Sam", "Alex"], [["T20", "S1", "D3"], ["S5", "T12", "S1"], ["S9", "D14", "S20"]]],
+  ["snakes", ["Joey", "Sam", "Alex"], [["T1", "I20", "Bull"], ["D1", "25", "S5"], ["T5", "T5", "I3"]]],
+  ["derby", ["Joey", "Sam", "Alex"], [["T20", "S1", "D3"], ["S5", "T12", "S1"], ["S9", "D14", "S20"]]],
   ["tower", TWO, [["T20", "T20", "S20"], ["S5", "T19", "S1"]]],
   ["limbo", TWO, [["S10", "S10", "S10"], ["S10", "S5", "S5"]]],
   ["bull_hunt", TWO, [["25", "Bull", "T20"], ["I20", "S1", "D16"]]],
-  ["killer_venue", ["Robin", "Sam", "Alex"], [["T20", "S1", "D3"], ["S5", "T12", "S1"], ["S9", "D14", "S20"]]],
-  ["fight", ["Robin", "Sam", "Alex"], [["T20", "S1", "D3"], ["S5", "T12", "S1"], ["S9", "D14", "S20"]]],
-  ["conqueror", ["Robin", "Sam", "Alex"], [["T20", "S1", "Bull"], ["S5", "T12", "S1"], ["S9", "D14", "S20"]]],
+  ["killer_venue", ["Joey", "Sam", "Alex"], [["T20", "S1", "D3"], ["S5", "T12", "S1"], ["S9", "D14", "S20"]]],
+  ["fight", ["Joey", "Sam", "Alex"], [["T20", "S1", "D3"], ["S5", "T12", "S1"], ["S9", "D14", "S20"]]],
+  ["conqueror", ["Joey", "Sam", "Alex"], [["T20", "S1", "Bull"], ["S5", "T12", "S1"], ["S9", "D14", "S20"]]],
   ["targets", TWO, [["T20", "S5", "Bull"], ["S19", "D16", "25"]]],
   ["moon_landing", TWO, [["T20", "T20", "S20"], ["S5", "T19", "S1"]]],
   ["beer_tap", TWO, [["T20", "T20", "S20"], ["S5", "T19", "S1"]]],
-  ["shanghai_party", ["Robin", "Sam", "Alex"], [["S1", "D1", "S20"], ["T1", "S1", "S5"], ["S1", "S18", "Miss"]]],
+  ["shanghai_party", ["Joey", "Sam", "Alex"], [["S1", "D1", "S20"], ["T1", "S1", "S5"], ["S1", "S18", "Miss"]]],
   ["scram", TWO, [["S20", "S19", "Bull"], ["T20", "S19", "S5"]]],
 ];
 
@@ -159,8 +159,8 @@ async function tour([w, h]) {
   await b.shot(path.join(dir, "00-lobby.png"));
   // The attract screen, with a made-up session (not saved) for its Top List.
   await b.run(`card._sess = { started: Date.now(), last: Date.now(), lastKey: null, games: [
-    { names: ["Robin", "Sam", "Alex"], winners: ["Robin"], game: "501" }, { names: ["Sam", "Robin"], winners: ["Sam"], game: "cricket" },
-    { names: ["Alex", "Robin", "Sam"], winners: ["Alex"], game: "snakes" }, { names: ["Robin", "Alex"], winners: ["Robin"], game: "derby" }] };
+    { names: ["Joey", "Sam", "Alex"], winners: ["Joey"], game: "501" }, { names: ["Sam", "Joey"], winners: ["Sam"], game: "cricket" },
+    { names: ["Alex", "Joey", "Sam"], winners: ["Alex"], game: "snakes" }, { names: ["Joey", "Alex"], winners: ["Joey"], game: "derby" }] };
     card._active = 0; card._idleTick(); return true;`);
   await sleep(1500);
   await b.shot(path.join(dir, "00-idle.png"));
@@ -168,7 +168,7 @@ async function tour([w, h]) {
   await b.run("card._idleOff(); card._act('trophies'); return true;");
   await sleep(800);
   await b.shot(path.join(dir, "01-trophies.png"));
-  await b.run(`card._trophies = false; card._sess = null; card._setup.players = ["Robin", "Sam", "Alex", "Mia"]; card._setup.teams = "pairs"; card._setup.game = "x01_party"; card._render(); return true;`);
+  await b.run(`card._trophies = false; card._sess = null; card._setup.players = ["Joey", "Sam", "Alex", "Mia"]; card._setup.teams = "pairs"; card._setup.game = "x01_party"; card._render(); return true;`);
   await sleep(600);
   await b.shot(path.join(dir, "02-teams-lobby.png"));
   await b.run(`card._setup.teams = "off"; card._openVoice(); return true;`);

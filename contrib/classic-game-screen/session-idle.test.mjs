@@ -12,7 +12,7 @@ vm.createContext(ctx);
 vm.runInContext(src + "\nthis.K = { sessionTable };", ctx);
 const { sessionTable } = ctx.K;
 
-function start(game, players = ["Robin", "Sam"], m = mount(states([], { game: "off" }))) {
+function start(game, players = ["Joey", "Sam"], m = mount(states([], { game: "off" }))) {
   m.el._sfx.play = () => {}; m.el._caller.say = () => {};
   m.el._setup.players = players;
   m.el._act("new");
@@ -39,7 +39,7 @@ test("a finished game counts once, however often the game shot screen is drawn",
   win(m, 1);
   m.el._render(); m.el._render();
   assert.equal(games(m).length, 1);
-  assert.deepEqual([...games(m)[0].names], ["Sam", "Robin"]);
+  assert.deepEqual([...games(m)[0].names], ["Sam", "Joey"]);
   assert.deepEqual([...games(m)[0].winners], ["Sam"]);
 });
 
@@ -71,7 +71,7 @@ test("a rematch with the same result counts as a new game; solo games do not cou
   m.el._act("rematch");
   win(m, 0);
   assert.equal(games(m).length, 2);
-  const solo = start("snakes", ["Robin"]);
+  const solo = start("snakes", ["Joey"]);
   win(solo, 0);
   assert.equal(games(solo).length, 0);
 });
@@ -80,7 +80,7 @@ test("the lobby shows tonight's Top List, and New session clears it after a seco
   const m = start("x01_party");
   win(m, 0);
   m.el._act("new");
-  assert.match(m.$(".toplist").textContent, /Robin[\s\S]*3[\s\S]*Sam[\s\S]*2/);
+  assert.match(m.$(".toplist").textContent, /Joey[\s\S]*3[\s\S]*Sam[\s\S]*2/);
   m.$('[data-act="new-session"]').click();
   assert.ok(m.$(".toplist"), "one tap only asks");
   m.$('[data-act="new-session"]').click();
@@ -119,7 +119,7 @@ test("the attract screen never covers a game being played, and idle: 0 turns it 
 
 test("the attract screen shows the board's records and the moment pictures, and a tap wakes it", () => {
   const s = states([], { game: "off" });
-  s[`sensor.${P}_personal_best`] = { state: "2026-09-28T10:00:00+00:00", attributes: { highest_visit: 140, highest_checkout: 121, record: "highest_visit", value: 140, name: "Robin" }, last_updated: "1" };
+  s[`sensor.${P}_personal_best`] = { state: "2026-09-28T10:00:00+00:00", attributes: { highest_visit: 140, highest_checkout: 121, record: "highest_visit", value: 140, name: "Joey" }, last_updated: "1" };
   const m = mount(s, { moments: { 180: "/local/darts/180.jpg" } });
   m.el._active = 0;
   m.el._idleTick();

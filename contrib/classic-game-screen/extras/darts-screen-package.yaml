@@ -22,7 +22,7 @@ input_text:
     name: Darts screen current player
     max: 64
   darts_screen_scores:
-    name: Darts screen scores          # "Robin 60 · Sam 20"
+    name: Darts screen scores          # "Joey 60 · Sam 20"
     max: 255
   darts_screen_last_dart:
     name: Darts screen last dart       # T20, D16, BULL, 25, MISS
@@ -31,7 +31,7 @@ input_text:
     name: Darts screen winner
     max: 64
   darts_screen_players:
-    name: Darts screen players         # set it to "Robin, Sam, Alex" to fill the list
+    name: Darts screen players         # set it to "Joey, Sam, Alex" to fill the list
     max: 255
 
 input_button:
@@ -63,7 +63,7 @@ input_select:
       - Tactics
       - Wild Mouse
       - Mickey Mouse
-      - Cricket Light
+      - Quick Cricket
       - Party Cricket
       - Party Cut-Throat
       - Killer
@@ -78,7 +78,7 @@ input_select:
       - Lives
       - Hi-Lo
       - Chase the Dragon
-      - Football
+      - Bull & Goal
       - Snooker
       - Around the Clock
       - Doubles
@@ -94,14 +94,14 @@ input_select:
       - Clock Lite
       - "Hare & Hounds"
       - Doubles Ladder
-      - "Snakes & Ladders"
+      - "Ladder Rush"
       - Derby Dash
       - Tower Takedown
-      - Limbo
-      - Bull Hunt
+      - Under the Bar
+      - Chasing Bullseye
       - Killer Night
-      - Fight
-      - Conqueror
-      - Targets
-      - Moon Landing
-      - Beer Tap
+      - Nine Lives
+      - Board Grab
+      - Target Blast
+      - Touchdown 200
+      - Pour the Pint

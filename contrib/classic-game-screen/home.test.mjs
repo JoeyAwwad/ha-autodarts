@@ -39,14 +39,14 @@ test("the highlight photo the blueprint takes shows on the game shot screen", as
   const m = mount(states([], { game: "off" }));
   m.el._sfx.play = () => {}; m.el._caller.say = () => {};
   const now = new Date(Date.now() + 2000), p2 = (n) => String(n).padStart(2, "0");
-  const file = `${now.getFullYear()}-${p2(now.getMonth() + 1)}-${p2(now.getDate())}_${p2(now.getHours())}-${p2(now.getMinutes())}-${p2(now.getSeconds())}_Robin_game_shot.jpg`;
+  const file = `${now.getFullYear()}-${p2(now.getMonth() + 1)}-${p2(now.getDate())}_${p2(now.getHours())}-${p2(now.getMinutes())}-${p2(now.getSeconds())}_Joey_game_shot.jpg`;
   const asked = [];
   m.el._hass.callWS = async (msg) => {
     asked.push(msg.type);
     if (msg.type === "media_source/browse_media") return { children: [{ media_content_id: `media-source://autodarts/${file.slice(0, 7)}/${file}` }, { media_content_id: "media-source://autodarts/2020-01/2020-01-01_10-00-00_Old_180.jpg" }] };
     return { url: "/media/local/autodarts/highlights/" + file + "?authSig=x" };
   };
-  m.el._setup.players = ["Robin", "Sam"];
+  m.el._setup.players = ["Joey", "Sam"];
   m.$('[data-act="game"][data-value="x01_party"]').click();
   m.$('[data-act="start"]').click();
   const realSet = globalThis.setInterval;
@@ -59,5 +59,5 @@ test("the highlight photo the blueprint takes shows on the game shot screen", as
   await (async () => { const fn = m.el._watchHighlight.bind(m.el); globalThis.setInterval = (f) => { f(); return 1; }; fn(); globalThis.setInterval = realSet; })();
   await new Promise((r) => setTimeout(r, 10));
   assert.deepEqual(asked.slice(-2), ["media_source/browse_media", "media_source/resolve_media"]);
-  assert.match(m.$(".gs-photo").getAttribute("src"), /Robin_game_shot\.jpg/);
+  assert.match(m.$(".gs-photo").getAttribute("src"), /Joey_game_shot\.jpg/);
 });

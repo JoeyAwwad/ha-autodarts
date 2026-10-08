@@ -57,7 +57,7 @@ test("Tower Takedown: equal turns, and a tie plays off from 60", () => {
   assert.equal(t.winner, null); assert.equal(t.players[0].rem, 60); assert.match(t.note, /Play-off/);
 });
 
-test("Moon Landing: beginners may overshoot, pros bounce back", () => {
+test("Touchdown 200: beginners may overshoot, pros bounce back", () => {
   const b = make("moon_landing", ["A"]);
   visit(b, "T20", "T20", "T20"); b.dart("Bull");
   assert.equal(b.winner, 0);
@@ -116,7 +116,7 @@ test("Random Checkout: finish the target on a double", () => {
   assert.notEqual(g.players[0].target, 0); assert.equal(g.players[0].visits, 0, "a new target");
 });
 
-test("Lives, Hi-Lo and Limbo lose lives the way their rules say", () => {
+test("Lives, Hi-Lo and Under the Bar lose lives the way their rules say", () => {
   const l = make("lives", ["A", "B"]);
   visit(l, "S20"); visit(l, "S10");
   assert.equal(l.players[1].lives, 2);
@@ -144,7 +144,7 @@ test("Killer Night: become a killer on your number, no killing yourself, knock-o
   assert.equal(g.winner, 0, "B lost 3 lives");
 });
 
-test("Fight: everybody is a killer, your number heals", () => {
+test("Nine Lives: everybody is a killer, your number heals", () => {
   const g = make("fight", ["A", "B"]);
   g.players[0].number = 7; g.players[1].number = 12;
   g.dart("T12");
@@ -153,7 +153,7 @@ test("Fight: everybody is a killer, your number heals", () => {
   assert.equal(g.players[1].lives, 8);
 });
 
-test("Snakes & Ladders: the ring is the dice, ladders climb, exact to finish", () => {
+test("Ladder Rush: the ring is the dice, ladders climb, exact to finish", () => {
   const g = make("snakes");
   g.dart("S20", { bed: "SingleInner" }); // roll 4 onto the ladder at 4
   assert.equal(g.players[0].sq, 17);
@@ -178,7 +178,7 @@ test("Derby Dash: your number moves you, theirs pushes them back, the round is f
   assert.deepEqual([...g.winners], [0, 1], "a dead heat");
 });
 
-test("Conqueror: claim next door, out of reach elsewhere, a home sector takes all", () => {
+test("Board Grab: claim next door, out of reach elsewhere, a home sector takes all", () => {
   const g = make("conqueror");
   g.owner = { 20: { by: 0, str: 3 }, 3: { by: 1, str: 1 } };
   g.players[0].home = 20; g.players[1].home = 3;
@@ -190,14 +190,14 @@ test("Conqueror: claim next door, out of reach elsewhere, a home sector takes al
   assert.equal(g.winner, 0);
 });
 
-test("Targets: close darts damage, destroyed targets score", () => {
+test("Target Blast: close darts damage, destroyed targets score", () => {
   const g = make("targets", ["A"]);
   g.targets = [{ x: 0, y: 0.5, hp: 3 }, { x: 0.8, y: 0, hp: 3 }, { x: -0.8, y: 0, hp: 3 }];
   g.dart("S20", { coords: { x: 0, y: 0.5 } });
   assert.equal(g.players[0].points, 13);
 });
 
-test("Bull Hunt: the middle scores, the edge costs, three bullseyes win", () => {
+test("Chasing Bullseye: the middle scores, the edge costs, three bullseyes win", () => {
   const g = make("bull_hunt", ["A", "B"]);
   g.dart("25"); g.dart("T20"); g.dart("S20");
   assert.equal(g.players[0].points, 2 - 2 - 1);
@@ -206,7 +206,7 @@ test("Bull Hunt: the middle scores, the edge costs, three bullseyes win", () => 
   assert.equal(g.winner, 0);
 });
 
-test("Football: the bull for the ball, then doubles are goals", () => {
+test("Bull & Goal: the bull for the ball, then doubles are goals", () => {
   const g = make("football", ["A"]);
   g.dart("D20");
   assert.equal(g.players[0].goals, 0);
@@ -225,7 +225,7 @@ test("Snooker: red, colour, and a foul ends the break", () => {
   assert.equal(g.blocked(), true); assert.equal(g.players[1].points, 1);
 });
 
-test("the cricket family: Mickey Mouse numbers, Cricket Light, Cut-Throat's points and win", () => {
+test("the cricket family: Mickey Mouse numbers, Quick Cricket, Cut-Throat's points and win", () => {
   const mm = WildMouse.create(["A", "B"], { kind: "mickey_mouse" });
   mm.dart("T12");
   assert.equal(mm.players[0].marks[12], 3);
@@ -251,7 +251,7 @@ test("every card-scored game starts, takes darts, shows its screen and its resul
   for (const kind of LOCAL_GAMES) {
     const m = mount(states([], { game: "off" }));
     m.el._sfx.play = () => {}; m.el._caller.say = () => {};
-    m.el._setup.players = ["Robin", "Sam", "Alex"];
+    m.el._setup.players = ["Joey", "Sam", "Alex"];
     m.el._setup.game = kind;
     await m.el._start();
     const g = m.el._wm;

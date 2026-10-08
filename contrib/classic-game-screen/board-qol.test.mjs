@@ -8,7 +8,7 @@ import assert from "node:assert/strict";
 import { P, states, mount } from "./dom-helpers.mjs";
 
 const key = (k) => window.dispatchEvent(new window.KeyboardEvent("keydown", { key: k, bubbles: true }));
-function wildMouse(names = ["Robin", "Sam"], config) {
+function wildMouse(names = ["Joey", "Sam"], config) {
   const m = mount(states([], { game: "off" }), config);
   m.el._sfx.play = () => {}; m.el._caller.say = () => {};
   m.el._setup.players = [...names];
@@ -49,11 +49,11 @@ test("TV remote keys: → and play/pause pass the turn, ← undoes", () => {
 test("Enter starts from the lobby; keys: false turns them off; typing a name is not a key", () => {
   const m = mount(states([], { game: "off" }));
   m.el._sfx.play = () => {}; m.el._caller.say = () => {};
-  m.el._setup.players = ["Robin", "Sam"]; m.el._setup.game = "wild_mouse"; m.el._render();
+  m.el._setup.players = ["Joey", "Sam"]; m.el._setup.game = "wild_mouse"; m.el._render();
   key("Enter");
   assert.equal(m.el._wm?.kind, "wild_mouse");
   m.el.remove();
-  const off = wildMouse(["Robin", "Sam"], { keys: false });
+  const off = wildMouse(["Joey", "Sam"], { keys: false });
   key("n");
   assert.equal(off.el._wm.current, 0);
   off.el.remove();
@@ -89,14 +89,14 @@ test("the result screen offers the rematch orders", () => {
 });
 
 test("the match intro shows the players before the first dart, with the head to head", () => {
-  const extra = { [`sensor.${P}_player_profiles`]: { state: "2", last_updated: "1", attributes: { players: [{ name: "Robin", head_to_head: { Sam: { won: 5, lost: 3 } } }, { name: "Sam" }] } } };
+  const extra = { [`sensor.${P}_player_profiles`]: { state: "2", last_updated: "1", attributes: { players: [{ name: "Joey", head_to_head: { Sam: { won: 5, lost: 3 } } }, { name: "Sam" }] } } };
   const m = mount(states([], { game: "off", extra }));
   m.el._sfx.play = () => {}; m.el._caller.say = () => {};
-  m.el._setup.players = ["Robin", "Sam"]; m.el._setup.game = "wild_mouse"; m.el._render();
+  m.el._setup.players = ["Joey", "Sam"]; m.el._setup.game = "wild_mouse"; m.el._render();
   m.$('[data-act="start"]').click();
   const intro = m.$(".intro-layer");
   assert.ok(intro);
-  assert.match(intro.textContent, /Robin[\s\S]*VS[\s\S]*Sam/);
+  assert.match(intro.textContent, /Joey[\s\S]*VS[\s\S]*Sam/);
   assert.match(intro.querySelector(".intro-h2h").textContent, /5 – 3/);
   intro.click();
   assert.equal(m.$(".intro-layer"), null, "a tap closes it");
@@ -104,10 +104,10 @@ test("the match intro shows the players before the first dart, with the head to 
 });
 
 test("intro: false, and solo games, skip the intro", () => {
-  const m = wildMouse(["Robin", "Sam"], { intro: false });
+  const m = wildMouse(["Joey", "Sam"], { intro: false });
   assert.equal(m.$(".intro-layer"), null);
   m.el.remove();
-  const solo = wildMouse(["Robin"]);
+  const solo = wildMouse(["Joey"]);
   assert.equal(solo.$(".intro-layer"), null);
   solo.el.remove();
 });
@@ -116,7 +116,7 @@ test("darts left in the board are flagged when a game starts", () => {
   const m = mount(states([], { game: "off" }));
   m.el._sfx.play = () => {}; m.el._caller.say = () => {};
   m.el._boardThrows = 2;
-  m.el._setup.players = ["Robin", "Sam"]; m.el._setup.game = "wild_mouse"; m.el._render();
+  m.el._setup.players = ["Joey", "Sam"]; m.el._setup.game = "wild_mouse"; m.el._render();
   m.$('[data-act="start"]').click();
   assert.match(m.$(".toast").textContent, /still darts in the board/);
   assert.equal(m.el._wm.seen, 2, "and they are not counted");
@@ -145,13 +145,13 @@ test("the coach shows under the integration's checkout route", () => {
 });
 
 test("banter after a visit, by what it scored, and banter: false keeps it quiet", async () => {
-  const m = wildMouse(["Robin", "Sam"], { banter: "always", banter_lines: { max: ["Custom max!"] } });
+  const m = wildMouse(["Joey", "Sam"], { banter: "always", banter_lines: { max: ["Custom max!"] } });
   const w = m.el._wm;
   w.dart("T20"); m.el._render(); w.dart("T20"); m.el._render(); w.dart("T20"); m.el._render();
   const b = m.$(".fx-layer .banter");
   assert.ok(b); assert.equal(b.textContent, "Custom max!");
   m.el.remove();
-  const quiet = wildMouse(["Robin", "Sam"], { banter: false });
+  const quiet = wildMouse(["Joey", "Sam"], { banter: false });
   ["S1", "S1", "S1"].forEach((d) => { quiet.el._wm.dart(d); quiet.el._render(); });
   assert.equal(quiet.$(".fx-layer .banter"), null);
   quiet.el.remove();
