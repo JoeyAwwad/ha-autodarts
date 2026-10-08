@@ -142,7 +142,7 @@ Every dart flashes big over the board for a moment, styled by what it hit (singl
 
 | Treble | Bullseye | 180 |
 | --- | --- | --- |
-| ![](images/hit-treble.png) | ![](images/hit-bull.png) | ![](images/celebrate-180.png) |
+| ![A treble flashing on the board](images/hit-treble.png) | ![A bullseye flashing on the board](images/hit-bull.png) | ![The 180 celebration](images/celebrate-180.png) |
 
 The **caller** calls every X01 visit ("One hundred and forty"), tells the next thrower what they require when they are on a finish, calls "Checkout" after a finish of 100 or more, "Up next" and the name in the other games, and the moments of the card's games ("Up the ladder!", "Goal!", "Shanghai!"). It uses the browser's voice, or your own recordings, in this order:
 
@@ -235,9 +235,9 @@ bash contrib/classic-game-screen/demo/demo.sh        # or .demo.ps1 in PowerShel
 
 | | |
 | --- | --- |
-| Game screen | http://localhost:18125/darts-classic/game |
-| Dart simulator | http://localhost:18126: click where the dart lands, *Pull the darts* ends the visit; quick buttons for T20, bull, off the board, a bounce out and a 180 |
-| Home Assistant | http://localhost:18125 (logs in by itself; only this PC can reach it) |
+| Game screen | <http://localhost:18125/darts-classic/game> |
+| Dart simulator | <http://localhost:18126>: click where the dart lands, *Pull the darts* ends the visit; quick buttons for T20, bull, off the board, a bounce out and a 180 |
+| Home Assistant | <http://localhost:18125> (logs in by itself; only this PC can reach it) |
 
 The demo has no pictures of its own. To try yours, put `logo.png`, `hero.jpg`, the moment pictures and `player.jpg` (the photo of Player 1) in a folder and start it with `DARTS_ASSETS=path`. The card file is mounted from the repository: `demo.sh reload` shows a changed card without resetting anything (Home Assistant restarts, so give it a minute). `demo.sh stop` removes everything.
 

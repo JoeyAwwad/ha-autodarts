@@ -49,7 +49,7 @@ for pid in $(pgrep -x chrome); do
 done
 
 # 1. Board detection.
-if ! ps -eo comm= | grep -qx autodarts-deskt; then
+if ! pgrep -x autodarts-deskt >/dev/null; then
     if [[ -x "$APP" ]]; then
         setsid nohup "$APP" >> "$LOG_DIR/v2.log" 2>&1 < /dev/null &
     else
