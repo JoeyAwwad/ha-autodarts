@@ -54,7 +54,9 @@
 <script>
   // Shown the moment the icon is clicked; the launcher starts the board and Home
   // Assistant behind it. Moves on to the game screen once both answer.
-  const HOST = new URLSearchParams(location.search).get("host") || "127.0.0.1";
+  // Only a host name or an IP address: the page never goes anywhere else.
+  const asked = new URLSearchParams(location.search).get("host") || "";
+  const HOST = /^[A-Za-z0-9.-]{1,253}$/.test(asked) ? asked : "127.0.0.1";
   const GAME = `http://${HOST}:8123/darts-classic/game`;
   const started = Date.now();
   const $ = (id) => document.getElementById(id);

@@ -477,6 +477,22 @@ function wedge(r1, r2, a1, a2) {
 
 // The board, with the beds of the visit lit and a marker where each dart sits. Board
 // coordinates are fractions of the double ring's outer edge, y pointing up.
+// The darts of the board's /api/events, kept to what the card reads: the bed's name, the
+// position as plain numbers and the bounce-out flag. Anything else a board (or something
+// pretending to be one) sends never reaches the screen's HTML.
+function boardThrows(raw) {
+  if (!Array.isArray(raw)) return [];
+  return raw.map((t) => {
+    const x = Number(t?.coords?.x), y = Number(t?.coords?.y);
+    const name = t?.segment?.name, bed = t?.segment?.bed;
+    return {
+      segment: { name: typeof name === "string" ? name : "M", bed: typeof bed === "string" ? bed : undefined },
+      coords: Number.isFinite(x) && Number.isFinite(y) ? { x, y } : null,
+      bouncer: !!t?.bouncer,
+    };
+  });
+}
+
 function boardSvg(visit, throws = [], overlay = "") {
   const hits = visit.map(parseSegment);
   const hit = (ring, number) => hits.some((h) => h.number === number && h.ring === ring);
@@ -2644,15 +2660,15 @@ class AutodartsClassicCard extends HTMLElement {
         return;
       }
       if (m.type !== "state" || !m.data) return;
-      const throws = m.data.throws || [];
+      const throws = boardThrows(m.data.throws);
       // The board flags a dart that bounced out; the miss it becomes shows as a bounce out.
       if (throws.slice(this._boardThrows || 0).some((t) => t.bouncer)) this._bouncedAt = Date.now();
       if (throws.length !== this._boardThrows) { this._active = Date.now(); if (this._idleOn) this._idleOff(); }
       this._keepSpots(throws);
       this._boardThrows = throws.length;
-      this._drawDarts(m.data.throws || []);
+      this._drawDarts(throws);
       this._watchTakeout(m.data);
-      this._wmThrows(m.data.throws || []);
+      this._wmThrows(throws);
     };
     ws.onclose = () => {
       this._ws = null;

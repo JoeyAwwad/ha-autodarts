@@ -29,3 +29,22 @@ for (const game of ["derby", "killer_venue", "fight", "conqueror", "targets", "s
     assert.equal(g.current, 1);
   });
 }
+
+test("a board's darts reach the screen as plain numbers and names, never as markup", () => {
+  const m = mount(states([], { game: "off" }));
+  m.el._sfx.play = () => {}; m.el._caller.say = () => {};
+  m.el._setup.players = ["Joey", "Sam"];
+  m.$('[data-act="game"][data-value="x01_party"]').click();
+  m.$('[data-act="start"]').click();
+  const evil = '0"/><img src=x onerror="window.pwned=1">';
+  send(m, [
+    { segment: { name: "S20", bed: "SingleOuter" }, coords: { x: evil, y: 0.5 }, bouncer: "yes", extra: evil },
+    { segment: { name: { toString: () => evil } }, coords: { x: "0.1", y: "-0.2" } },
+  ]);
+  assert.deepEqual(JSON.parse(JSON.stringify(m.el._lastThrows)), [
+    { segment: { name: "S20", bed: "SingleOuter" }, coords: null, bouncer: true },
+    { segment: { name: "M" }, coords: { x: 0.1, y: -0.2 }, bouncer: false },
+  ]);
+  assert.equal(m.el.shadowRoot.querySelector("img[onerror]"), null);
+  assert.equal(m.el.shadowRoot.innerHTML.includes("onerror"), false);
+});
