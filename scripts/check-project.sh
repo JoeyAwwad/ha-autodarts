@@ -36,3 +36,7 @@ fi
 node --check custom_components/autodarts/frontend/autodarts-card.js
 npx --no-install eslint .
 npm test
+
+printf '\n== %s\n' "The classic game screen of contrib/"
+node --check contrib/classic-game-screen/autodarts-classic-card.js
+node --test "contrib/classic-game-screen/*.test.mjs"

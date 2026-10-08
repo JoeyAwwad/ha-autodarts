@@ -26,6 +26,15 @@ export default [
     },
   },
   {
+    // The classic game screen of contrib/ runs in the browser; its tests in Node.
+    files: ["contrib/**/*.js", "contrib/**/*.mjs"],
+    languageOptions: {
+      ecmaVersion: "latest",
+      sourceType: "module",
+      globals: { ...globals.node, ...globals.browser },
+    },
+  },
+  {
     files: ["tests/**/*.js", "tests/**/*.mjs", "scripts/**/*.mjs", "eslint.config.mjs"],
     languageOptions: {
       ecmaVersion: "latest",

@@ -578,7 +578,7 @@ function esc(v) {
 function load(key, fallback) {
   try {
     return JSON.parse(localStorage.getItem(`autodarts-classic:${key}`)) ?? fallback;
-  } catch (err) {
+  } catch {
     return fallback;
   }
 }
@@ -586,7 +586,7 @@ function load(key, fallback) {
 function save(key, value) {
   try {
     localStorage.setItem(`autodarts-classic:${key}`, JSON.stringify(value));
-  } catch (err) { /* private mode: the choice is just not remembered */ }
+  } catch { /* private mode: the choice is just not remembered */ }
 }
 
 // -- Sound effects and the caller --------------------------------------------------------------
@@ -617,7 +617,7 @@ class Sound {
     try {
       this.ctx ??= new (window.AudioContext || window.webkitAudioContext)();
       if (this.ctx.state === "suspended") this.ctx.resume();
-    } catch (err) {
+    } catch {
       this.ctx = null;
     }
   }
@@ -671,7 +671,7 @@ class Sound {
         case "win": [[523, 659, 784], [587, 740, 880], [659, 831, 988, 1319]].forEach((ch, i) => ch.forEach((f) => T(f, i * 0.28, i === 2 ? 1.2 : 0.3, { type: "triangle", gain: 0.1 }))); break;
         default: break;
       }
-    } catch (err) { /* audio is a nicety */ }
+    } catch { /* audio is a nicety */ }
   }
 }
 
@@ -693,7 +693,7 @@ class Caller {
   stop() {
     this.queue = [];
     this.busy = false;
-    try { window.speechSynthesis?.cancel(); } catch (err) { /* nothing to stop */ }
+    try { window.speechSynthesis?.cancel(); } catch { /* nothing to stop */ }
   }
 
   _next() {
@@ -713,7 +713,7 @@ class Caller {
         const p = audio.play();
         if (p?.catch) p.catch(speak);
         return;
-      } catch (err) { /* fall back to speech */ }
+      } catch { /* fall back to speech */ }
     }
     speak();
   }
@@ -776,7 +776,7 @@ class ReplayBuffer {
       slot.rec.ondataavailable = (ev) => { if (ev.data?.size) slot.chunks.push(ev.data); };
       slot.rec.start(1000);
       slot.timer = setTimeout(() => this._restart(slot), REPLAY_SEGMENT_S * 1000);
-    } catch (err) {
+    } catch {
       slot.rec = null;
     }
   }
@@ -805,7 +805,7 @@ class ReplayBuffer {
         this._begin(slot);
         resolve(blob);
       };
-      try { rec.stop(); } catch (err) { resolve(null); }
+      try { rec.stop(); } catch { resolve(null); }
     });
   }
 
@@ -816,7 +816,7 @@ class ReplayBuffer {
       clearTimeout(slot.timer);
       if (slot.rec && slot.rec.state !== "inactive") {
         slot.rec.onstop = null;
-        try { slot.rec.stop(); } catch (err) { /* already stopped */ }
+        try { slot.rec.stop(); } catch { /* already stopped */ }
       }
     }
     this.slots = [];
@@ -957,7 +957,7 @@ class AutodartsClassicCard extends HTMLElement {
       let m;
       try {
         m = JSON.parse(ev.data);
-      } catch (err) {
+      } catch {
         return;
       }
       if (m.type !== "state" || !m.data) return;
@@ -1023,7 +1023,7 @@ class AutodartsClassicCard extends HTMLElement {
       this._img.style.transform = `matrix3d(${[H[0][0], H[1][0], 0, H[2][0], H[0][1], H[1][1], 0, H[2][1], 0, 0, 1, 0, H[0][2], H[1][2], 0, H[2][2]].join(",")})`;
       this._img.src = `${base}/api/streams/cams/${cam}`;
       this._liveFailed = false;
-    } catch (err) {
+    } catch {
       this._liveFailed = true;
     }
     this._stage.classList.toggle("virtual-mode", this._liveFailed);
@@ -1905,7 +1905,7 @@ class AutodartsClassicCard extends HTMLElement {
       });
       if (!this._camSet.replay || this._isLobby()) stream.getTracks().forEach((t) => t.stop());
       else if (buf.start(stream)) this._replayCam = this._camSet.replay;
-    } catch (err) {
+    } catch {
       this._replayCam = null;
       if (!this._replayWarned) this._toast("The replay camera could not start: is it plugged in?");
       this._replayWarned = true;
@@ -1955,12 +1955,12 @@ class AutodartsClassicCard extends HTMLElement {
         video.removeEventListener("timeupdate", once);
         resolve(Number.isFinite(video.duration) ? video.duration : video.currentTime);
       });
-      try { video.currentTime = 1e6; } catch (err) { resolve(0); }
+      try { video.currentTime = 1e6; } catch { resolve(0); }
     });
     const play = async (rate, lastSeconds) => {
       const d = await length();
       video.playbackRate = rate;
-      try { video.currentTime = Math.max(0, d - lastSeconds); } catch (err) { /* from the start */ }
+      try { video.currentTime = Math.max(0, d - lastSeconds); } catch { /* from the start */ }
       speed.textContent = rate < 1 ? "Slow motion" : "";
       layer.classList.toggle("slow", rate < 1);
       return video.play()?.catch?.(() => {});
@@ -2053,7 +2053,7 @@ class AutodartsClassicCard extends HTMLElement {
       const probe = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
       probe.getTracks().forEach((t) => t.stop());
       cams = (await navigator.mediaDevices.enumerateDevices()).filter((d) => d.kind === "videoinput");
-    } catch (err) {
+    } catch {
       cams = [];
     }
     if (this._camSetup !== layer) return;

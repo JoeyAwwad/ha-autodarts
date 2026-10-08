@@ -2,7 +2,7 @@
 // Run: node --test "contrib/classic-game-screen/*.test.mjs"
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { P, settle, states, mount } from "./dom-helpers.mjs";
+import { settle, states, mount } from "./dom-helpers.mjs";
 
 const lobby = (config) => mount(states([], { game: "off" }), config);
 const names = (n) => Array.from({ length: n }, (_, i) => `P${i + 1}`);
@@ -61,7 +61,7 @@ test("shuffle keeps everybody, clear empties the list", () => {
 test("pictures: a booth photo, the avatars option, a Home Assistant person, else initials", () => {
   localStorage.clear();
   const s = states([], { game: "off", extra: { "person.sam": { entity_id: "person.sam", state: "home", attributes: { friendly_name: "Sam", entity_picture: "/api/image/serve/abc/512x512" }, last_updated: "1" } } });
-  const { el, $ } = mount(s, { avatars: { alex: "/local/darts/alex.png", evil: "javascript:alert(1)" } });
+  const { el } = mount(s, { avatars: { alex: "/local/darts/alex.png", evil: "javascript:alert(1)" } });
   localStorage.setItem("autodarts-classic:photos", JSON.stringify({ Joey: PIXEL }));
   el._photos = null;
   el._setup.players = ["Joey", "Sam", "Alex", "Evil Kid"];
