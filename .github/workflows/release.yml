@@ -33,7 +33,10 @@ concurrency:
 jobs:
   release-please:
     name: release pull request
-    if: ${{ !github.event.repository.fork }}
+    # Releases come from Dennis-Otto/ha-autodarts alone. Copies of it, such as this one,
+    # which GitHub does not mark as a fork, would otherwise run the release bot every
+    # hour and fail, as they have neither the release app nor its pull requests.
+    if: ${{ !github.event.repository.fork && github.repository_owner == 'Dennis-Otto' }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     # The environment holds the private key of the release app; only main may use it.

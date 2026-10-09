@@ -20,3 +20,17 @@ tool = "Scorecard"
 rule = "MaintainedID"
 reason = "won't fix"
 comment = "Scorecard counts a repository younger than 90 days as unmaintained; this one gets commits every week."
+
+[[accept]]
+tool = "CodeQL"
+rule = "js/client-side-unvalidated-url-redirection"
+reason = "won't fix"
+comment = "The launcher's splash page opens the game screen on the host it is started for; the host parameter takes only a host name or an IP address."
+path = "contrib/classic-game-screen/extras/splash.html"
+
+[[accept]]
+tool = "CodeQL"
+rule = "js/client-side-request-forgery"
+reason = "won't fix"
+comment = "The launcher's splash page asks the board and Home Assistant on the host it is started for whether they are up; the host parameter takes only a host name or an IP address."
+path = "contrib/classic-game-screen/extras/splash.html"
